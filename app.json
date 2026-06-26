@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Plately",
+    "slug": "plately",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "plately",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#FF7A1A"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "backgroundColor": "#FF7A1A"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font"
+    ]
+  }
+}
