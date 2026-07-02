@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import type { SvgProps } from 'react-native-svg';
 
@@ -44,6 +44,20 @@ function ionicon(name: IoniconName) {
   };
 }
 
+type MaterialCommunityName = React.ComponentProps<
+  typeof MaterialCommunityIcons
+>['name'];
+
+/** Same as `ionicon`, for the few glyphs Ionicons doesn't cover (e.g. a plain
+ * drink cup). MaterialCommunityIcons shares the same outline weight. */
+function materialCommunityIcon(name: MaterialCommunityName) {
+  return function BrandMaterialCommunityIcon({ width = 24, color }: SvgProps) {
+    const size =
+      typeof width === 'number' ? width : Number.parseFloat(`${width}`) || 24;
+    return <MaterialCommunityIcons name={name} size={size} color={color} />;
+  };
+}
+
 export const BrandIcon = {
   Breakfast: ionicon('cafe-outline'),
   Calendar,
@@ -59,7 +73,7 @@ export const BrandIcon = {
   Like,
   Line,
   Logo,
-  Lunch: ionicon('fast-food-outline'),
+  Lunch: materialCommunityIcon('cup-outline'),
   Measure,
   Meat,
   Notification,

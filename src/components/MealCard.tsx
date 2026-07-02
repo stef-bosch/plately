@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { getRecipeImage } from '../constants/images';
 import { mealTypeLabel } from '../constants/labels';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 import type { MealType, Recipe } from '../types';
 import { MealIcon } from './BrandIcons';
+import { PressableScale } from './PressableScale';
 
 interface MealCardProps {
   mealType: MealType;
@@ -24,10 +25,10 @@ export function MealCard({
   onPress,
 }: MealCardProps) {
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={styles.card}
     >
       <View style={styles.thumbWrap}>
         <Image
@@ -51,7 +52,7 @@ export function MealCard({
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={iconSize.action} color={colors.textMuted} />
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -64,9 +65,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadow.soft,
-  },
-  pressed: {
-    opacity: 0.85,
   },
   thumbWrap: {
     position: 'relative',

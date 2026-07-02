@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import type {
   DietaryPreference,
+  EnergyNeed,
   Goal,
   MealType,
   Season,
@@ -22,6 +23,12 @@ export const mealTypeIcon: Record<MealType, keyof typeof Ionicons.glyphMap> = {
   lunch: 'restaurant-outline',
   diner: 'moon-outline',
   tussendoortje: 'nutrition-outline',
+};
+
+export const energyNeedLabel: Record<EnergyNeed, string> = {
+  laag: 'Laag',
+  gemiddeld: 'Gemiddeld',
+  hoog: 'Hoog',
 };
 
 export const seasonLabel: Record<Season, string> = {
@@ -68,9 +75,10 @@ export const goalLabel: Record<Goal, string> = {
 
 export const dietaryLabel: Record<DietaryPreference, string> = {
   vegetarisch: 'Vegetarisch',
-  glutenvrij: 'Glutenvrij',
+  vegan: 'Vegan',
   lactosevrij: 'Lactosevrij',
-  notenvrij: 'Notenvrij',
+  glutenvrij: 'Glutenvrij',
+  halal: 'Halal',
 };
 
 /** Maps a JS Date weekday (0 = Sunday) onto our Dutch week ordering. */

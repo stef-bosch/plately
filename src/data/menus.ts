@@ -1,4 +1,4 @@
-import type { Menu, MenuCourseType } from '../types';
+import type { Menu } from '../types';
 
 /**
  * Complete, multi-course menus for Plately.
@@ -20,7 +20,7 @@ export const menus: Menu[] = [
     courses: [
       {
         type: 'welkom',
-        title: 'Welkomstmocktail',
+        title: 'Aperitief',
         recipeIds: ['bbq-za-mocktail'],
       },
       {
@@ -55,36 +55,7 @@ export const menus: Menu[] = [
   },
 ];
 
-/** Fast lookup by id, used by the menu detail screen. */
-export const menusById: Record<string, Menu> = menus.reduce(
-  (acc, menu) => {
-    acc[menu.id] = menu;
-    return acc;
-  },
-  {} as Record<string, Menu>,
-);
-
-export function getMenuById(id: string): Menu | undefined {
-  return menusById[id];
-}
-
-/**
- * Maps each dish (recipe id) that appears in a menu to its course type, so the
- * recipe browser can offer course-based filters (aperitief, voorgerecht, …)
- * without duplicating that information onto the recipes themselves.
- */
-export const courseByRecipeId: Record<string, MenuCourseType> = menus.reduce(
-  (acc, menu) => {
-    menu.courses.forEach((course) => {
-      course.recipeIds.forEach((id) => {
-        acc[id] = course.type;
-      });
-    });
-    return acc;
-  },
-  {} as Record<string, MenuCourseType>,
-);
-
-export function getCourseForRecipe(recipeId: string): MenuCourseType | undefined {
-  return courseByRecipeId[recipeId];
-}
+// Menus can be loaded from Supabase (with the array above as the fallback).
+// The lookups live in the content store; re-exported here so existing imports
+// of `getMenuById` / `getCourseForRecipe` / `getMenus` keep working.
+export { getMenuById, getCourseForRecipe, getMenus } from './content';

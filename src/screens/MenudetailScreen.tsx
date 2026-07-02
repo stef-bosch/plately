@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, type RouteProp } from '@react-navigation/native';
 import React, { useLayoutEffect } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '../components/BrandIcons';
+import { PressableScale } from '../components/PressableScale';
 import { Tag } from '../components/Tag';
 import { getRecipeImage } from '../constants/images';
 import { getRecipeById } from '../data/recipes';
@@ -78,10 +79,6 @@ export function MenudetailScreen() {
             <Icon name="Graph" size={iconSize.badge} color={colors.textSecondary} />
             <Text style={styles.metaText}>±{totalCalories} kcal p.p.</Text>
           </View>
-          <View style={styles.metaItem}>
-            <Icon name="Scale" size={iconSize.badge} color={colors.textSecondary} />
-            <Text style={styles.metaText}>{menu.baseServings} personen</Text>
-          </View>
         </View>
 
         {menu.tags.length > 0 ? (
@@ -121,8 +118,7 @@ export function MenudetailScreen() {
 
       <Text style={styles.footnote}>
         Tik op een gerecht voor het volledige recept, ingrediënten en
-        bereidingswijze. Alle gerechten zijn gebaseerd op {menu.baseServings}{' '}
-        personen.
+        bereidingswijze.
       </Text>
     </ScrollView>
   );
@@ -137,10 +133,10 @@ function DishRow({
 }) {
   const totalTime = recipe.prepTime + recipe.cookTime;
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.dishRow, pressed && styles.dishRowPressed]}
+      style={styles.dishRow}
     >
       <Image
         source={getRecipeImage(recipe)}
@@ -169,7 +165,7 @@ function DishRow({
         size={iconSize.action}
         color={colors.textMuted}
       />
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -260,10 +256,6 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     paddingRight: spacing.md,
     ...shadow.soft,
-  },
-  dishRowPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
   },
   dishThumb: {
     width: 64,

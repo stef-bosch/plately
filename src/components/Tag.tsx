@@ -27,6 +27,11 @@ const PALETTE: Tone[] = [
 
 const TAG_TONES: Record<string, Tone> = {
   Vegetarisch: PALETTE[0],
+  Vegan: PALETTE[4],
+  Lactosevrij: PALETTE[5],
+  Glutenvrij: PALETTE[2],
+  Notenvrij: PALETTE[6],
+  Halal: PALETTE[3],
   Eiwitrijk: PALETTE[1],
   'Snel klaar': PALETTE[2],
   Gezond: PALETTE[3],

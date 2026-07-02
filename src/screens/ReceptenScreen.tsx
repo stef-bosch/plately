@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   FlatList,
+  PanResponder,
   Pressable,
   StyleSheet,
   Text,
@@ -12,19 +13,21 @@ import {
 } from 'react-native';
 
 import { Icon } from '../components/BrandIcons';
+import { FadeInView } from '../components/FadeInView';
 import { FilterChip } from '../components/FilterChip';
 import { MenuCard } from '../components/MenuCard';
 import { RecipeCard } from '../components/RecipeCard';
 import { mealTypeLabel, seasonLabel } from '../constants/labels';
-import { getCourseForRecipe, menus } from '../data/menus';
-import { recipes } from '../data/recipes';
+import { useSettings } from '../context/SettingsContext';
+import { getCourseForRecipe, getMenus } from '../data/menus';
+import { getAllRecipes } from '../data/recipes';
 import { useOpenMenu, useOpenRecipe } from '../navigation/hooks';
+import { recipeMatchesDiets } from '../utils/resolveRecipe';
 import type { TabParamList } from '../navigation/types';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 import type {
   MealType,
   Menu,
-  MenuCourseType,
   Recipe,
   RecipeTag,
   Season,
@@ -32,9 +35,7 @@ import type {
 
 /** Top-level browse mode. */
 type Category = 'gerechten' | 'menus' | 'overig';
-/** Course-based filter options layered on top of the everyday meal types. */
-type CourseFilter = 'aperitief' | 'voorgerecht' | 'hoofdgerecht' | 'nagerecht';
-type MealFilter = MealType | CourseFilter | 'alle';
+type MealFilter = MealType | 'alle';
 type TagFilter = 'cocktails' | 'sauzen';
 type TagFilterOption = TagFilter | 'alle';
 type SeasonFilter = Season | 'alle';
@@ -51,30 +52,7 @@ const MEAL_FILTERS: MealFilter[] = [
   'lunch',
   'diner',
   'tussendoortje',
-  'aperitief',
-  'voorgerecht',
-  'hoofdgerecht',
-  'nagerecht',
 ];
-
-/** Course filters resolve a dish to a menu course (see data/menus.ts). */
-const COURSE_FILTER_TO_COURSE: Record<CourseFilter, MenuCourseType> = {
-  aperitief: 'welkom',
-  voorgerecht: 'voorgerecht',
-  hoofdgerecht: 'hoofdgerecht',
-  nagerecht: 'nagerecht',
-};
-
-const COURSE_FILTER_LABEL: Record<CourseFilter, string> = {
-  aperitief: 'Aperitief',
-  voorgerecht: 'Voorgerecht',
-  hoofdgerecht: 'Hoofdgerecht',
-  nagerecht: 'Nagerecht',
-};
-
-function isCourseFilter(value: MealFilter): value is CourseFilter {
-  return value in COURSE_FILTER_TO_COURSE;
-}
 
 /** "Overig" filters match on a recipe tag rather than its meal type. */
 const TAG_FILTERS: Record<TagFilter, RecipeTag> = {
@@ -102,6 +80,7 @@ export function ReceptenScreen() {
   const openRecipe = useOpenRecipe();
   const openMenu = useOpenMenu();
   const route = useRoute<RouteProp<TabParamList, 'Recepten'>>();
+  const { settings } = useSettings();
 
   // A deep-link param can target a meal type or an "Overig" tag.
   const param = route.params?.mealType;
@@ -122,9 +101,17 @@ export function ReceptenScreen() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  // Recipes resolved for the current settings (reactive breakfasts adapt to
+  // the user's energy need + dietary preferences).
+  const allRecipes = useMemo(() => getAllRecipes(settings), [settings]);
+
   const filteredRecipes = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return recipes.filter((recipe) => {
+    return allRecipes.filter((recipe) => {
+      // Dishes that are part of a menu only show under the "Menu's" tab.
+      if (getCourseForRecipe(recipe.id)) return false;
+      // Only show dishes that meet every selected dietary preference.
+      if (!recipeMatchesDiets(recipe, settings.dietaryPreferences)) return false;
       const matchesQuery = q === '' || recipe.title.toLowerCase().includes(q);
       const matchesSeason =
         seasonFilter === 'alle' || recipe.seasons.includes(seasonFilter);
@@ -136,19 +123,14 @@ export function ReceptenScreen() {
         return matchesQuery && matchesSeason && matchesTag;
       }
       const matchesMeal =
-        mealFilter === 'alle'
-          ? true
-          : isCourseFilter(mealFilter)
-            ? getCourseForRecipe(recipe.id) ===
-              COURSE_FILTER_TO_COURSE[mealFilter]
-            : recipe.mealType === mealFilter;
+        mealFilter === 'alle' ? true : recipe.mealType === mealFilter;
       return matchesQuery && matchesSeason && matchesMeal;
     });
-  }, [query, category, mealFilter, tagFilter, seasonFilter]);
+  }, [allRecipes, query, category, mealFilter, tagFilter, seasonFilter]);
 
   const filteredMenus = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return menus.filter(
+    return getMenus().filter(
       (menu) => q === '' || menu.title.toLowerCase().includes(q),
     );
   }, [query]);
@@ -180,19 +162,61 @@ export function ReceptenScreen() {
   // Slide-in for the in-tree filter sheet (kept inside the app container rather
   // than a Modal, which on web would portal to full browser width).
   const sheetAnim = useRef(new Animated.Value(0)).current;
+  // Extra downward offset driven by dragging the grab handle.
+  const dragY = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!filtersOpen) return;
     sheetAnim.setValue(0);
+    dragY.setValue(0);
     Animated.timing(sheetAnim, {
       toValue: 1,
       duration: 220,
       useNativeDriver: true,
     }).start();
-  }, [filtersOpen, sheetAnim]);
+  }, [filtersOpen, sheetAnim, dragY]);
   const sheetTranslateY = sheetAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [480, 0],
   });
+
+  // Let the user swipe the sheet down by its handle to dismiss it.
+  const sheetPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_evt, gesture) => gesture.dy > 4,
+      onPanResponderMove: (_evt, gesture) => {
+        if (gesture.dy > 0) {
+          dragY.setValue(gesture.dy);
+        }
+      },
+      onPanResponderRelease: (_evt, gesture) => {
+        // Far enough or a quick flick down → close; otherwise snap back.
+        if (gesture.dy > 110 || gesture.vy > 0.8) {
+          Animated.timing(dragY, {
+            toValue: 480,
+            duration: 180,
+            useNativeDriver: true,
+          }).start(() => {
+            dragY.setValue(0);
+            setFiltersOpen(false);
+          });
+        } else {
+          Animated.spring(dragY, {
+            toValue: 0,
+            bounciness: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(dragY, {
+          toValue: 0,
+          bounciness: 0,
+          useNativeDriver: true,
+        }).start();
+      },
+    }),
+  ).current;
 
   return (
     <View style={styles.screen}>
@@ -202,16 +226,18 @@ export function ReceptenScreen() {
       data={data}
       keyExtractor={(item) => item.id}
       showsVerticalScrollIndicator={false}
-      renderItem={({ item }) =>
-        showingMenus ? (
-          <MenuCard menu={item as Menu} onPress={() => openMenu(item.id)} />
-        ) : (
-          <RecipeCard
-            recipe={item as Recipe}
-            onPress={() => openRecipe(item.id)}
-          />
-        )
-      }
+      renderItem={({ item, index }) => (
+        <FadeInView delay={Math.min(index, 6) * 55}>
+          {showingMenus ? (
+            <MenuCard menu={item as Menu} onPress={() => openMenu(item.id)} />
+          ) : (
+            <RecipeCard
+              recipe={item as Recipe}
+              onPress={() => openRecipe(item.id)}
+            />
+          )}
+        </FadeInView>
+      )}
       ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
       ListHeaderComponent={
         <View style={styles.header}>
@@ -308,11 +334,6 @@ export function ReceptenScreen() {
             </View>
           ) : null}
 
-          {showingMenus ? (
-            <Text style={styles.menuIntro}>
-              Complete meergangen-menu's om in één keer te koken.
-            </Text>
-          ) : null}
         </View>
       }
       ListEmptyComponent={
@@ -338,10 +359,17 @@ export function ReceptenScreen() {
         <Animated.View
           style={[
             styles.sheet,
-            { transform: [{ translateY: sheetTranslateY }] },
+            { transform: [{ translateY: Animated.add(sheetTranslateY, dragY) }] },
           ]}
         >
-          <View style={styles.sheetHandle} />
+          <View
+            style={styles.sheetHandleArea}
+            {...sheetPanResponder.panHandlers}
+            accessibilityRole="button"
+            accessibilityLabel="Sleep omlaag om filters te sluiten"
+          >
+            <View style={styles.sheetHandle} />
+          </View>
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>Filters</Text>
             {activeFilterCount > 0 ? (
@@ -358,13 +386,7 @@ export function ReceptenScreen() {
                 {MEAL_FILTERS.map((m) => (
                   <FilterChip
                     key={m}
-                    label={
-                      m === 'alle'
-                        ? 'Alle'
-                        : isCourseFilter(m)
-                          ? COURSE_FILTER_LABEL[m]
-                          : mealTypeLabel[m]
-                    }
+                    label={m === 'alle' ? 'Alle' : mealTypeLabel[m]}
                     active={mealFilter === m}
                     onPress={() => setMealFilter(m)}
                   />
@@ -545,8 +567,13 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     ...shadow.card,
   },
+  sheetHandleArea: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    marginTop: -spacing.xs,
+  },
   sheetHandle: {
-    alignSelf: 'center',
     width: 40,
     height: 4,
     borderRadius: radius.pill,
@@ -594,11 +621,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-  },
-  menuIntro: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: spacing.xs,
   },
   empty: {
     alignItems: 'center',

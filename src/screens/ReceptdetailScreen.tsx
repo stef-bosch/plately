@@ -39,7 +39,7 @@ export function ReceptdetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'Receptdetail'>>();
   const { settings } = useSettings();
 
-  const recipe = getRecipeById(route.params.recipeId);
+  const recipe = getRecipeById(route.params.recipeId, settings);
 
   // Dishes written for a fixed party size (e.g. a 4-person menu dish) open at
   // their base servings so the quantities read cleanly; single-serving recipes
@@ -211,10 +211,6 @@ export function ReceptdetailScreen() {
       {/* Macros per serving */}
       <Section title="Voedingswaarden per portie">
         <View style={styles.card}>
-          <View style={styles.calorieHeader}>
-            <Text style={styles.calorieBig}>{recipe.nutrition.calories}</Text>
-            <Text style={styles.calorieBigUnit}>kcal</Text>
-          </View>
           <MacroSummary
             items={[
               { label: 'Eiwitten', value: recipe.nutrition.protein, unit: 'g', color: colors.protein },
@@ -512,21 +508,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     lineHeight: 23,
     paddingTop: 3,
-  },
-  calorieHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  calorieBig: {
-    ...typography.display,
-    color: colors.textPrimary,
-  },
-  calorieBigUnit: {
-    ...typography.subheading,
-    color: colors.textSecondary,
-    marginBottom: 5,
   },
   indicative: {
     ...typography.caption,

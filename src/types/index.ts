@@ -33,10 +33,18 @@ export type IngredientCategory =
   | 'Dressing'
   | 'Salade'
   | 'Garnering'
-  | 'Optioneel';
+  | 'Optioneel'
+  // Admins can type any custom heading (e.g. "Voor de bowl"); the UI renders
+  // whatever string is stored. This keeps the literals above as suggestions.
+  | (string & {});
 
 export type RecipeTag =
   | 'Vegetarisch'
+  | 'Vegan'
+  | 'Lactosevrij'
+  | 'Glutenvrij'
+  | 'Notenvrij'
+  | 'Halal'
   | 'Eiwitrijk'
   | 'Vezelrijk'
   | 'Meal prep proof'
@@ -83,11 +91,23 @@ export interface Micronutrients {
   /** mg */
   magnesium?: number;
   /** mg */
+  phosphorus?: number;
+  /** mg */
+  zinc?: number;
+  /** mg */
   vitaminC?: number;
   /** µg */
   vitaminA?: number;
   /** µg */
   folate?: number;
+  /** µg */
+  vitaminB12?: number;
+  /** µg */
+  vitaminD?: number;
+  /** µg */
+  selenium?: number;
+  /** µg */
+  iodine?: number;
 }
 
 export interface Nutrition {
@@ -127,6 +147,10 @@ export interface Recipe {
   ingredients: IngredientGroup[];
   instructions: string[];
   nutrition: Nutrition;
+  /** Diets this dish satisfies as written (used by the recipe filter). */
+  suitableFor?: DietaryPreference[];
+  /** Diets reachable via one trivial swap, shown as a hint on the detail. */
+  dietSwaps?: DietSwap[];
 }
 
 /* ---------- Menus ---------- */
@@ -190,16 +214,66 @@ export interface WeeklyPlan {
 
 export type Goal = 'gezond-eten' | 'spierbehoud' | 'afvallen' | 'aankomen';
 
+export type EnergyNeed = 'laag' | 'gemiddeld' | 'hoog';
+
 export type DietaryPreference =
   | 'vegetarisch'
-  | 'glutenvrij'
+  | 'vegan'
   | 'lactosevrij'
-  | 'notenvrij';
+  | 'glutenvrij'
+  | 'halal';
 
 export interface Settings {
   goal: Goal;
   defaultServings: number;
+  energyNeed: EnergyNeed;
   preferredSeason: Season;
   dietaryPreferences: DietaryPreference[];
   showMicronutrients: boolean;
+}
+
+/* ---------- Reactive recipes ---------- */
+
+/**
+ * A recipe whose portion (ingredients + nutrition) follows the user's
+ * `energyNeed`. Dietary preferences are NOT used to morph the recipe; instead a
+ * recipe declares which diets it suits (as-is or via a trivial swap shown as a
+ * hint), and the recipe browser filters on that. `resolveRecipe` collapses one
+ * of these into a plain `Recipe` for the UI.
+ */
+
+/** One full ingredient + nutrition set for a single energy level. */
+export interface EnergyVariant {
+  ingredients: IngredientGroup[];
+  nutrition: Nutrition;
+}
+
+/**
+ * A diet a recipe can satisfy with one simple, like-for-like swap (e.g. gluten
+ * free bread). The recipe still counts as suitable for that diet; the hint just
+ * tells the user what to swap. Nutrition is not recalculated.
+ */
+export interface DietSwap {
+  diet: DietaryPreference;
+  hint: string;
+}
+
+export interface ReactiveRecipe {
+  id: string;
+  title: string;
+  subtitle?: string;
+  image?: import('react-native').ImageSourcePropType;
+  mealType: MealType;
+  seasons: Season[];
+  baseServings: number;
+  prepTime: number;
+  cookTime: number;
+  tags: RecipeTag[];
+  instructions: string[];
+  /** Ingredients + nutrition per energy level. */
+  energy: Record<EnergyNeed, EnergyVariant>;
+  /** Diets the recipe satisfies as written. */
+  suitableFor: DietaryPreference[];
+  /** Diets reachable via one trivial swap, shown as a hint. */
+  dietSwaps?: DietSwap[];
 }

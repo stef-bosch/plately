@@ -15,8 +15,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'maandag',
         meals: {
-          ontbijt: 'ontbijt-yoghurt-bessen',
-          lunch: 'lunch-quinoa-kikkererwten',
+          ontbijt: 'ontbijt-mango-overnight-oats',
+          lunch: 'lunch-hummus-avocado-sandwich',
           tussendoortje: ['snack-kwark-bessen'],
           diner: 'diner-pasta-norma',
         },
@@ -24,8 +24,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'dinsdag',
         meals: {
-          ontbijt: 'ontbijt-wrap-ei-avocado',
-          lunch: 'lunch-poke-zalm',
+          ontbijt: 'ontbijt-volkoren-toast-avocado',
+          lunch: 'lunch-roggebrood-makreel',
           tussendoortje: ['snack-appel-amandel'],
           diner: 'diner-couscous-halloumi',
         },
@@ -33,8 +33,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'woensdag',
         meals: {
-          ontbijt: 'ontbijt-yoghurt-bessen',
-          lunch: 'lunch-wrap-hummus-kip',
+          ontbijt: 'ontbijt-skyr-bowl-bessen',
+          lunch: 'lunch-pastasalade-witte-bonen',
           tussendoortje: ['snack-hummus-groente'],
           diner: 'diner-kip-teriyaki-rijst',
         },
@@ -42,8 +42,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'donderdag',
         meals: {
-          ontbijt: 'ontbijt-wrap-ei-avocado',
-          lunch: 'lunch-quinoa-kikkererwten',
+          ontbijt: 'ontbijt-smoothie-bowl',
+          lunch: 'lunch-couscous-kikkererwten-feta',
           tussendoortje: ['snack-kwark-bessen'],
           diner: 'diner-pasta-norma',
         },
@@ -51,8 +51,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'vrijdag',
         meals: {
-          ontbijt: 'ontbijt-yoghurt-bessen',
-          lunch: 'lunch-poke-zalm',
+          ontbijt: 'ontbijt-zomerkwark-perzik',
+          lunch: 'lunch-hummus-avocado-sandwich',
           tussendoortje: ['snack-appel-amandel'],
           diner: 'diner-couscous-halloumi',
         },
@@ -60,8 +60,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'zaterdag',
         meals: {
-          ontbijt: 'ontbijt-wrap-ei-avocado',
-          lunch: 'lunch-wrap-hummus-kip',
+          ontbijt: 'ontbijt-mango-overnight-oats',
+          lunch: 'lunch-roggebrood-makreel',
           tussendoortje: ['snack-hummus-groente', 'snack-kwark-bessen'],
           diner: 'diner-kip-teriyaki-rijst',
         },
@@ -69,8 +69,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'zondag',
         meals: {
-          ontbijt: 'ontbijt-yoghurt-bessen',
-          lunch: 'lunch-quinoa-kikkererwten',
+          ontbijt: 'ontbijt-volkoren-toast-avocado',
+          lunch: 'lunch-pastasalade-witte-bonen',
           tussendoortje: ['snack-appel-amandel'],
           diner: 'diner-pasta-norma',
         },
@@ -83,8 +83,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'maandag',
         meals: {
-          ontbijt: 'ontbijt-havermout-appel',
-          lunch: 'lunch-wrap-hummus-kip',
+          ontbijt: 'ontbijt-skyr-bowl-bessen',
+          lunch: 'lunch-couscous-kikkererwten-feta',
           tussendoortje: ['snack-noten-fruit'],
           diner: 'diner-kikkererwten-curry',
         },
@@ -92,8 +92,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'dinsdag',
         meals: {
-          ontbijt: 'ontbijt-yoghurt-bessen',
-          lunch: 'lunch-wrap-hummus-kip',
+          ontbijt: 'ontbijt-smoothie-bowl',
+          lunch: 'lunch-hummus-avocado-sandwich',
           tussendoortje: ['snack-appel-amandel'],
           diner: 'diner-zalm-zoete-aardappel',
         },
@@ -101,8 +101,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'woensdag',
         meals: {
-          ontbijt: 'ontbijt-havermout-appel',
-          lunch: 'lunch-wrap-hummus-kip',
+          ontbijt: 'ontbijt-zomerkwark-perzik',
+          lunch: 'lunch-roggebrood-makreel',
           tussendoortje: ['snack-hummus-groente'],
           diner: 'diner-zoete-aardappel-bonen',
         },
@@ -110,8 +110,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'donderdag',
         meals: {
-          ontbijt: 'ontbijt-wrap-ei-avocado',
-          lunch: 'lunch-wrap-hummus-kip',
+          ontbijt: 'ontbijt-mango-overnight-oats',
+          lunch: 'lunch-pastasalade-witte-bonen',
           tussendoortje: ['snack-noten-fruit'],
           diner: 'diner-pasta-norma',
         },
@@ -119,8 +119,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'vrijdag',
         meals: {
-          ontbijt: 'ontbijt-havermout-appel',
-          lunch: 'lunch-wrap-hummus-kip',
+          ontbijt: 'ontbijt-volkoren-toast-avocado',
+          lunch: 'lunch-couscous-kikkererwten-feta',
           tussendoortje: ['snack-appel-amandel'],
           diner: 'diner-kip-teriyaki-rijst',
         },
@@ -128,8 +128,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'zaterdag',
         meals: {
-          ontbijt: 'ontbijt-yoghurt-bessen',
-          lunch: 'lunch-wrap-hummus-kip',
+          ontbijt: 'ontbijt-skyr-bowl-bessen',
+          lunch: 'lunch-hummus-avocado-sandwich',
           tussendoortje: ['snack-noten-fruit', 'snack-hummus-groente'],
           diner: 'diner-zalm-zoete-aardappel',
         },
@@ -137,8 +137,8 @@ export const weeklyPlans: WeeklyPlan[] = [
       {
         day: 'zondag',
         meals: {
-          ontbijt: 'ontbijt-havermout-appel',
-          lunch: 'lunch-wrap-hummus-kip',
+          ontbijt: 'ontbijt-smoothie-bowl',
+          lunch: 'lunch-roggebrood-makreel',
           tussendoortje: ['snack-appel-amandel'],
           diner: 'diner-kikkererwten-curry',
         },

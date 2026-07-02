@@ -1,9 +1,8 @@
-import * as Print from 'expo-print';
-import { Platform } from 'react-native';
-
 import { mealTypeLabel, seasonLabel } from '../constants/labels';
+import { colors } from '../theme';
 import type { Recipe } from '../types';
 import { micronutrientMeta } from './nutrition';
+import { printHtml } from './printHtml';
 import { scaleIngredient } from './scaling';
 
 /**
@@ -30,6 +29,28 @@ function esc(value: string | number): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const c = hex.replace('#', '');
+  return {
+    r: parseInt(c.slice(0, 2), 16),
+    g: parseInt(c.slice(2, 4), 16),
+    b: parseInt(c.slice(4, 6), 16),
+  };
+}
+
+/** Translucent tint of `hex` — mirrors the in-app macro block interior. */
+function tint(hex: string, alpha: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/** Darkened variant of `hex` for legible text on the light tint. */
+function darken(hex: string, factor: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+  return `rgb(${clamp(r * factor)}, ${clamp(g * factor)}, ${clamp(b * factor)})`;
 }
 
 /** Builds the full HTML document for one recipe at the given servings. */
@@ -84,16 +105,19 @@ export function buildRecipeHtml(
     .join('');
 
   const macros = [
-    { label: 'Eiwitten', value: recipe.nutrition.protein },
-    { label: 'Koolhydraten', value: recipe.nutrition.carbs },
-    { label: 'Vetten', value: recipe.nutrition.fat },
-    { label: 'Vezels', value: recipe.nutrition.fiber },
+    { label: 'Eiwitten', value: recipe.nutrition.protein, color: colors.protein },
+    { label: 'Koolhydraten', value: recipe.nutrition.carbs, color: colors.carbs },
+    { label: 'Vetten', value: recipe.nutrition.fat, color: colors.fat },
+    { label: 'Vezels', value: recipe.nutrition.fiber, color: colors.fiber },
   ]
     .map(
       (m) =>
-        `<div class="macro"><div class="macro-value">${esc(m.value)} g</div><div class="macro-label">${esc(
-          m.label,
-        )}</div></div>`,
+        `<div class="macro" style="border-color: ${m.color}; background: ${tint(
+          m.color,
+          0.14,
+        )}; color: ${darken(m.color, 0.55)};"><div class="macro-value">${esc(
+          m.value,
+        )} g</div><div class="macro-label">${esc(m.label)}</div></div>`,
     )
     .join('');
 
@@ -207,15 +231,12 @@ export function buildRecipeHtml(
   .macro {
     flex: 1;
     text-align: center;
-    background: #FFF6E9;
-    border: 1px solid #F1E5CF;
+    border: 1.5px solid #F1E5CF;
     border-radius: 12px;
     padding: 10px 6px;
   }
   .macro-value { font-size: 16px; font-weight: 700; }
-  .macro-label { font-size: 10.5px; color: #6B5D4D; margin-top: 2px; }
-  .calories { font-size: 22px; font-weight: 800; margin: 0 0 12px; }
-  .calories span { font-size: 14px; font-weight: 600; color: #6B5D4D; }
+  .macro-label { font-size: 10.5px; margin-top: 2px; }
   .indicative { font-size: 11px; color: #998A77; margin: 10px 0 0; }
   table.micros { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.micros td { padding: 6px 0; border-bottom: 1px solid #F1E5CF; }
@@ -245,7 +266,6 @@ export function buildRecipeHtml(
 
   <section>
     <h2>Voedingswaarden per portie</h2>
-    <p class="calories">${esc(recipe.nutrition.calories)} <span>kcal</span></p>
     <div class="macros">${macros}</div>
     ${indicative}
   </section>
@@ -258,41 +278,6 @@ export function buildRecipeHtml(
 }
 
 /**
- * Renders the recipe HTML into a hidden iframe and prints just that document.
- *
- * `expo-print` on web ignores the supplied HTML and prints the whole page, so
- * for the web build we drive the browser print dialog ourselves — this way the
- * dialog (and the "Save as PDF" destination) only contains the recipe.
- */
-function printHtmlOnWeb(html: string): void {
-  const iframe = document.createElement('iframe');
-  iframe.setAttribute('aria-hidden', 'true');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-
-  // `srcdoc` fires `load` deterministically once the document is parsed, so we
-  // can print exactly the recipe (and only after it has rendered).
-  iframe.onload = () => {
-    const frameWindow = iframe.contentWindow;
-    if (!frameWindow) {
-      iframe.remove();
-      return;
-    }
-    frameWindow.focus();
-    frameWindow.print();
-    // Give the print dialog time to grab the document before removing it.
-    window.setTimeout(() => iframe.remove(), 1000);
-  };
-
-  iframe.srcdoc = html;
-  document.body.appendChild(iframe);
-}
-
-/**
  * Opens the platform print / "Save as PDF" dialog for a recipe.
  * On web this is the browser print dialog; on native the system print sheet.
  */
@@ -300,10 +285,5 @@ export async function printRecipe(
   recipe: Recipe,
   options: RecipePdfOptions,
 ): Promise<void> {
-  const html = buildRecipeHtml(recipe, options);
-  if (Platform.OS === 'web') {
-    printHtmlOnWeb(html);
-    return;
-  }
-  await Print.printAsync({ html });
+  await printHtml(buildRecipeHtml(recipe, options));
 }

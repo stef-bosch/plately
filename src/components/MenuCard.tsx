@@ -1,11 +1,12 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { getRecipeImage } from '../constants/images';
 import { getRecipeById } from '../data/recipes';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 import type { Menu } from '../types';
 import { Icon } from './BrandIcons';
+import { PressableScale } from './PressableScale';
 import { Tag } from './Tag';
 
 interface MenuCardProps {
@@ -32,10 +33,10 @@ export function MenuCard({ menu, onPress }: MenuCardProps) {
   );
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={styles.card}
     >
       <View style={styles.imageWrap}>
         <Image
@@ -65,10 +66,6 @@ export function MenuCard({ menu, onPress }: MenuCardProps) {
             <Icon name="Graph" size={iconSize.badge} color={colors.primary} />
             <Text style={styles.metaText}>±{totalCalories} kcal p.p.</Text>
           </View>
-          <View style={styles.metaItem}>
-            <Icon name="Scale" size={iconSize.badge} color={colors.primary} />
-            <Text style={styles.metaText}>{menu.baseServings} personen</Text>
-          </View>
         </View>
 
         <View style={styles.tagRow}>
@@ -77,7 +74,7 @@ export function MenuCard({ menu, onPress }: MenuCardProps) {
           ))}
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -87,10 +84,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     overflow: 'hidden',
     ...shadow.card,
-  },
-  pressed: {
-    opacity: 0.92,
-    transform: [{ scale: 0.99 }],
   },
   imageWrap: {
     position: 'relative',

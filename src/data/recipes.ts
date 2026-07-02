@@ -1,7 +1,12 @@
 import type { Recipe } from '../types';
 
+// The content store (which can load dishes from Supabase, with this bundled data
+// as the fallback) lives in ./content. The recipe lookups are re-exported from
+// here so existing imports of `getRecipeById` / `getAllRecipes` keep working.
+export { getRecipeById, getAllRecipes } from './content';
+
 /**
- * Mock recipe library for the Plately MVP.
+ * Bundled (fallback) static recipe library.
  *
  * Every recipe is written for ONE person (baseServings: 1) and scales up via
  * the plus/minus control on the detail screen. Nutrition is recipe-level and
@@ -12,350 +17,10 @@ import type { Recipe } from '../types';
  */
 
 export const recipes: Recipe[] = [
-  /* ============================ ONTBIJT ============================ */
-  {
-    id: 'ontbijt-yoghurt-bessen',
-    title: 'Griekse yoghurt met blauwe bessen, noten & honing',
-    subtitle: 'Romig, fris en eiwitrijk om de dag mee te starten',
-    mealType: 'ontbijt',
-    seasons: ['lente-zomer', 'herfst-winter'],
-    baseServings: 1,
-    prepTime: 5,
-    cookTime: 0,
-    tags: ['Vegetarisch', 'Eiwitrijk', 'Snel klaar', 'Gezond'],
-    ingredients: [
-      {
-        category: 'Basis',
-        items: [
-          { name: 'Griekse yoghurt 2%', quantity: 200, unit: 'g', scalable: true },
-          { name: 'Blauwe bessen', quantity: 80, unit: 'g', scalable: true },
-          { name: 'Walnoten, grof gehakt', quantity: 15, unit: 'g', scalable: true },
-        ],
-      },
-      {
-        category: 'Topping',
-        items: [
-          { name: 'Honing', quantity: 1, unit: 'tl', scalable: true },
-          { name: 'Chiazaad', quantity: 1, unit: 'tl', scalable: true },
-          { name: 'Kaneel', quantity: 'naar smaak', unit: '', scalable: false },
-        ],
-      },
-    ],
-    instructions: [
-      'Schep de Griekse yoghurt in een diep bord of kom.',
-      'Verdeel de blauwe bessen en gehakte walnoten erover.',
-      'Bestrooi met chiazaad en een snufje kaneel.',
-      'Druppel als laatste de honing eroverheen en serveer direct.',
-    ],
-    nutrition: {
-      calories: 330,
-      protein: 22,
-      carbs: 26,
-      fat: 15,
-      fiber: 5,
-      micronutrients: {
-        calcium: 240,
-        potassium: 380,
-        magnesium: 55,
-        vitaminC: 9,
-        folate: 30,
-        iron: 1.5,
-      },
-      isIndicative: true,
-    },
-  },
-  {
-    id: 'ontbijt-havermout-appel',
-    title: 'Warme havermout met appel, kaneel & walnoten',
-    subtitle: 'Stevig en vezelrijk ontbijt voor koudere ochtenden',
-    mealType: 'ontbijt',
-    seasons: ['herfst-winter'],
-    baseServings: 1,
-    prepTime: 5,
-    cookTime: 8,
-    tags: ['Vegetarisch', 'Vezelrijk', 'Gezond'],
-    ingredients: [
-      {
-        category: 'Basis',
-        items: [
-          { name: 'Havermout', quantity: 50, unit: 'g', scalable: true },
-          { name: 'Halfvolle melk of haverdrink', quantity: 200, unit: 'ml', scalable: true },
-          { name: 'Appel, in blokjes', quantity: 1, unit: 'stuk', scalable: true, display: '1 appel' },
-        ],
-      },
-      {
-        category: 'Topping',
-        items: [
-          { name: 'Walnoten, grof gehakt', quantity: 15, unit: 'g', scalable: true },
-          { name: 'Kaneel', quantity: 0.5, unit: 'tl', scalable: true, display: '½ tl' },
-          { name: 'Honing of ahornsiroop', quantity: 1, unit: 'tl', scalable: true, note: 'optioneel' },
-        ],
-      },
-    ],
-    instructions: [
-      'Doe de havermout met de melk in een steelpan.',
-      'Verwarm op middelhoog vuur en roer regelmatig, 5–7 minuten tot een romige pap.',
-      'Roer de helft van de appelblokjes en de kaneel erdoor.',
-      'Schep in een kom en verdeel de rest van de appel en de walnoten erover.',
-      'Werk af met een klein beetje honing of ahornsiroop naar smaak.',
-    ],
-    nutrition: {
-      calories: 410,
-      protein: 15,
-      carbs: 58,
-      fat: 13,
-      fiber: 9,
-      micronutrients: {
-        calcium: 220,
-        potassium: 520,
-        magnesium: 90,
-        vitaminC: 7,
-        iron: 2.4,
-        folate: 25,
-      },
-      isIndicative: true,
-    },
-  },
-  {
-    id: 'ontbijt-wrap-ei-avocado',
-    title: 'Volkoren wrap met roerei, avocado & spinazie',
-    subtitle: 'Hartig en eiwitrijk, klaar in tien minuten',
-    mealType: 'ontbijt',
-    seasons: ['lente-zomer', 'herfst-winter'],
-    baseServings: 1,
-    prepTime: 5,
-    cookTime: 5,
-    tags: ['Vegetarisch', 'Eiwitrijk', 'Snel klaar'],
-    ingredients: [
-      {
-        category: 'Basis',
-        items: [
-          { name: 'Volkoren wrap', quantity: 1, unit: 'stuk', scalable: true, display: '1 wrap' },
-          { name: 'Eieren', quantity: 2, unit: 'stuks', scalable: true },
-          { name: 'Avocado', quantity: 0.5, unit: 'stuk', scalable: true, display: '½ avocado' },
-          { name: 'Handje verse spinazie', quantity: 1, unit: 'hand', scalable: true },
-        ],
-      },
-      {
-        category: 'Smaakmakers',
-        items: [
-          { name: 'Olijfolie', quantity: 1, unit: 'tl', scalable: true },
-          { name: 'Zwarte peper', quantity: 'naar smaak', unit: '', scalable: false },
-          { name: 'Chilivlokken', quantity: 'naar smaak', unit: '', scalable: false },
-        ],
-      },
-    ],
-    instructions: [
-      'Klop de eieren los met een snufje peper.',
-      'Verhit de olijfolie in een pan en roer de eieren zacht tot smeuïg roerei.',
-      'Verwarm de wrap kort in een droge pan of in de magnetron.',
-      'Pureer de avocado grof en bestrijk de wrap ermee.',
-      'Verdeel de spinazie en het roerei erover, bestrooi met chilivlokken.',
-      'Rol de wrap stevig op en snijd schuin doormidden.',
-    ],
-    nutrition: {
-      calories: 420,
-      protein: 21,
-      carbs: 30,
-      fat: 24,
-      fiber: 8,
-      micronutrients: {
-        iron: 3,
-        calcium: 110,
-        potassium: 620,
-        magnesium: 70,
-        vitaminC: 12,
-        vitaminA: 180,
-        folate: 110,
-      },
-      isIndicative: true,
-    },
-  },
-
-  /* ============================= LUNCH ============================= */
-  {
-    id: 'lunch-quinoa-kikkererwten',
-    title: 'Quinoasalade met kikkererwten, feta & granaatappel',
-    subtitle: 'Frisse, kleurrijke bowl boordevol plantaardige eiwitten',
-    mealType: 'lunch',
-    seasons: ['lente-zomer'],
-    baseServings: 1,
-    prepTime: 10,
-    cookTime: 15,
-    tags: ['Vegetarisch', 'Eiwitrijk', 'Vezelrijk', 'Meal prep proof', 'Gezond'],
-    ingredients: [
-      {
-        category: 'Basis',
-        items: [
-          { name: 'Quinoa', quantity: 60, unit: 'g', scalable: true },
-          { name: 'Kikkererwten, uitgelekt', quantity: 120, unit: 'g', scalable: true },
-          { name: 'Komkommer, in blokjes', quantity: 0.5, unit: 'stuk', scalable: true, display: '½ komkommer' },
-          { name: 'Cherrytomaatjes, gehalveerd', quantity: 80, unit: 'g', scalable: true },
-        ],
-      },
-      {
-        category: 'Topping',
-        items: [
-          { name: 'Feta, verkruimeld', quantity: 30, unit: 'g', scalable: true },
-          { name: 'Granaatappelpitjes', quantity: 30, unit: 'g', scalable: true },
-          { name: 'Verse munt of peterselie', quantity: 'naar smaak', unit: '', scalable: false },
-        ],
-      },
-      {
-        category: 'Dressing',
-        items: [
-          { name: 'Olijfolie', quantity: 1, unit: 'el', scalable: true },
-          { name: 'Citroensap', quantity: 0.5, unit: 'el', scalable: true, display: '½ el' },
-          { name: 'Zwarte peper', quantity: 'naar smaak', unit: '', scalable: false },
-        ],
-      },
-    ],
-    instructions: [
-      'Kook de quinoa volgens de verpakking, ongeveer 12–15 minuten, en laat afkoelen.',
-      'Meng de quinoa met de kikkererwten, komkommer en cherrytomaatjes.',
-      'Klop olijfolie, citroensap en peper tot een dressing en schep erdoor.',
-      'Verdeel de feta, granaatappelpitjes en verse kruiden erover.',
-      'Serveer koud of op kamertemperatuur.',
-    ],
-    nutrition: {
-      calories: 480,
-      protein: 19,
-      carbs: 52,
-      fat: 21,
-      fiber: 11,
-      micronutrients: {
-        iron: 4,
-        calcium: 180,
-        potassium: 720,
-        magnesium: 110,
-        vitaminC: 25,
-        vitaminA: 60,
-        folate: 150,
-      },
-      isIndicative: true,
-    },
-  },
-  {
-    id: 'lunch-wrap-hummus-kip',
-    title: 'Volkoren wrap met hummus, kip & knapperige groenten',
-    subtitle: 'Handige eiwitrijke lunch voor onderweg',
-    mealType: 'lunch',
-    seasons: ['lente-zomer', 'herfst-winter'],
-    baseServings: 1,
-    prepTime: 10,
-    cookTime: 0,
-    tags: ['Eiwitrijk', 'Snel klaar', 'Meal prep proof'],
-    ingredients: [
-      {
-        category: 'Basis',
-        items: [
-          { name: 'Volkoren wrap', quantity: 1, unit: 'stuk', scalable: true, display: '1 wrap' },
-          { name: 'Gegrilde kipfilet, in reepjes', quantity: 90, unit: 'g', scalable: true },
-          { name: 'Hummus', quantity: 40, unit: 'g', scalable: true },
-          { name: 'Wortel, in dunne reepjes', quantity: 0.5, unit: 'stuk', scalable: true, display: '½ wortel' },
-          { name: 'Komkommer, in reepjes', quantity: 0.25, unit: 'stuk', scalable: true, display: '¼ komkommer' },
-        ],
-      },
-      {
-        category: 'Topping',
-        items: [
-          { name: 'Handje sla of rucola', quantity: 1, unit: 'hand', scalable: true },
-          { name: 'Zwarte peper', quantity: 'naar smaak', unit: '', scalable: false },
-        ],
-      },
-    ],
-    instructions: [
-      'Bestrijk de wrap royaal met hummus.',
-      'Verdeel de sla, kip, wortel en komkommer over de onderste helft.',
-      'Maal er wat zwarte peper over.',
-      'Vouw de zijkanten naar binnen en rol de wrap stevig op.',
-      'Snijd schuin doormidden en serveer.',
-    ],
-    nutrition: {
-      calories: 440,
-      protein: 34,
-      carbs: 38,
-      fat: 16,
-      fiber: 8,
-      micronutrients: {
-        iron: 3.2,
-        calcium: 90,
-        potassium: 560,
-        magnesium: 65,
-        vitaminC: 8,
-        vitaminA: 350,
-        folate: 70,
-      },
-      isIndicative: true,
-    },
-  },
-  {
-    id: 'lunch-poke-zalm',
-    title: 'Pokébowl met zalm, edamame & avocado',
-    subtitle: 'Frisse bowl met omega-3 en een umami-dressing',
-    mealType: 'lunch',
-    seasons: ['lente-zomer'],
-    baseServings: 1,
-    prepTime: 15,
-    cookTime: 12,
-    tags: ['Eiwitrijk', 'Gezond', 'Restaurantwaardig'],
-    ingredients: [
-      {
-        category: 'Basis',
-        items: [
-          { name: 'Sushirijst of zilvervliesrijst', quantity: 60, unit: 'g', scalable: true },
-          { name: 'Zalmfilet, in blokjes', quantity: 100, unit: 'g', scalable: true },
-          { name: 'Edamameboontjes', quantity: 50, unit: 'g', scalable: true },
-          { name: 'Avocado, in plakjes', quantity: 0.5, unit: 'stuk', scalable: true, display: '½ avocado' },
-          { name: 'Komkommer, in blokjes', quantity: 0.25, unit: 'stuk', scalable: true, display: '¼ komkommer' },
-        ],
-      },
-      {
-        category: 'Dressing',
-        items: [
-          { name: 'Sojasaus, zoutarm', quantity: 1, unit: 'el', scalable: true },
-          { name: 'Sesamolie', quantity: 0.5, unit: 'tl', scalable: true, display: '½ tl' },
-          { name: 'Limoensap', quantity: 0.5, unit: 'el', scalable: true, display: '½ el' },
-        ],
-      },
-      {
-        category: 'Garnering',
-        items: [
-          { name: 'Sesamzaad', quantity: 1, unit: 'tl', scalable: true },
-          { name: 'Lente-ui, in ringetjes', quantity: 'naar smaak', unit: '', scalable: false },
-        ],
-      },
-    ],
-    instructions: [
-      'Kook de rijst gaar en laat iets afkoelen.',
-      'Kook de edamameboontjes 3–4 minuten en spoel koud.',
-      'Meng sojasaus, sesamolie en limoensap tot een dressing.',
-      'Schep de helft van de dressing door de zalmblokjes.',
-      'Verdeel de rijst in een kom en leg de zalm, edamame, avocado en komkommer erop.',
-      'Bestrooi met sesamzaad en lente-ui en druppel de rest van de dressing erover.',
-    ],
-    nutrition: {
-      calories: 520,
-      protein: 31,
-      carbs: 45,
-      fat: 24,
-      fiber: 8,
-      micronutrients: {
-        iron: 2.6,
-        calcium: 70,
-        potassium: 820,
-        magnesium: 95,
-        vitaminC: 14,
-        vitaminA: 70,
-        folate: 130,
-      },
-      isIndicative: true,
-    },
-  },
-
   /* ========================= TUSSENDOORTJE ========================= */
   {
     id: 'snack-appel-amandel',
+    suitableFor: ['vegetarisch', 'vegan', 'lactosevrij', 'glutenvrij', 'halal'],
     title: 'Appel met amandelpasta & kaneel',
     subtitle: 'Snel, zoet en verzadigend tussendoortje',
     mealType: 'tussendoortje',
@@ -400,6 +65,11 @@ export const recipes: Recipe[] = [
   },
   {
     id: 'snack-kwark-bessen',
+    suitableFor: ['vegetarisch', 'glutenvrij', 'halal'],
+    dietSwaps: [
+      { diet: 'vegan', hint: 'Gebruik plantaardige kwark en laat de honing weg of gebruik agave.' },
+      { diet: 'lactosevrij', hint: 'Gebruik lactosevrije kwark.' },
+    ],
     title: 'Magere kwark met aardbeien & pompoenpitten',
     subtitle: 'Eiwitrijke boost met een knapperige finish',
     mealType: 'tussendoortje',
@@ -448,6 +118,7 @@ export const recipes: Recipe[] = [
   },
   {
     id: 'snack-hummus-groente',
+    suitableFor: ['vegetarisch', 'vegan', 'lactosevrij', 'glutenvrij', 'halal'],
     title: 'Hummus met knapperige groentereepjes',
     subtitle: 'Hartig, vezelrijk en perfect voor onderweg',
     mealType: 'tussendoortje',
@@ -496,6 +167,7 @@ export const recipes: Recipe[] = [
   },
   {
     id: 'snack-noten-fruit',
+    suitableFor: ['vegetarisch', 'vegan', 'lactosevrij', 'glutenvrij', 'halal'],
     title: 'Handje noten met een mandarijn',
     subtitle: 'Simpel, voedzaam en altijd mee te nemen',
     mealType: 'tussendoortje',
@@ -538,6 +210,13 @@ export const recipes: Recipe[] = [
   /* ============================= DINER ============================= */
   {
     id: 'diner-pasta-norma',
+    suitableFor: ['vegetarisch'],
+    dietSwaps: [
+      { diet: 'vegan', hint: 'Laat de parmezaan weg of gebruik plantaardige kaas; kies pijnboompitten als topping.' },
+      { diet: 'lactosevrij', hint: 'Gebruik lactosevrije kaas; oude parmezaan is van nature vrijwel lactosevrij.' },
+      { diet: 'glutenvrij', hint: 'Gebruik glutenvrije pasta en laat het paneermeel weg of kies een glutenvrije variant.' },
+      { diet: 'halal', hint: 'Gebruik kaas zonder dierlijk stremsel.' },
+    ],
     title: 'Pasta alla Norma met linzen, geroosterde aubergine & basilicum',
     subtitle: 'Klassieke Siciliaanse pasta, vezelrijk en restaurantwaardig',
     mealType: 'diner',
@@ -611,6 +290,7 @@ export const recipes: Recipe[] = [
   },
   {
     id: 'diner-zalm-zoete-aardappel',
+    suitableFor: ['lactosevrij', 'glutenvrij', 'halal'],
     title: 'Zalmfilet met geroosterde zoete aardappel & broccoli',
     subtitle: 'Oven-diner met omega-3 en flink wat groente',
     mealType: 'diner',
@@ -667,6 +347,11 @@ export const recipes: Recipe[] = [
   },
   {
     id: 'diner-kip-teriyaki-rijst',
+    suitableFor: ['lactosevrij'],
+    dietSwaps: [
+      { diet: 'glutenvrij', hint: 'Gebruik glutenvrije sojasaus (tamari).' },
+      { diet: 'halal', hint: 'Gebruik halal-gecertificeerde kipfilet.' },
+    ],
     title: 'Teriyaki-kip met zilvervliesrijst & roerbakgroenten',
     subtitle: 'Snelle wokschotel met een kleverige, hartige saus',
     mealType: 'diner',
@@ -730,6 +415,13 @@ export const recipes: Recipe[] = [
   },
   {
     id: 'diner-couscous-halloumi',
+    suitableFor: ['vegetarisch'],
+    dietSwaps: [
+      { diet: 'vegan', hint: 'Vervang de halloumi door gegrilde tofu of plantaardige halloumi.' },
+      { diet: 'lactosevrij', hint: 'Gebruik een lactosevrije grillkaas of gegrilde tofu.' },
+      { diet: 'glutenvrij', hint: 'Vervang de couscous door glutenvrije couscous, quinoa of rijst.' },
+      { diet: 'halal', hint: 'Gebruik halloumi zonder dierlijk stremsel.' },
+    ],
     title: 'Volkoren couscous met geroosterde groenten & halloumi',
     subtitle: 'Mediterraan bord vol kleur en gegrilde kaas',
     mealType: 'diner',
@@ -789,6 +481,7 @@ export const recipes: Recipe[] = [
   },
   {
     id: 'diner-kikkererwten-curry',
+    suitableFor: ['vegetarisch', 'vegan', 'lactosevrij', 'glutenvrij', 'halal'],
     title: 'Kikkererwtencurry met spinazie & kokosmelk',
     subtitle: 'Romige, kruidige plantaardige curry uit één pan',
     mealType: 'diner',
@@ -852,6 +545,11 @@ export const recipes: Recipe[] = [
   },
   {
     id: 'diner-zoete-aardappel-bonen',
+    suitableFor: ['vegetarisch', 'glutenvrij', 'halal'],
+    dietSwaps: [
+      { diet: 'vegan', hint: 'Laat de Griekse yoghurt weg of gebruik plantaardige yoghurt.' },
+      { diet: 'lactosevrij', hint: 'Laat de yoghurt weg of gebruik lactosevrije yoghurt.' },
+    ],
     title: 'Gevulde zoete aardappel met zwarte bonen & avocado',
     subtitle: 'Tex-mex traktatie uit de oven, vol vezels',
     mealType: 'diner',
@@ -1405,15 +1103,3 @@ export const recipes: Recipe[] = [
   },
 ];
 
-/** Fast lookup by id, used by weekly plans, dashboard and detail screen. */
-export const recipesById: Record<string, Recipe> = recipes.reduce(
-  (acc, recipe) => {
-    acc[recipe.id] = recipe;
-    return acc;
-  },
-  {} as Record<string, Recipe>,
-);
-
-export function getRecipeById(id: string): Recipe | undefined {
-  return recipesById[id];
-}

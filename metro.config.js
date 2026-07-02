@@ -13,4 +13,19 @@ config.resolver.assetExts = config.resolver.assetExts.filter(
 );
 config.resolver.sourceExts.push('svg');
 
+// `@supabase/supabase-js` has an *optional* dynamic import of
+// `@opentelemetry/api` (tracing). It's not installed and not needed here, so
+// stub it to an empty module instead of letting Metro fail to resolve it.
+const defaultResolveRequest = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === '@opentelemetry/api') {
+    return { type: 'empty' };
+  }
+  return (defaultResolveRequest ?? context.resolveRequest)(
+    context,
+    moduleName,
+    platform,
+  );
+};
+
 module.exports = config;

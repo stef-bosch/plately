@@ -13,12 +13,20 @@ import React, { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AdminApp } from './src/admin/AdminApp';
 import { SplashScreen } from './src/components/SplashScreen';
 import { SettingsProvider } from './src/context/SettingsContext';
+import { loadContent } from './src/data/content';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { colors } from './src/theme';
 
 const isWeb = Platform.OS === 'web';
+
+/** The hidden admin lives at /admin on web only (not linked from the app). */
+const isAdminRoute =
+  isWeb &&
+  typeof window !== 'undefined' &&
+  /^\/admin(\/|$)/.test(window.location.pathname);
 
 /** Minimum time the splash stays up so it reads as a splash, not a flicker. */
 const SPLASH_MIN_MS = 1800;
@@ -38,7 +46,35 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (!fontsLoaded || !minTimePassed) {
+  // Load dishes from the backend (if configured) before showing the app, with a
+  // timeout so a slow/unavailable backend can't keep us on the splash forever.
+  const [contentReady, setContentReady] = useState(false);
+  useEffect(() => {
+    let settled = false;
+    const finish = () => {
+      if (!settled) {
+        settled = true;
+        setContentReady(true);
+      }
+    };
+    loadContent().finally(finish);
+    const timer = setTimeout(finish, 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // The admin is a separate, full-screen web surface — only fonts need to be
+  // ready (it loads its own data from Supabase).
+  if (isAdminRoute) {
+    if (!fontsLoaded) return <SplashScreen />;
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <AdminApp />
+      </SafeAreaProvider>
+    );
+  }
+
+  if (!fontsLoaded || !minTimePassed || !contentReady) {
     return <SplashScreen />;
   }
 

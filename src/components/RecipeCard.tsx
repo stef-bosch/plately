@@ -1,11 +1,12 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { getRecipeImage } from '../constants/images';
 import { mealTypeLabel } from '../constants/labels';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 import type { Recipe } from '../types';
 import { Icon } from './BrandIcons';
+import { PressableScale } from './PressableScale';
 import { Tag } from './Tag';
 
 interface RecipeCardProps {
@@ -18,10 +19,10 @@ export function RecipeCard({ recipe, onPress }: RecipeCardProps) {
   const totalTime = recipe.prepTime + recipe.cookTime;
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={styles.card}
     >
       <View style={styles.imageWrap}>
         <Image
@@ -58,7 +59,7 @@ export function RecipeCard({ recipe, onPress }: RecipeCardProps) {
           ))}
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -77,10 +78,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     overflow: 'hidden',
     ...shadow.card,
-  },
-  pressed: {
-    opacity: 0.92,
-    transform: [{ scale: 0.99 }],
   },
   imageWrap: {
     position: 'relative',

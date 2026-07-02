@@ -5,17 +5,19 @@ import { PlatelyLogo } from '../components/BrandIcons';
 import { FilterChip } from '../components/FilterChip';
 import { Screen } from '../components/Screen';
 import { Stepper } from '../components/Stepper';
-import { dietaryLabel, seasonLabel } from '../constants/labels';
+import { dietaryLabel, energyNeedLabel } from '../constants/labels';
 import { useSettings } from '../context/SettingsContext';
 import { colors, radius, shadow, spacing, typography } from '../theme';
-import type { DietaryPreference, Season } from '../types';
+import type { DietaryPreference, EnergyNeed } from '../types';
 
-const SEASONS: Season[] = ['lente-zomer', 'herfst-winter'];
+const ENERGY_NEEDS: EnergyNeed[] = ['laag', 'gemiddeld', 'hoog'];
+
 const DIETS: DietaryPreference[] = [
   'vegetarisch',
-  'glutenvrij',
+  'vegan',
   'lactosevrij',
-  'notenvrij',
+  'glutenvrij',
+  'halal',
 ];
 
 export function InstellingenScreen() {
@@ -42,16 +44,16 @@ export function InstellingenScreen() {
         </View>
       </SettingCard>
 
-      {/* Preferred season */}
-      <SettingCard title="Voorkeur seizoen">
+      {/* Energy need */}
+      <SettingCard title="Energiebehoefte">
         <View style={styles.grid}>
-          {SEASONS.map((s) => (
+          {ENERGY_NEEDS.map((level) => (
             <FilterChip
-              key={s}
-              label={seasonLabel[s]}
-              active={settings.preferredSeason === s}
-              onPress={() => updateSettings({ preferredSeason: s })}
-              style={styles.gridItemHalf}
+              key={level}
+              label={energyNeedLabel[level]}
+              active={settings.energyNeed === level}
+              onPress={() => updateSettings({ energyNeed: level })}
+              style={styles.gridItemThird}
             />
           ))}
         </View>
@@ -157,14 +159,11 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    columnGap: spacing.sm,
     rowGap: spacing.sm,
   },
-  gridItemHalf: {
-    width: '48.5%',
-  },
   gridItemThird: {
-    width: '31.5%',
+    width: '31%',
   },
   footer: {
     alignItems: 'center',

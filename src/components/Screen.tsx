@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, spacing, typography } from '../theme';
+import { FadeInView } from './FadeInView';
 
 interface ScreenProps {
   title: string;
@@ -22,14 +23,16 @@ export function Screen({ title, subtitle, headerRight, children }: ScreenProps) 
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <FadeInView style={styles.inner}>
+        <View style={styles.header}>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>{title}</Text>
+            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          </View>
+          {headerRight}
         </View>
-        {headerRight}
-      </View>
-      {children}
+        {children}
+      </FadeInView>
     </ScrollView>
   );
 }
@@ -43,6 +46,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xl,
     paddingBottom: spacing.xxxl,
+  },
+  inner: {
     gap: spacing.xl,
   },
   header: {

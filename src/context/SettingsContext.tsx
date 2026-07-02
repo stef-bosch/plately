@@ -12,6 +12,7 @@ import type { Settings } from '../types';
 const DEFAULT_SETTINGS: Settings = {
   goal: 'gezond-eten',
   defaultServings: 1,
+  energyNeed: 'gemiddeld',
   preferredSeason: 'lente-zomer',
   dietaryPreferences: [],
   showMicronutrients: true,

@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Icon } from '../components/BrandIcons';
 import { Button } from '../components/Button';
 import { MacroSummary } from '../components/MacroSummary';
 import { MealCard } from '../components/MealCard';
@@ -14,7 +13,7 @@ import { getRecipeById } from '../data/recipes';
 import { getWeeklyPlan } from '../data/weeklyPlans';
 import { useSettings } from '../context/SettingsContext';
 import { useAppNavigation, useOpenRecipe } from '../navigation/hooks';
-import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
+import { colors, radius, shadow, spacing, typography } from '../theme';
 import { getDailyTotals } from '../utils/nutrition';
 
 export function DashboardScreen() {
@@ -30,13 +29,16 @@ export function DashboardScreen() {
   const dayPlan = plan.days.find((d) => d.day === todayName) ?? plan.days[0];
   const meals = dayPlan.meals;
 
-  const totals = useMemo(() => getDailyTotals(meals), [meals]);
+  const totals = useMemo(
+    () => getDailyTotals(meals, settings),
+    [meals, settings],
+  );
 
-  const ontbijt = getRecipeById(meals.ontbijt);
-  const lunch = getRecipeById(meals.lunch);
-  const diner = getRecipeById(meals.diner);
+  const ontbijt = getRecipeById(meals.ontbijt, settings);
+  const lunch = getRecipeById(meals.lunch, settings);
+  const diner = getRecipeById(meals.diner, settings);
   const snacks = meals.tussendoortje
-    .map((id) => getRecipeById(id))
+    .map((id) => getRecipeById(id, settings))
     .filter((r): r is NonNullable<typeof r> => Boolean(r));
 
   return (
@@ -53,9 +55,6 @@ export function DashboardScreen() {
               <Text style={styles.calorieValue}>{totals.calories}</Text>
               <Text style={styles.calorieUnit}>kcal</Text>
             </View>
-          </View>
-          <View style={styles.flameWrap}>
-            <Icon name="Scale" size={iconSize.tab} color={colors.accent} />
           </View>
         </View>
 
@@ -159,14 +158,6 @@ const styles = StyleSheet.create({
     ...typography.subheading,
     color: colors.textSecondary,
     marginBottom: 6,
-  },
-  flameWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accentSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   indicative: {
     ...typography.caption,
