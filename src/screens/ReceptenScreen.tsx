@@ -29,15 +29,14 @@ import type {
   MealType,
   Menu,
   Recipe,
-  RecipeTag,
   Season,
 } from '../types';
 
 /** Top-level browse mode. */
 type Category = 'gerechten' | 'menus' | 'overig';
 type MealFilter = MealType | 'alle';
-type TagFilter = 'cocktails' | 'sauzen';
-type TagFilterOption = TagFilter | 'alle';
+/** An "Overig" category name, or 'alle' for no category filter. */
+type TagFilterOption = string;
 type SeasonFilter = Season | 'alle';
 
 const CATEGORIES: { key: Category; label: string }[] = [
@@ -54,27 +53,19 @@ const MEAL_FILTERS: MealFilter[] = [
   'tussendoortje',
 ];
 
-/** "Overig" filters match on a recipe tag rather than its meal type. */
-const TAG_FILTERS: Record<TagFilter, RecipeTag> = {
-  cocktails: 'Cocktails',
-  sauzen: 'Sauzen',
-};
-const TAG_FILTER_OPTIONS: TagFilterOption[] = ['alle', 'cocktails', 'sauzen'];
-
 /**
- * Tags that define the "Overig" tab. Only recipes carrying one of these belong
- * here, so full dishes (e.g. BBQ mains) stay out of "Overig" entirely — even
- * when no specific category is selected.
+ * A recipe belongs to the "Overig" tab when it has a free-text `overigCategory`
+ * (e.g. "Cocktail", "Saus", "Smoothie"). The category filter options for that
+ * tab are derived from whatever categories exist, so new ones appear on their
+ * own.
  */
-const OVERIG_TAGS: RecipeTag[] = Object.values(TAG_FILTERS);
+const overigCategoryOf = (recipe: Recipe): string =>
+  recipe.overigCategory?.trim() ?? '';
+const isOverig = (recipe: Recipe): boolean => overigCategoryOf(recipe) !== '';
 
 const SEASON_FILTERS: SeasonFilter[] = ['alle', 'lente-zomer', 'herfst-winter'];
 
 const MEAL_TYPES: MealType[] = ['ontbijt', 'lunch', 'diner', 'tussendoortje'];
-
-function isTagFilter(value: string): value is TagFilter {
-  return value in TAG_FILTERS;
-}
 
 export function ReceptenScreen() {
   const openRecipe = useOpenRecipe();
@@ -82,21 +73,17 @@ export function ReceptenScreen() {
   const route = useRoute<RouteProp<TabParamList, 'Recepten'>>();
   const { settings } = useSettings();
 
-  // A deep-link param can target a meal type or an "Overig" tag.
+  // A deep-link param can target a meal type.
   const param = route.params?.mealType;
-  const initialCategory: Category =
-    param && isTagFilter(param) ? 'overig' : 'gerechten';
   const initialMeal: MealFilter =
     param && MEAL_TYPES.includes(param as MealType)
       ? (param as MealType)
       : 'alle';
-  const initialTag: TagFilterOption =
-    param && isTagFilter(param) ? param : 'alle';
 
-  const [category, setCategory] = useState<Category>(initialCategory);
+  const [category, setCategory] = useState<Category>('gerechten');
   const [query, setQuery] = useState('');
   const [mealFilter, setMealFilter] = useState<MealFilter>(initialMeal);
-  const [tagFilter, setTagFilter] = useState<TagFilterOption>(initialTag);
+  const [tagFilter, setTagFilter] = useState<TagFilterOption>('alle');
   const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>('alle');
   const [searchOpen, setSearchOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -104,6 +91,13 @@ export function ReceptenScreen() {
   // Recipes resolved for the current settings (reactive breakfasts adapt to
   // the user's energy need + dietary preferences).
   const allRecipes = useMemo(() => getAllRecipes(settings), [settings]);
+
+  // The category filter options for the "Overig" tab, derived from the
+  // categories that actually exist (so new ones show up automatically).
+  const overigCategories = useMemo(
+    () => [...new Set(allRecipes.map(overigCategoryOf).filter(Boolean))].sort(),
+    [allRecipes],
+  );
 
   const filteredRecipes = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -116,17 +110,18 @@ export function ReceptenScreen() {
       const matchesSeason =
         seasonFilter === 'alle' || recipe.seasons.includes(seasonFilter);
       if (category === 'overig') {
-        const matchesTag =
-          tagFilter === 'alle'
-            ? OVERIG_TAGS.some((tag) => recipe.tags.includes(tag))
-            : recipe.tags.includes(TAG_FILTERS[tagFilter]);
+        const cat = overigCategoryOf(recipe);
+        if (!cat) return false;
+        const matchesTag = tagFilter === 'alle' || cat === tagFilter;
         return matchesQuery && matchesSeason && matchesTag;
       }
+      // Overig items live only under the Overig tab.
+      if (isOverig(recipe)) return false;
       const matchesMeal =
         mealFilter === 'alle' ? true : recipe.mealType === mealFilter;
       return matchesQuery && matchesSeason && matchesMeal;
     });
-  }, [allRecipes, query, category, mealFilter, tagFilter, seasonFilter]);
+  }, [allRecipes, query, category, mealFilter, tagFilter, seasonFilter, settings.dietaryPreferences]);
 
   const filteredMenus = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -399,10 +394,10 @@ export function ReceptenScreen() {
             <View style={styles.sheetGroup}>
               <Text style={styles.filterLabel}>Categorie</Text>
               <View style={styles.chipRow}>
-                {TAG_FILTER_OPTIONS.map((t) => (
+                {['alle', ...overigCategories].map((t) => (
                   <FilterChip
                     key={t}
-                    label={t === 'alle' ? 'Alle' : TAG_FILTERS[t]}
+                    label={t === 'alle' ? 'Alle' : t}
                     active={tagFilter === t}
                     onPress={() => setTagFilter(t)}
                   />

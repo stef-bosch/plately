@@ -151,6 +151,13 @@ export interface Recipe {
   suitableFor?: DietaryPreference[];
   /** Diets reachable via one trivial swap, shown as a hint on the detail. */
   dietSwaps?: DietSwap[];
+  /**
+   * Free-text "Overig" category (e.g. "Cocktail", "Saus", "Smoothie"). When set,
+   * the dish lives under the app's "Overig" tab instead of the normal dish list,
+   * and the value feeds that tab's category filter (added automatically as new
+   * categories appear). Empty/undefined means a normal dish.
+   */
+  overigCategory?: string;
 }
 
 /* ---------- Menus ---------- */

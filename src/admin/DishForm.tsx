@@ -96,11 +96,18 @@ function groupsFromIngredients(ingredients: IngredientGroup[]): GroupDraft[] {
 
 interface DishFormProps {
   dishId?: string;
+  /** Opened from the "Overig" tab: a cocktail/sauce rather than a normal dish. */
+  overig?: boolean;
   onSaved: () => void;
   onCancel: () => void;
 }
 
-export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
+export function DishForm({
+  dishId,
+  overig = false,
+  onSaved,
+  onCancel,
+}: DishFormProps) {
   const isEdit = Boolean(dishId);
 
   const [loading, setLoading] = useState(isEdit);
@@ -115,13 +122,17 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
   const [seasons, setSeasons] = useState<Season[]>(['lente-zomer']);
   const [totalTime, setTotalTime] = useState('10');
   const [suitableFor, setSuitableFor] = useState<DietaryPreference[]>([]);
+  // Free-text "Overig" category (Cocktail/Saus/…) that moves a dish to the
+  // Overig tab; also feeds the frontend's category filter automatically.
+  const [overigCategory, setOverigCategory] = useState('');
   const [groups, setGroups] = useState<GroupDraft[]>([emptyGroup()]);
   const [steps, setSteps] = useState<string[]>(['']);
   const [macros, setMacros] = useState<Record<string, string>>({});
   const [imageUrl, setImageUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   // Reactive dishes scale ingredients + nutrition with the user's energy need.
-  const [reactive, setReactive] = useState(true);
+  // Overig items (cocktails/sauzen) don't scale, so they default to off.
+  const [reactive, setReactive] = useState(!overig);
   const [lowPct, setLowPct] = useState(DEFAULT_LOW_PCT);
   const [highPct, setHighPct] = useState(DEFAULT_HIGH_PCT);
   const [lowOverrides, setLowOverrides] = useState<Record<string, string>>({});
@@ -174,6 +185,7 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
           setSeasons(r.seasons);
           setTotalTime(String(r.prepTime + r.cookTime));
           setSuitableFor(r.suitableFor ?? []);
+          setOverigCategory(r.overigCategory ?? '');
           setDietSwaps(r.dietSwaps);
           setGroups(groupsFromIngredients(r.ingredients));
           setSteps(r.instructions.length ? r.instructions : ['']);
@@ -204,6 +216,7 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
     const v = Number((macros[key] ?? '').replace(',', '.'));
     return Number.isNaN(v) ? 0 : v;
   };
+
 
   // Web-only: pick a file and upload it to the public `dish-images` bucket,
   // then store its public URL as the dish photo.
@@ -245,6 +258,8 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
     setError(null);
     if (!title.trim()) return setError('Geef het gerecht een naam.');
     if (!effectiveId) return setError('De id mag niet leeg zijn.');
+    if (overig && !overigCategory.trim())
+      return setError('Vul een categorie in (bijv. Cocktail, Saus, Smoothie).');
 
     const mapItems = (drafts: IngredientDraft[]): Ingredient[] =>
       drafts
@@ -280,8 +295,10 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
     };
 
     const instructions = steps.map((s) => s.trim()).filter(Boolean);
-    // The diet filter selections are also the dish's display tags in the app.
+    // The diet filter selections double as the dish's display tags in the app.
     const tags = suitableFor.map((d) => DIET_TO_TAG[d]);
+    // Overig category (only for overig items) moves the dish to the Overig tab.
+    const overigCat = overig && overigCategory.trim() ? overigCategory.trim() : undefined;
     const seasonsOut: Season[] = seasons.length ? seasons : ['lente-zomer'];
     const image = imageUrl.trim() ? { uri: imageUrl.trim() } : undefined;
 
@@ -370,6 +387,7 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
           nutrition: baseNutrition,
           suitableFor: suitableFor.length ? suitableFor : undefined,
           dietSwaps,
+          overigCategory: overigCat,
         };
         await saveDish(recipe, 'static');
       }
@@ -388,7 +406,11 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
   return (
     <View style={styles.wrap}>
       <View style={styles.formHeader}>
-        <Text style={styles.formTitle}>{isEdit ? 'Gerecht bewerken' : 'Nieuw gerecht'}</Text>
+        <Text style={styles.formTitle}>
+          {overig
+            ? isEdit ? 'Overig bewerken' : 'Nieuw overig-item'
+            : isEdit ? 'Gerecht bewerken' : 'Nieuw gerecht'}
+        </Text>
         <Pressable onPress={onCancel} style={({ pressed }) => [styles.ghost, pressed && styles.pressed]}>
           <Text style={styles.ghostText}>Annuleren</Text>
         </Pressable>
@@ -406,13 +428,15 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
         <Field label="Ondertitel">
           <TextInput value={subtitle} onChangeText={setSubtitle} style={styles.input} placeholder="Korte tagline" placeholderTextColor={colors.textMuted} />
         </Field>
-        <Field label="Soort maaltijd">
-          <View style={styles.chipRow}>
-            {MEAL_TYPES.map((m) => (
-              <FilterChip key={m} label={m} active={mealType === m} onPress={() => setMealType(m)} />
-            ))}
-          </View>
-        </Field>
+        {!overig ? (
+          <Field label="Soort maaltijd">
+            <View style={styles.chipRow}>
+              {MEAL_TYPES.map((m) => (
+                <FilterChip key={m} label={m} active={mealType === m} onPress={() => setMealType(m)} />
+              ))}
+            </View>
+          </Field>
+        ) : null}
         <Field label="Seizoen">
           <View style={styles.chipRow}>
             {SEASONS.map((s) => (
@@ -425,6 +449,7 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
         </Field>
       </Section>
 
+      {!overig ? (
       <Section title="Energiebehoefte">
         <View style={styles.switchRow}>
           <View style={{ flex: 1 }}>
@@ -458,6 +483,7 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
           </View>
         ) : null}
       </Section>
+      ) : null}
 
       <Section title="Foto">
         <Text style={styles.hint}>
@@ -509,6 +535,22 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
           ))}
         </View>
       </Section>
+
+      {overig ? (
+      <Section title="Categorie">
+        <Text style={styles.hint}>
+          Onder welke categorie verschijnt dit in de app (tab "Overig")? Typ een
+          categorie — een nieuwe categorie komt automatisch in het filter.
+        </Text>
+        <TextInput
+          value={overigCategory}
+          onChangeText={setOverigCategory}
+          style={styles.input}
+          placeholder="Bijv. Cocktail, Saus, Smoothie"
+          placeholderTextColor={colors.textMuted}
+        />
+      </Section>
+      ) : null}
 
       <Section title="Ingrediënten">
         <Text style={styles.hint}>
