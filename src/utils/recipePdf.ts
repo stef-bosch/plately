@@ -102,10 +102,9 @@ export function buildRecipeHtml(
     .join('');
 
   const macros = [
-    { label: 'Eiwitten', value: recipe.nutrition.protein, color: colors.protein },
     { label: 'Koolhydraten', value: recipe.nutrition.carbs, color: colors.carbs },
+    { label: 'Eiwitten', value: recipe.nutrition.protein, color: colors.protein },
     { label: 'Vetten', value: recipe.nutrition.fat, color: colors.fat },
-    { label: 'Vezels', value: recipe.nutrition.fiber, color: colors.fiber },
   ]
     .map(
       (m) =>
@@ -203,6 +202,8 @@ export function buildRecipeHtml(
     line-height: 22px;
   }
   .step-text { flex: 1; padding-top: 1px; }
+  .kcal { font-size: 22px; color: #2A1E12; margin: 0 0 10px; }
+  .kcal strong { font-size: 28px; font-weight: 800; }
   .macros { display: flex; gap: 10px; }
   .macro {
     flex: 1;
@@ -239,6 +240,7 @@ export function buildRecipeHtml(
 
   <section>
     <h2>Voedingswaarden per portie</h2>
+    <p class="kcal"><strong>${esc(recipe.nutrition.calories)}</strong> kcal</p>
     <div class="macros">${macros}</div>
     ${indicative}
   </section>

@@ -60,10 +60,9 @@ export function DashboardScreen() {
 
         <MacroSummary
           items={[
-            { label: 'Eiwitten', value: totals.protein, unit: 'g', color: colors.protein },
             { label: 'Koolhydraten', value: totals.carbs, unit: 'g', color: colors.carbs },
+            { label: 'Eiwitten', value: totals.protein, unit: 'g', color: colors.protein },
             { label: 'Vetten', value: totals.fat, unit: 'g', color: colors.fat },
-            { label: 'Vezels', value: totals.fiber, unit: 'g', color: colors.fiber },
           ]}
         />
         <Text style={styles.indicative}>Voedingswaarden zijn indicatief</Text>

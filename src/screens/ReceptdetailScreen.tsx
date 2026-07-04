@@ -206,12 +206,15 @@ export function ReceptdetailScreen() {
       {/* Macros per serving */}
       <Section title="Voedingswaarden per portie">
         <View style={styles.card}>
+          <View style={styles.calorieRow}>
+            <Text style={styles.calorieValue}>{recipe.nutrition.calories}</Text>
+            <Text style={styles.calorieUnit}>kcal</Text>
+          </View>
           <MacroSummary
             items={[
-              { label: 'Eiwitten', value: recipe.nutrition.protein, unit: 'g', color: colors.protein },
               { label: 'Koolhydraten', value: recipe.nutrition.carbs, unit: 'g', color: colors.carbs },
+              { label: 'Eiwitten', value: recipe.nutrition.protein, unit: 'g', color: colors.protein },
               { label: 'Vetten', value: recipe.nutrition.fat, unit: 'g', color: colors.fat },
-              { label: 'Vezels', value: recipe.nutrition.fiber, unit: 'g', color: colors.fiber },
             ]}
           />
           {recipe.nutrition.isIndicative ? (
@@ -481,6 +484,22 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     lineHeight: 23,
     paddingTop: 3,
+  },
+  calorieRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  calorieValue: {
+    ...typography.display,
+    fontSize: 34,
+    color: colors.textPrimary,
+  },
+  calorieUnit: {
+    ...typography.subheading,
+    color: colors.textSecondary,
+    marginBottom: 5,
   },
   indicative: {
     ...typography.caption,
