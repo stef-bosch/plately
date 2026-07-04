@@ -1,7 +1,6 @@
 import { mealTypeLabel, seasonLabel } from '../constants/labels';
 import { colors } from '../theme';
 import type { Recipe } from '../types';
-import { micronutrientMeta } from './nutrition';
 import { printHtml } from './printHtml';
 import { scaleIngredient } from './scaling';
 
@@ -18,8 +17,6 @@ import { scaleIngredient } from './scaling';
 interface RecipePdfOptions {
   /** Servings the ingredient amounts should be scaled to. */
   servings: number;
-  /** Mirror the in-app setting so the PDF can include micronutrients. */
-  showMicronutrients?: boolean;
 }
 
 /** Minimal HTML-escaping for text taken from recipe data. */
@@ -56,7 +53,7 @@ function darken(hex: string, factor: number): string {
 /** Builds the full HTML document for one recipe at the given servings. */
 export function buildRecipeHtml(
   recipe: Recipe,
-  { servings, showMicronutrients = false }: RecipePdfOptions,
+  { servings }: RecipePdfOptions,
 ): string {
   const totalTime = recipe.prepTime + recipe.cookTime;
   const servingsLabel = `${servings} ${servings === 1 ? 'persoon' : 'personen'}`;
@@ -120,27 +117,6 @@ export function buildRecipeHtml(
         )} g</div><div class="macro-label">${esc(m.label)}</div></div>`,
     )
     .join('');
-
-  const micros = micronutrientMeta.filter(
-    (m) => recipe.nutrition.micronutrients[m.key] !== undefined,
-  );
-  const microSection =
-    showMicronutrients && micros.length > 0
-      ? `
-        <section>
-          <h2>Micronutriënten per portie</h2>
-          <table class="micros">
-            ${micros
-              .map(
-                (m) =>
-                  `<tr><td>${esc(m.label)}</td><td class="micro-value">${esc(
-                    recipe.nutrition.micronutrients[m.key] as number,
-                  )} ${esc(m.unit)}</td></tr>`,
-              )
-              .join('')}
-          </table>
-        </section>`
-      : '';
 
   const indicative = recipe.nutrition.isIndicative
     ? `<p class="indicative">Voedingswaarden zijn indicatief</p>`
@@ -238,9 +214,6 @@ export function buildRecipeHtml(
   .macro-value { font-size: 16px; font-weight: 700; }
   .macro-label { font-size: 10.5px; margin-top: 2px; }
   .indicative { font-size: 11px; color: #998A77; margin: 10px 0 0; }
-  table.micros { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.micros td { padding: 6px 0; border-bottom: 1px solid #F1E5CF; }
-  .micro-value { text-align: right; font-weight: 600; }
   footer { margin-top: 26px; padding-top: 10px; border-top: 1px solid #F1E5CF; font-size: 10.5px; color: #998A77; text-align: center; }
 </style>
 </head>
@@ -269,8 +242,6 @@ export function buildRecipeHtml(
     <div class="macros">${macros}</div>
     ${indicative}
   </section>
-
-  ${microSection}
 
   <footer>Geprint vanuit Plately · ${esc(recipe.title)}</footer>
 </body>

@@ -30,7 +30,6 @@ import { useSettings } from '../context/SettingsContext';
 import { useAppNavigation } from '../navigation/hooks';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
-import { micronutrientMeta } from '../utils/nutrition';
 import { scaleIngredient } from '../utils/scaling';
 
 export function ReceptdetailScreen() {
@@ -65,9 +64,6 @@ export function ReceptdetailScreen() {
   }
 
   const totalTime = recipe.prepTime + recipe.cookTime;
-  const micros = micronutrientMeta.filter(
-    (m) => recipe.nutrition.micronutrients[m.key] !== undefined,
-  );
 
   const handlePrint = async () => {
     if (printing) return;
@@ -75,7 +71,6 @@ export function ReceptdetailScreen() {
       setPrinting(true);
       await printRecipe(recipe, {
         servings,
-        showMicronutrients: settings.showMicronutrients,
       });
     } catch (error) {
       // Cancelling the dialog or a print failure shouldn't crash the screen.
@@ -226,28 +221,6 @@ export function ReceptdetailScreen() {
           ) : null}
         </View>
       </Section>
-
-      {/* Micronutrients */}
-      {settings.showMicronutrients && micros.length > 0 ? (
-        <Section title="Micronutriënten per portie">
-          <View style={styles.card}>
-            {micros.map((m, index) => (
-              <View
-                key={m.key}
-                style={[
-                  styles.microRow,
-                  index < micros.length - 1 && styles.microRowBorder,
-                ]}
-              >
-                <Text style={styles.microLabel}>{m.label}</Text>
-                <Text style={styles.microValue}>
-                  {recipe.nutrition.micronutrients[m.key]} {m.unit}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </Section>
-      ) : null}
 
       {/* Print / save as PDF */}
       <Pressable
@@ -514,24 +487,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: spacing.lg,
-  },
-  microRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-  },
-  microRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  microLabel: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  microValue: {
-    ...typography.bodyStrong,
-    color: colors.textPrimary,
   },
   tagRow: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { PlatelyLogo } from '../components/BrandIcons';
 import { FilterChip } from '../components/FilterChip';
@@ -74,29 +74,6 @@ export function InstellingenScreen() {
         </View>
       </SettingCard>
 
-      {/* Micronutrients */}
-      <SettingCard title="Weergave">
-        <View style={styles.rowBetween}>
-          <View style={styles.switchText}>
-            <Text style={styles.switchLabel}>Micronutriënten tonen</Text>
-            <Text style={styles.helperText}>
-              Toon vitaminen en mineralen bij recepten
-            </Text>
-          </View>
-          <Switch
-            value={settings.showMicronutrients}
-            onValueChange={(v) => updateSettings({ showMicronutrients: v })}
-            trackColor={{ false: colors.border, true: colors.primary }}
-            thumbColor={colors.surface}
-            ios_backgroundColor={colors.border}
-            // `activeThumbColor` is a react-native-web prop: without it the web
-            // Switch falls back to a teal thumb when on. Keep the knob white so
-            // the control reads as fully orange on every platform.
-            {...({ activeThumbColor: colors.surface } as object)}
-          />
-        </View>
-      </SettingCard>
-
       <View style={styles.footer}>
         <PlatelyLogo width={130} color={colors.primary} />
         <Text style={styles.footerText}>versie 1.0</Text>
@@ -136,25 +113,6 @@ const styles = StyleSheet.create({
   },
   stepperWrap: {
     alignItems: 'center',
-  },
-  rowBetween: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  switchText: {
-    flex: 1,
-    gap: 2,
-  },
-  switchLabel: {
-    ...typography.bodyStrong,
-    color: colors.textPrimary,
-  },
-  helperText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    flexShrink: 1,
   },
   grid: {
     flexDirection: 'row',
