@@ -21,7 +21,7 @@ const COURSE_LABEL: Record<MenuCourseType, string> = {
   bijgerecht: 'Bijgerecht',
   nagerecht: 'Nagerecht',
 };
-const TAG_OPTIONS: RecipeTag[] = ['Vegetarisch', 'Gezond', 'Restaurantwaardig', 'BBQ'];
+const TAG_OPTIONS: RecipeTag[] = ['BBQ', 'Gezond', 'Restaurantwaardig', 'Vegetarisch'];
 
 interface DishOption {
   id: string;

@@ -39,7 +39,7 @@ import { slugify } from './slugify';
 
 const SEASONS: Season[] = ['lente-zomer', 'herfst-winter'];
 const DIET_OPTIONS: DietaryPreference[] = [
-  'vegetarisch', 'vegan', 'lactosevrij', 'glutenvrij', 'halal',
+  'glutenvrij', 'halal', 'lactosevrij', 'vegan', 'vegetarisch',
 ];
 // The diet filter doubles as the dish's display tags in the app.
 const DIET_TO_TAG: Record<DietaryPreference, RecipeTag> = {
