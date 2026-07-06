@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRoute, type RouteProp } from '@react-navigation/native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -17,87 +16,51 @@ import { FadeInView } from '../components/FadeInView';
 import { FilterChip } from '../components/FilterChip';
 import { MenuCard } from '../components/MenuCard';
 import { RecipeCard } from '../components/RecipeCard';
-import { mealTypeLabel, seasonLabel } from '../constants/labels';
+import {
+  MEAL_CATEGORIES,
+  OTHER_CATEGORIES,
+  dishCategory,
+  seasonLabel,
+} from '../constants/labels';
 import { useSettings } from '../context/SettingsContext';
 import { getCourseForRecipe, getMenus } from '../data/menus';
 import { getAllRecipes } from '../data/recipes';
 import { useOpenMenu, useOpenRecipe } from '../navigation/hooks';
 import { recipeMatchesDiets } from '../utils/resolveRecipe';
-import type { TabParamList } from '../navigation/types';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 import type {
-  MealType,
   Menu,
   Recipe,
   Season,
 } from '../types';
 
 /** Top-level browse mode. */
-type Category = 'gerechten' | 'menus' | 'overig';
-type MealFilter = MealType | 'alle';
-/** An "Overig" category name, or 'alle' for no category filter. */
-type TagFilterOption = string;
+type Category = 'gerechten' | 'menus';
+/** A dish category name, or 'alle' for no category filter. */
+type CategoryFilter = string;
 type SeasonFilter = Season | 'alle';
 
 const CATEGORIES: { key: Category; label: string }[] = [
   { key: 'gerechten', label: 'Gerechten' },
   { key: 'menus', label: "Menu's" },
-  { key: 'overig', label: 'Overig' },
 ];
-
-const MEAL_FILTERS: MealFilter[] = [
-  'alle',
-  'ontbijt',
-  'lunch',
-  'diner',
-  'tussendoortje',
-];
-
-/**
- * A recipe belongs to the "Overig" tab when it has a free-text `overigCategory`
- * (e.g. "Cocktail", "Saus", "Smoothie"). The category filter options for that
- * tab are derived from whatever categories exist, so new ones appear on their
- * own.
- */
-const overigCategoryOf = (recipe: Recipe): string =>
-  recipe.overigCategory?.trim() ?? '';
-const isOverig = (recipe: Recipe): boolean => overigCategoryOf(recipe) !== '';
 
 const SEASON_FILTERS: SeasonFilter[] = ['alle', 'lente-zomer', 'herfst-winter'];
-
-const MEAL_TYPES: MealType[] = ['ontbijt', 'lunch', 'diner', 'tussendoortje'];
 
 export function ReceptenScreen() {
   const openRecipe = useOpenRecipe();
   const openMenu = useOpenMenu();
-  const route = useRoute<RouteProp<TabParamList, 'Recepten'>>();
   const { settings } = useSettings();
-
-  // A deep-link param can target a meal type.
-  const param = route.params?.mealType;
-  const initialMeal: MealFilter =
-    param && MEAL_TYPES.includes(param as MealType)
-      ? (param as MealType)
-      : 'alle';
 
   const [category, setCategory] = useState<Category>('gerechten');
   const [query, setQuery] = useState('');
-  const [mealFilter, setMealFilter] = useState<MealFilter>(initialMeal);
-  const [tagFilter, setTagFilter] = useState<TagFilterOption>('alle');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('alle');
   const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>('alle');
   const [searchOpen, setSearchOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Recipes resolved for the current settings (reactive breakfasts adapt to
-  // the user's energy need + dietary preferences).
+  // Recipes resolved for the current settings.
   const allRecipes = useMemo(() => getAllRecipes(settings), [settings]);
-
-  // The category filter options for the "Overig" tab, derived from the
-  // categories that actually exist (so new ones show up automatically).
-  const overigCategories = useMemo(
-    () => [...new Set(allRecipes.map(overigCategoryOf).filter(Boolean))].sort(),
-    [allRecipes],
-  );
 
   const filteredRecipes = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -109,19 +72,11 @@ export function ReceptenScreen() {
       const matchesQuery = q === '' || recipe.title.toLowerCase().includes(q);
       const matchesSeason =
         seasonFilter === 'alle' || recipe.seasons.includes(seasonFilter);
-      if (category === 'overig') {
-        const cat = overigCategoryOf(recipe);
-        if (!cat) return false;
-        const matchesTag = tagFilter === 'alle' || cat === tagFilter;
-        return matchesQuery && matchesSeason && matchesTag;
-      }
-      // Overig items live only under the Overig tab.
-      if (isOverig(recipe)) return false;
-      const matchesMeal =
-        mealFilter === 'alle' ? true : recipe.mealType === mealFilter;
-      return matchesQuery && matchesSeason && matchesMeal;
+      const matchesCategory =
+        categoryFilter === 'alle' || dishCategory(recipe) === categoryFilter;
+      return matchesQuery && matchesSeason && matchesCategory;
     });
-  }, [allRecipes, query, category, mealFilter, tagFilter, seasonFilter, settings.dietaryPreferences]);
+  }, [allRecipes, query, categoryFilter, seasonFilter, settings.dietaryPreferences]);
 
   const filteredMenus = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -140,14 +95,11 @@ export function ReceptenScreen() {
     : `${filteredRecipes.length} ${filteredRecipes.length === 1 ? 'recept' : 'recepten'} gevonden`;
 
   // How many filters are narrowing the current list (used for the badge).
-  const primaryFilterActive =
-    category === 'overig' ? tagFilter !== 'alle' : mealFilter !== 'alle';
   const activeFilterCount =
-    (primaryFilterActive ? 1 : 0) + (seasonFilter !== 'alle' ? 1 : 0);
+    (categoryFilter !== 'alle' ? 1 : 0) + (seasonFilter !== 'alle' ? 1 : 0);
 
   const resetFilters = () => {
-    setMealFilter('alle');
-    setTagFilter('alle');
+    setCategoryFilter('alle');
     setSeasonFilter('alle');
   };
 
@@ -376,30 +328,25 @@ export function ReceptenScreen() {
 
           {category === 'gerechten' ? (
             <View style={styles.sheetGroup}>
-              <Text style={styles.filterLabel}>Soort gerecht</Text>
+              <Text style={styles.filterLabel}>Maaltijd</Text>
               <View style={styles.chipRow}>
-                {MEAL_FILTERS.map((m) => (
+                {['alle', ...MEAL_CATEGORIES].map((c) => (
                   <FilterChip
-                    key={m}
-                    label={m === 'alle' ? 'Alle' : mealTypeLabel[m]}
-                    active={mealFilter === m}
-                    onPress={() => setMealFilter(m)}
+                    key={c}
+                    label={c === 'alle' ? 'Alle' : c}
+                    active={categoryFilter === c}
+                    onPress={() => setCategoryFilter(c)}
                   />
                 ))}
               </View>
-            </View>
-          ) : null}
-
-          {category === 'overig' ? (
-            <View style={styles.sheetGroup}>
-              <Text style={styles.filterLabel}>Categorie</Text>
+              <Text style={[styles.filterLabel, styles.filterSubLabel]}>Overig</Text>
               <View style={styles.chipRow}>
-                {['alle', ...overigCategories].map((t) => (
+                {OTHER_CATEGORIES.map((c) => (
                   <FilterChip
-                    key={t}
-                    label={t === 'alle' ? 'Alle' : t}
-                    active={tagFilter === t}
-                    onPress={() => setTagFilter(t)}
+                    key={c}
+                    label={c}
+                    active={categoryFilter === c}
+                    onPress={() => setCategoryFilter(c)}
                   />
                 ))}
               </View>
@@ -611,6 +558,9 @@ const styles = StyleSheet.create({
     ...typography.label,
     color: colors.textSecondary,
     marginTop: spacing.xs,
+  },
+  filterSubLabel: {
+    marginTop: spacing.sm,
   },
   chipRow: {
     flexDirection: 'row',

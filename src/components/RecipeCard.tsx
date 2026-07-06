@@ -2,7 +2,7 @@ import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { getRecipeImage } from '../constants/images';
-import { mealTypeLabel } from '../constants/labels';
+import { dishCategory } from '../constants/labels';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 import type { Recipe } from '../types';
 import { Icon } from './BrandIcons';
@@ -38,9 +38,7 @@ export function RecipeCard({ recipe, onPress }: RecipeCardProps) {
 
       <View style={styles.body}>
         <View style={styles.mealBadge}>
-          <Text style={styles.mealBadgeText}>
-            {mealTypeLabel[recipe.mealType]}
-          </Text>
+          <Text style={styles.mealBadgeText}>{dishCategory(recipe)}</Text>
         </View>
 
         <Text style={styles.title}>{recipe.title}</Text>

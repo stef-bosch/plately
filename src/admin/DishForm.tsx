@@ -1,21 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { FilterChip } from '../components/FilterChip';
+import {
+  CATEGORY_TO_MEALTYPE,
+  MEAL_CATEGORIES,
+  OTHER_CATEGORIES,
+  dishCategory,
+} from '../constants/labels';
 import { getDishRow, saveDish } from '../data/adminApi';
 import { reloadContent } from '../data/content';
-import { supabase } from '../lib/supabase';
-import { colors, radius, shadow, spacing, typography } from '../theme';
+import { colors, spacing, typography } from '../theme';
 import type {
   DietSwap,
   DietaryPreference,
@@ -29,9 +25,18 @@ import type {
   RecipeTag,
   Season,
 } from '../types';
+import { Field, FormHeader, SaveButton, Section, formKit } from './formKit';
+import {
+  GroupDraft,
+  IngredientDraft,
+  IngredientGroupsEditor,
+  emptyGroup,
+  groupsFromIngredients,
+} from './IngredientGroupsEditor';
+import { NutritionEditor } from './NutritionEditor';
+import { PhotoField } from './PhotoField';
 import { slugify } from './slugify';
 
-const MEAL_TYPES: MealType[] = ['ontbijt', 'lunch', 'diner', 'tussendoortje'];
 const SEASONS: Season[] = ['lente-zomer', 'herfst-winter'];
 const DIET_OPTIONS: DietaryPreference[] = [
   'vegetarisch', 'vegan', 'lactosevrij', 'glutenvrij', 'halal',
@@ -44,13 +49,6 @@ const DIET_TO_TAG: Record<DietaryPreference, RecipeTag> = {
   glutenvrij: 'Glutenvrij',
   halal: 'Halal',
 };
-const MACROS = ['calories', 'protein', 'carbs', 'fat', 'fiber'] as const;
-const MACRO_LABEL: Record<(typeof MACROS)[number], string> = {
-  calories: 'Calorieën', protein: 'Eiwitten', carbs: 'Koolhydraten', fat: 'Vetten', fiber: 'Vezels',
-};
-const MACRO_UNIT: Record<(typeof MACROS)[number], string> = {
-  calories: 'kcal', protein: 'g', carbs: 'g', fat: 'g', fiber: 'g',
-};
 
 function nutritionToStrings(n: Nutrition): Record<string, string> {
   return {
@@ -62,48 +60,13 @@ function nutritionToStrings(n: Nutrition): Record<string, string> {
   };
 }
 
-interface IngredientDraft {
-  name: string;
-  quantity: string;
-  unit: string;
-}
-
-interface GroupDraft {
-  category: string;
-  items: IngredientDraft[];
-}
-
-const emptyItem = (): IngredientDraft => ({ name: '', quantity: '', unit: '' });
-const emptyGroup = (): GroupDraft => ({ category: '', items: [emptyItem()] });
-
-function groupsFromIngredients(ingredients: IngredientGroup[]): GroupDraft[] {
-  if (!ingredients.length) return [emptyGroup()];
-  return ingredients.map((g) => ({
-    category: g.category,
-    items: g.items.length
-      ? g.items.map((it) => ({
-          name: it.name,
-          quantity: String(it.quantity),
-          unit: it.unit,
-        }))
-      : [emptyItem()],
-  }));
-}
-
 interface DishFormProps {
   dishId?: string;
-  /** Opened from the "Overig" tab: a cocktail/sauce rather than a normal dish. */
-  overig?: boolean;
   onSaved: () => void;
   onCancel: () => void;
 }
 
-export function DishForm({
-  dishId,
-  overig = false,
-  onSaved,
-  onCancel,
-}: DishFormProps) {
+export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
   const isEdit = Boolean(dishId);
 
   const [loading, setLoading] = useState(isEdit);
@@ -114,18 +77,16 @@ export function DishForm({
   const [idValue, setIdValue] = useState('');
   const [idTouched, setIdTouched] = useState(false);
   const [subtitle, setSubtitle] = useState('');
-  const [mealType, setMealType] = useState<MealType>('lunch');
+  // The dish category (one of the app's categories). Meal categories map back
+  // to a mealType on save; the rest are stored as overigCategory.
+  const [category, setCategory] = useState<string>('Lunch');
   const [seasons, setSeasons] = useState<Season[]>(['lente-zomer']);
   const [totalTime, setTotalTime] = useState('10');
   const [suitableFor, setSuitableFor] = useState<DietaryPreference[]>([]);
-  // Free-text "Overig" category (Cocktail/Saus/…) that moves a dish to the
-  // Overig tab; also feeds the frontend's category filter automatically.
-  const [overigCategory, setOverigCategory] = useState('');
   const [groups, setGroups] = useState<GroupDraft[]>([emptyGroup()]);
   const [steps, setSteps] = useState<string[]>(['']);
   const [macros, setMacros] = useState<Record<string, string>>({});
   const [imageUrl, setImageUrl] = useState('');
-  const [uploading, setUploading] = useState(false);
   // Preserved across edits so diet swaps aren't silently dropped.
   const [dietSwaps, setDietSwaps] = useState<DietSwap[] | undefined>(undefined);
 
@@ -145,7 +106,7 @@ export function DishForm({
           setIdValue(rr.id);
           setIdTouched(true);
           setSubtitle(rr.subtitle ?? '');
-          setMealType(rr.mealType);
+          setCategory(dishCategory(rr));
           setSeasons(rr.seasons);
           setTotalTime(String(rr.prepTime + rr.cookTime));
           setSuitableFor(rr.suitableFor ?? []);
@@ -161,11 +122,10 @@ export function DishForm({
           setIdValue(r.id);
           setIdTouched(true);
           setSubtitle(r.subtitle ?? '');
-          setMealType(r.mealType);
+          setCategory(dishCategory(r));
           setSeasons(r.seasons);
           setTotalTime(String(r.prepTime + r.cookTime));
           setSuitableFor(r.suitableFor ?? []);
-          setOverigCategory(r.overigCategory ?? '');
           setDietSwaps(r.dietSwaps);
           setGroups(groupsFromIngredients(r.ingredients));
           setSteps(r.instructions.length ? r.instructions : ['']);
@@ -191,99 +151,72 @@ export function DishForm({
     return Number.isNaN(v) ? 0 : v;
   };
 
-  // Web-only: pick a file and upload it to the public `dish-images` bucket,
-  // then store its public URL as the dish photo.
-  const pickAndUpload = () => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      if (!supabase) {
-        setError('Supabase is niet geconfigureerd.');
-        return;
-      }
-      setError(null);
-      setUploading(true);
-      try {
-        const ext = file.name.split('.').pop() || 'jpg';
-        const path = `${effectiveId || slugify(title) || 'dish'}-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from('dish-images')
-          .upload(path, file, { upsert: true, contentType: file.type });
-        if (upErr) throw upErr;
-        const { data } = supabase.storage.from('dish-images').getPublicUrl(path);
-        setImageUrl(data.publicUrl);
-      } catch (e) {
-        setError(
-          `Uploaden mislukt: ${(e as Error).message}. Bestaat de publieke bucket "dish-images"?`,
-        );
-      } finally {
-        setUploading(false);
-      }
-    };
-    input.click();
-  };
-
   const save = async () => {
     setError(null);
     if (!title.trim()) return setError('Geef het gerecht een naam.');
     if (!effectiveId) return setError('De id mag niet leeg zijn.');
-    if (overig && !overigCategory.trim())
-      return setError('Vul een categorie in (bijv. Cocktail, Saus, Smoothie).');
-
-    const mapItems = (drafts: IngredientDraft[]): Ingredient[] =>
-      drafts
-        .filter((i) => i.name.trim())
-        .map((i) => {
-          const n = Number(i.quantity.replace(',', '.'));
-          const scalable = i.quantity.trim() !== '' && !Number.isNaN(n);
-          return {
-            name: i.name.trim(),
-            quantity: scalable ? n : i.quantity.trim() || 'naar smaak',
-            unit: i.unit.trim(),
-            scalable,
-          };
-        });
-
-    // Each group keeps its own heading; empty groups are dropped and a blank
-    // heading falls back to "Basis".
-    const baseGroups: IngredientGroup[] = groups
-      .map((g) => ({
-        category: (g.category.trim() || 'Basis') as IngredientCategory,
-        items: mapItems(g.items),
-      }))
-      .filter((g) => g.items.length > 0);
-
-    const baseNutrition: Nutrition = {
-      calories: baseMacro('calories'),
-      protein: baseMacro('protein'),
-      carbs: baseMacro('carbs'),
-      fat: baseMacro('fat'),
-      fiber: baseMacro('fiber'),
-      micronutrients: {},
-      isIndicative: true,
-    };
-
-    const instructions = steps.map((s) => s.trim()).filter(Boolean);
-    // The diet filter selections double as the dish's display tags in the app.
-    const tags = suitableFor.map((d) => DIET_TO_TAG[d]);
-    // Overig category (only for overig items) moves the dish to the Overig tab.
-    const overigCat = overig && overigCategory.trim() ? overigCategory.trim() : undefined;
-    const seasonsOut: Season[] = seasons.length ? seasons : ['lente-zomer'];
-    const image = imageUrl.trim() ? { uri: imageUrl.trim() } : undefined;
 
     setSaving(true);
     try {
+      // Guard against silently overwriting an existing dish with the same id.
+      if (!isEdit) {
+        const existing = await getDishRow(effectiveId);
+        if (existing) {
+          setSaving(false);
+          return setError(
+            'Er bestaat al een gerecht met deze id. Kies een andere naam of pas de id aan.',
+          );
+        }
+      }
+
+      const mapItems = (drafts: IngredientDraft[]): Ingredient[] =>
+        drafts
+          .filter((i) => i.name.trim())
+          .map((i) => {
+            const n = Number(i.quantity.replace(',', '.'));
+            const scalable = i.quantity.trim() !== '' && !Number.isNaN(n);
+            return {
+              name: i.name.trim(),
+              quantity: scalable ? n : i.quantity.trim() || 'naar smaak',
+              unit: i.unit.trim(),
+              scalable,
+            };
+          });
+
+      // Each group keeps its own heading; empty groups are dropped and a blank
+      // heading falls back to "Basis".
+      const baseGroups: IngredientGroup[] = groups
+        .map((g) => ({
+          category: (g.category.trim() || 'Basis') as IngredientCategory,
+          items: mapItems(g.items),
+        }))
+        .filter((g) => g.items.length > 0);
+
+      const baseNutrition: Nutrition = {
+        calories: baseMacro('calories'),
+        protein: baseMacro('protein'),
+        carbs: baseMacro('carbs'),
+        fat: baseMacro('fat'),
+        fiber: baseMacro('fiber'),
+        micronutrients: {},
+        isIndicative: true,
+      };
+
+      const instructions = steps.map((s) => s.trim()).filter(Boolean);
+      const tags = suitableFor.map((d) => DIET_TO_TAG[d]);
+      // A meal category maps back to a mealType; the other categories are
+      // stored as overigCategory (mealType then gets a neutral default).
+      const mappedMealType = CATEGORY_TO_MEALTYPE[category];
+      const mealType: MealType = mappedMealType ?? 'diner';
+      const overigCat = mappedMealType ? undefined : category;
+
       const recipe: Recipe = {
         id: effectiveId,
         title: title.trim(),
         subtitle: subtitle.trim() || undefined,
-        image,
+        image: imageUrl.trim() ? { uri: imageUrl.trim() } : undefined,
         mealType,
-        seasons: seasonsOut,
+        seasons: seasons.length ? seasons : ['lente-zomer'],
         baseServings: 1,
         prepTime: Number(totalTime) || 0,
         cookTime: 0,
@@ -305,262 +238,102 @@ export function DishForm({
   };
 
   if (loading) {
-    return <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />;
+    return <Text style={formKit.hint}>Laden…</Text>;
   }
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.formHeader}>
-        <Text style={styles.formTitle}>
-          {overig
-            ? isEdit ? 'Overig bewerken' : 'Nieuw overig-item'
-            : isEdit ? 'Gerecht bewerken' : 'Nieuw gerecht'}
-        </Text>
-        <Pressable onPress={onCancel} style={({ pressed }) => [styles.ghost, pressed && styles.pressed]}>
-          <Text style={styles.ghostText}>Annuleren</Text>
-        </Pressable>
-      </View>
+      <FormHeader title={isEdit ? 'Gerecht bewerken' : 'Nieuw gerecht'} onCancel={onCancel} />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={formKit.error}>{error}</Text> : null}
 
       <Section title="Basis">
         <Field label="Naam">
-          <TextInput value={title} onChangeText={setTitle} style={styles.input} placeholder="Bijv. Griekse salade" placeholderTextColor={colors.textMuted} />
+          <TextInput value={title} onChangeText={setTitle} style={formKit.input} placeholder="Bijv. Griekse salade" placeholderTextColor={colors.textMuted} />
         </Field>
         <Field label="Id (uniek)">
-          <TextInput value={effectiveId} onChangeText={(t) => { setIdTouched(true); setIdValue(t); }} editable={!isEdit} style={[styles.input, isEdit && styles.disabledInput]} autoCapitalize="none" />
+          <TextInput value={effectiveId} onChangeText={(t) => { setIdTouched(true); setIdValue(t); }} editable={!isEdit} style={[formKit.input, isEdit && formKit.disabledInput]} autoCapitalize="none" />
         </Field>
         <Field label="Ondertitel">
-          <TextInput value={subtitle} onChangeText={setSubtitle} style={styles.input} placeholder="Korte tagline" placeholderTextColor={colors.textMuted} />
+          <TextInput value={subtitle} onChangeText={setSubtitle} style={formKit.input} placeholder="Korte tagline" placeholderTextColor={colors.textMuted} />
         </Field>
-        {!overig ? (
-          <Field label="Soort maaltijd">
-            <View style={styles.chipRow}>
-              {MEAL_TYPES.map((m) => (
-                <FilterChip key={m} label={m} active={mealType === m} onPress={() => setMealType(m)} />
+        <Field label="Categorie">
+          <View style={styles.categoryGroups}>
+            <Text style={formKit.hint}>Maaltijd</Text>
+            <View style={formKit.chipRow}>
+              {MEAL_CATEGORIES.map((c) => (
+                <FilterChip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
               ))}
             </View>
-          </Field>
-        ) : null}
+            <Text style={formKit.hint}>Overig</Text>
+            <View style={formKit.chipRow}>
+              {OTHER_CATEGORIES.map((c) => (
+                <FilterChip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
+              ))}
+            </View>
+          </View>
+        </Field>
         <Field label="Seizoen">
-          <View style={styles.chipRow}>
+          <View style={formKit.chipRow}>
             {SEASONS.map((s) => (
               <FilterChip key={s} label={s} active={seasons.includes(s)} onPress={() => setSeasons(toggle(seasons, s))} />
             ))}
           </View>
         </Field>
         <Field label="Bereidingstijd (min)">
-          <TextInput value={totalTime} onChangeText={setTotalTime} keyboardType="numeric" style={styles.input} />
+          <TextInput value={totalTime} onChangeText={setTotalTime} keyboardType="numeric" style={formKit.input} />
         </Field>
       </Section>
 
       <Section title="Foto">
-        <Text style={styles.hint}>
-          Deze foto verschijnt in de app bij het gerecht. Upload een afbeelding
-          of plak een afbeeldings-URL. Laat leeg voor de standaard placeholder.
-        </Text>
-        {imageUrl.trim() ? (
-          <Image source={{ uri: imageUrl.trim() }} style={styles.preview} resizeMode="cover" />
-        ) : null}
-        <Field label="Afbeelding-URL">
-          <TextInput
-            value={imageUrl}
-            onChangeText={setImageUrl}
-            style={styles.input}
-            autoCapitalize="none"
-            placeholder="https://…"
-            placeholderTextColor={colors.textMuted}
-          />
-        </Field>
-        {Platform.OS === 'web' ? (
-          <View style={styles.photoActions}>
-            <Pressable
-              onPress={pickAndUpload}
-              disabled={uploading}
-              style={({ pressed }) => [styles.ghost, pressed && styles.pressed, uploading && styles.disabled]}
-            >
-              {uploading ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Text style={styles.ghostText}>Foto uploaden…</Text>
-              )}
-            </Pressable>
-            {imageUrl.trim() ? (
-              <Pressable
-                onPress={() => setImageUrl('')}
-                style={({ pressed }) => [styles.ghost, pressed && styles.pressed]}
-              >
-                <Text style={styles.ghostText}>Verwijderen</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        ) : null}
+        <PhotoField
+          imageUrl={imageUrl}
+          onChange={setImageUrl}
+          fileBaseName={effectiveId || slugify(title) || 'dish'}
+          onError={(m) => setError(m || null)}
+        />
       </Section>
 
       <Section title="Tags">
-        <View style={styles.chipRow}>
+        <View style={formKit.chipRow}>
           {DIET_OPTIONS.map((d) => (
             <FilterChip key={d} label={d} active={suitableFor.includes(d)} onPress={() => setSuitableFor(toggle(suitableFor, d))} />
           ))}
         </View>
       </Section>
 
-      {overig ? (
-      <Section title="Categorie">
-        <Text style={styles.hint}>
-          Onder welke categorie verschijnt dit in de app (tab "Overig")? Typ een
-          categorie — een nieuwe categorie komt automatisch in het filter.
-        </Text>
-        <TextInput
-          value={overigCategory}
-          onChangeText={setOverigCategory}
-          style={styles.input}
-          placeholder="Bijv. Cocktail, Saus, Smoothie"
-          placeholderTextColor={colors.textMuted}
-        />
-      </Section>
-      ) : null}
-
       <Section title="Ingrediënten">
-        <Text style={styles.hint}>
-          Groepeer ingrediënten onder een kop (bijv. "Basis", "Topping"). De kop
-          verschijnt in de app boven de betreffende ingrediënten.
-        </Text>
-        {groups.map((group, gi) => (
-          <View key={gi} style={styles.groupBlock}>
-            <View style={styles.groupHeaderRow}>
-              <TextInput
-                value={group.category}
-                onChangeText={(t) =>
-                  setGroups((p) => p.map((g, i) => (i === gi ? { ...g, category: t } : g)))
-                }
-                placeholder="Kop (bijv. Basis, Topping)"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.groupTitleInput, { flex: 1 }]}
-              />
-              {groups.length > 1 ? (
-                <Pressable
-                  onPress={() => setGroups((p) => p.filter((_, i) => i !== gi))}
-                  style={styles.iconButton}
-                >
-                  <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
-                </Pressable>
-              ) : null}
-            </View>
-            {group.items.map((ing, idx) => (
-              <View key={idx} style={styles.ingredientRow}>
-                <TextInput value={ing.quantity} onChangeText={(t) => setGroups((p) => p.map((g, i) => (i === gi ? { ...g, items: g.items.map((x, j) => (j === idx ? { ...x, quantity: t } : x)) } : g)))} placeholder="100" placeholderTextColor={colors.textMuted} style={[styles.input, styles.qtyInput]} />
-                <TextInput value={ing.unit} onChangeText={(t) => setGroups((p) => p.map((g, i) => (i === gi ? { ...g, items: g.items.map((x, j) => (j === idx ? { ...x, unit: t } : x)) } : g)))} placeholder="g" placeholderTextColor={colors.textMuted} style={[styles.input, styles.unitInput]} />
-                <TextInput value={ing.name} onChangeText={(t) => setGroups((p) => p.map((g, i) => (i === gi ? { ...g, items: g.items.map((x, j) => (j === idx ? { ...x, name: t } : x)) } : g)))} placeholder="ingrediënt" placeholderTextColor={colors.textMuted} style={[styles.input, { flex: 1 }]} />
-                <Pressable onPress={() => setGroups((p) => p.map((g, i) => (i === gi ? { ...g, items: g.items.filter((_, j) => j !== idx) } : g)))} style={styles.iconButton}>
-                  <Ionicons name="close" size={18} color={colors.textMuted} />
-                </Pressable>
-              </View>
-            ))}
-            <Pressable onPress={() => setGroups((p) => p.map((g, i) => (i === gi ? { ...g, items: [...g.items, emptyItem()] } : g)))} style={styles.addRow}>
-              <Ionicons name="add" size={18} color={colors.primary} />
-              <Text style={styles.addRowText}>Ingrediënt toevoegen</Text>
-            </Pressable>
-          </View>
-        ))}
-        <Pressable onPress={() => setGroups((p) => [...p, emptyGroup()])} style={styles.addRow}>
-          <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
-          <Text style={styles.addRowText}>Kop toevoegen</Text>
-        </Pressable>
+        <IngredientGroupsEditor groups={groups} setGroups={setGroups} />
       </Section>
 
       <Section title="Bereidingswijze">
         {steps.map((step, idx) => (
           <View key={idx} style={styles.stepRow}>
             <Text style={styles.stepNum}>{idx + 1}</Text>
-            <TextInput value={step} onChangeText={(t) => setSteps((p) => p.map((x, i) => (i === idx ? t : x)))} placeholder="Stap…" placeholderTextColor={colors.textMuted} multiline style={[styles.input, { flex: 1 }]} />
-            <Pressable onPress={() => setSteps((p) => p.filter((_, i) => i !== idx))} style={styles.iconButton}>
+            <TextInput value={step} onChangeText={(t) => setSteps((p) => p.map((x, i) => (i === idx ? t : x)))} placeholder="Stap…" placeholderTextColor={colors.textMuted} multiline style={[formKit.input, { flex: 1 }]} />
+            <Pressable onPress={() => setSteps((p) => p.filter((_, i) => i !== idx))} style={formKit.iconButton}>
               <Ionicons name="close" size={18} color={colors.textMuted} />
             </Pressable>
           </View>
         ))}
-        <Pressable onPress={() => setSteps((p) => [...p, ''])} style={styles.addRow}>
+        <Pressable onPress={() => setSteps((p) => [...p, ''])} style={formKit.addRow}>
           <Ionicons name="add" size={18} color={colors.primary} />
-          <Text style={styles.addRowText}>Stap toevoegen</Text>
+          <Text style={formKit.addRowText}>Stap toevoegen</Text>
         </Pressable>
       </Section>
 
       <Section title="Voedingswaarden (per portie)">
-        <View style={styles.macroGrid}>
-          {MACROS.map((m) => (
-            <Field key={m} label={`${MACRO_LABEL[m]} (${MACRO_UNIT[m]})`} style={styles.macroField}>
-              <TextInput value={macros[m] ?? ''} onChangeText={(t) => setMacros((p) => ({ ...p, [m]: t }))} keyboardType="numeric" placeholder="0" placeholderTextColor={colors.textMuted} style={styles.input} />
-            </Field>
-          ))}
-        </View>
+        <NutritionEditor macros={macros} setMacros={setMacros} />
       </Section>
 
-      <Pressable onPress={save} disabled={saving} style={({ pressed }) => [styles.saveButton, pressed && styles.pressed, saving && styles.disabled]}>
-        {saving ? <ActivityIndicator size="small" color={colors.textOnPrimary} /> : <Text style={styles.saveButtonText}>Opslaan</Text>}
-      </Pressable>
-    </View>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {children}
-    </View>
-  );
-}
-
-function Field({ label, style, children }: { label: string; style?: object; children: React.ReactNode }) {
-  return (
-    <View style={[styles.field, style]}>
-      <Text style={styles.label}>{label}</Text>
-      {children}
+      <SaveButton saving={saving} onPress={save} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.lg },
-  formHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  formTitle: { ...typography.heading, color: colors.textPrimary },
-  section: { gap: spacing.sm, backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, ...shadow.soft },
-  sectionTitle: { ...typography.heading, color: colors.textPrimary, marginBottom: spacing.xs },
-  hint: { ...typography.caption, color: colors.textMuted },
-  preview: { width: '100%', height: 180, borderRadius: radius.md, backgroundColor: colors.background },
-  photoActions: { flexDirection: 'row', gap: spacing.sm },
-  field: { gap: 4 },
-  label: { ...typography.label, color: colors.textSecondary },
-  input: {
-    ...typography.body,
-    color: colors.textPrimary,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  disabledInput: { opacity: 0.6 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  groupBlock: { gap: spacing.xs, paddingLeft: spacing.sm, borderLeftWidth: 2, borderLeftColor: colors.border, marginBottom: spacing.sm },
-  groupHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: 2 },
-  groupTitleInput: { ...typography.bodyStrong },
-  ingredientRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  qtyInput: { width: 64 },
-  unitInput: { width: 64 },
+  categoryGroups: { gap: spacing.sm },
   stepRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   stepNum: { ...typography.bodyStrong, color: colors.primary, width: 18 },
-  addRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: spacing.xs },
-  addRowText: { ...typography.label, color: colors.primary },
-  macroGrid: { gap: spacing.md },
-  macroField: { width: '100%' },
-  iconButton: { padding: spacing.xs },
-  error: { ...typography.bodyStrong, color: colors.fat },
-  saveButton: { backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: spacing.md, alignItems: 'center' },
-  saveButtonText: { ...typography.bodyStrong, color: colors.textOnPrimary },
-  ghost: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
-  ghostText: { ...typography.label, color: colors.textSecondary },
-  pressed: { opacity: 0.85 },
-  disabled: { opacity: 0.6 },
 });

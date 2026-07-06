@@ -1,3 +1,4 @@
+import { dishCategory } from '../constants/labels';
 import { supabase } from '../lib/supabase';
 import type { Menu, Recipe, ReactiveRecipe } from '../types';
 
@@ -21,7 +22,10 @@ function rowFor(dish: Recipe | ReactiveRecipe, kind: DishKind) {
   return {
     id: dish.id,
     kind,
-    meal_type: dish.mealType ?? null,
+    // The `meal_type` column stores the dish's display category (Ontbijt,
+    // Sauzen, …). It's only used for admin list ordering; the JSONB `data`
+    // stays the source of truth.
+    meal_type: dishCategory(dish),
     title: dish.title,
     data: dish,
   };

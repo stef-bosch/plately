@@ -5,6 +5,7 @@ import type {
   EnergyNeed,
   Goal,
   MealType,
+  Recipe,
   Season,
   WeekDayName,
 } from '../types';
@@ -17,6 +18,56 @@ export const mealTypeLabel: Record<MealType, string> = {
   diner: 'Diner',
   tussendoortje: 'Tussendoortje',
 };
+
+/**
+ * Dish categories shown on the "Gerechten" tab. The four meal categories are
+ * derived from a dish's `mealType`; the rest come from its free-text
+ * `overigCategory` (set in the admin). Order = display order in the filter.
+ */
+export const MEAL_CATEGORIES = [
+  'Ontbijt',
+  'Lunch',
+  'Tussendoortjes',
+  'Diner',
+] as const;
+
+export const OTHER_CATEGORIES = [
+  'Voorgerechten',
+  'Hoofdgerechten',
+  'Bijgerechten',
+  'Sauzen',
+  'Desserts & gebak',
+  'Borrelhapjes & snacks',
+  'Dranken & cocktails',
+] as const;
+
+export const DISH_CATEGORIES: string[] = [
+  ...MEAL_CATEGORIES,
+  ...OTHER_CATEGORIES,
+];
+
+const MEALTYPE_TO_CATEGORY: Record<MealType, string> = {
+  ontbijt: 'Ontbijt',
+  lunch: 'Lunch',
+  tussendoortje: 'Tussendoortjes',
+  diner: 'Diner',
+};
+
+/** Reverse of the above — only the four meal categories map to a mealType. */
+export const CATEGORY_TO_MEALTYPE: Record<string, MealType> = {
+  Ontbijt: 'ontbijt',
+  Lunch: 'lunch',
+  Tussendoortjes: 'tussendoortje',
+  Diner: 'diner',
+};
+
+/** The single category a dish belongs to in the "Gerechten" overview. */
+export function dishCategory(
+  recipe: Pick<Recipe, 'mealType' | 'overigCategory'>,
+): string {
+  const custom = recipe.overigCategory?.trim();
+  return custom || MEALTYPE_TO_CATEGORY[recipe.mealType];
+}
 
 export const mealTypeIcon: Record<MealType, keyof typeof Ionicons.glyphMap> = {
   ontbijt: 'sunny-outline',

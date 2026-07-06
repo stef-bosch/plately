@@ -1,19 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { FilterChip } from '../components/FilterChip';
+import { dishCategory } from '../constants/labels';
 import { getMenuRow, saveMenu } from '../data/adminApi';
 import { getAllRecipes, reloadContent } from '../data/content';
-import { colors, radius, shadow, spacing, typography } from '../theme';
+import { colors, spacing, typography } from '../theme';
 import type { Menu, MenuCourse, MenuCourseType, RecipeTag } from '../types';
+import { Field, FormHeader, SaveButton, formKit } from './formKit';
 import { slugify } from './slugify';
 
 const COURSE_TYPES: MenuCourseType[] = [
@@ -28,6 +23,15 @@ const COURSE_LABEL: Record<MenuCourseType, string> = {
 };
 const TAG_OPTIONS: RecipeTag[] = ['Vegetarisch', 'Gezond', 'Restaurantwaardig', 'BBQ'];
 
+interface DishOption {
+  id: string;
+  title: string;
+  category: string;
+}
+
+const dishOptions = (): DishOption[] =>
+  getAllRecipes().map((r) => ({ id: r.id, title: r.title, category: dishCategory(r) }));
+
 interface MenuFormProps {
   menuId?: string;
   onSaved: () => void;
@@ -36,14 +40,15 @@ interface MenuFormProps {
 
 export function MenuForm({ menuId, onSaved, onCancel }: MenuFormProps) {
   const isEdit = Boolean(menuId);
-  const allDishes = useMemo(
-    () => getAllRecipes().map((r) => ({ id: r.id, title: r.title })),
-    [],
-  );
 
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // The dishes a course can reference. Loaded defensively so an admin that
+  // opens this before the content store is ready still gets a full list.
+  const [allDishes, setAllDishes] = useState<DishOption[]>(dishOptions);
+  const [dishSearch, setDishSearch] = useState('');
 
   const [title, setTitle] = useState('');
   const [idValue, setIdValue] = useState('');
@@ -55,6 +60,13 @@ export function MenuForm({ menuId, onSaved, onCancel }: MenuFormProps) {
   const [courses, setCourses] = useState<MenuCourse[]>([
     { type: 'hoofdgerecht', title: 'Hoofdgerecht', recipeIds: [] },
   ]);
+
+  useEffect(() => {
+    (async () => {
+      if (getAllRecipes().length === 0) await reloadContent();
+      setAllDishes(dishOptions());
+    })();
+  }, []);
 
   useEffect(() => {
     if (!menuId) return;
@@ -101,6 +113,19 @@ export function MenuForm({ menuId, onSaved, onCancel }: MenuFormProps) {
       ),
     );
 
+  // Dishes referenced by a course that no longer exist (deleted/renamed).
+  const knownIds = new Set(allDishes.map((d) => d.id));
+  const missingIds =
+    allDishes.length > 0
+      ? [...new Set(courses.flatMap((c) => c.recipeIds).filter((id) => !knownIds.has(id)))]
+      : [];
+
+  const visibleDishes = (() => {
+    const q = dishSearch.trim().toLowerCase();
+    if (!q) return allDishes;
+    return allDishes.filter((d) => d.title.toLowerCase().includes(q));
+  })();
+
   const save = async () => {
     setError(null);
     if (!title.trim()) return setError('Geef het menu een naam.');
@@ -124,6 +149,16 @@ export function MenuForm({ menuId, onSaved, onCancel }: MenuFormProps) {
 
     setSaving(true);
     try {
+      // Guard against silently overwriting an existing menu with the same id.
+      if (!isEdit) {
+        const existing = await getMenuRow(effectiveId);
+        if (existing) {
+          setSaving(false);
+          return setError(
+            'Er bestaat al een menu met deze id. Kies een andere naam of pas de id aan.',
+          );
+        }
+      }
       await saveMenu(menu);
       await reloadContent();
       onSaved();
@@ -134,75 +169,87 @@ export function MenuForm({ menuId, onSaved, onCancel }: MenuFormProps) {
   };
 
   if (loading) {
-    return <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />;
+    return <Text style={formKit.hint}>Laden…</Text>;
   }
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.formHeader}>
-        <Text style={styles.formTitle}>{isEdit ? 'Menu bewerken' : 'Nieuw menu'}</Text>
-        <Pressable onPress={onCancel} style={({ pressed }) => [styles.ghost, pressed && styles.pressed]}>
-          <Text style={styles.ghostText}>Annuleren</Text>
-        </Pressable>
-      </View>
+      <FormHeader title={isEdit ? 'Menu bewerken' : 'Nieuw menu'} onCancel={onCancel} />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={formKit.error}>{error}</Text> : null}
+      {missingIds.length > 0 ? (
+        <Text style={styles.warning}>
+          Let op: {missingIds.length} gekozen gerecht(en) bestaan niet meer
+          ({missingIds.join(', ')}). Kies een ander gerecht of sla opnieuw op.
+        </Text>
+      ) : null}
 
-      <View style={styles.section}>
+      <View style={formKit.section}>
         <Field label="Naam">
-          <TextInput value={title} onChangeText={setTitle} style={styles.input} placeholder="Bijv. Italiaans diner" placeholderTextColor={colors.textMuted} />
+          <TextInput value={title} onChangeText={setTitle} style={formKit.input} placeholder="Bijv. Italiaans diner" placeholderTextColor={colors.textMuted} />
         </Field>
         <Field label="Id (uniek)">
-          <TextInput value={effectiveId} onChangeText={(t) => { setIdTouched(true); setIdValue(t); }} editable={!isEdit} style={[styles.input, isEdit && styles.disabledInput]} autoCapitalize="none" />
+          <TextInput value={effectiveId} onChangeText={(t) => { setIdTouched(true); setIdValue(t); }} editable={!isEdit} style={[formKit.input, isEdit && formKit.disabledInput]} autoCapitalize="none" />
         </Field>
         <Field label="Ondertitel">
-          <TextInput value={subtitle} onChangeText={setSubtitle} style={styles.input} placeholder="Korte tagline" placeholderTextColor={colors.textMuted} />
+          <TextInput value={subtitle} onChangeText={setSubtitle} style={formKit.input} placeholder="Korte tagline" placeholderTextColor={colors.textMuted} />
         </Field>
         <Field label="Omschrijving">
-          <TextInput value={description} onChangeText={setDescription} multiline style={[styles.input, { minHeight: 60 }]} placeholder="Intro-tekst" placeholderTextColor={colors.textMuted} />
+          <TextInput value={description} onChangeText={setDescription} multiline style={[formKit.input, { minHeight: 60 }]} placeholder="Intro-tekst" placeholderTextColor={colors.textMuted} />
         </Field>
         <Field label="Aantal personen (basis)">
-          <TextInput value={baseServings} onChangeText={setBaseServings} keyboardType="numeric" style={[styles.input, { width: 90 }]} />
+          <TextInput value={baseServings} onChangeText={setBaseServings} keyboardType="numeric" style={[formKit.input, { width: 90 }]} />
         </Field>
         <Field label="Tags">
-          <View style={styles.chipRow}>
+          <View style={formKit.chipRow}>
             {TAG_OPTIONS.map((t) => (
               <FilterChip key={t} label={t} active={tags.includes(t)} onPress={() => setTags((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]))} />
             ))}
           </View>
         </Field>
+        <Field label="Gerechten zoeken (in de keuzes hieronder)">
+          <TextInput value={dishSearch} onChangeText={setDishSearch} style={formKit.input} placeholder="Typ om te filteren…" placeholderTextColor={colors.textMuted} />
+        </Field>
       </View>
 
       {courses.map((course, idx) => (
-        <View key={idx} style={styles.section}>
+        <View key={idx} style={formKit.section}>
           <View style={styles.courseHeader}>
-            <Text style={styles.sectionTitle}>Gang {idx + 1}</Text>
-            <Pressable onPress={() => setCourses((p) => p.filter((_, i) => i !== idx))} style={styles.iconButton}>
+            <Text style={formKit.sectionTitle}>Gang {idx + 1}</Text>
+            <Pressable onPress={() => setCourses((p) => p.filter((_, i) => i !== idx))} style={formKit.iconButton}>
               <Ionicons name="trash-outline" size={18} color={colors.fat} />
             </Pressable>
           </View>
           <Field label="Type">
-            <View style={styles.chipRow}>
+            <View style={formKit.chipRow}>
               {COURSE_TYPES.map((t) => (
                 <FilterChip key={t} label={COURSE_LABEL[t]} active={course.type === t} onPress={() => updateCourse(idx, { type: t })} />
               ))}
             </View>
           </Field>
           <Field label="Titel van de gang">
-            <TextInput value={course.title} onChangeText={(t) => updateCourse(idx, { title: t })} style={styles.input} placeholder={COURSE_LABEL[course.type]} placeholderTextColor={colors.textMuted} />
+            <TextInput value={course.title} onChangeText={(t) => updateCourse(idx, { title: t })} style={formKit.input} placeholder={COURSE_LABEL[course.type]} placeholderTextColor={colors.textMuted} />
           </Field>
           <Field label={`Gerechten (${course.recipeIds.length} gekozen)`}>
             <View style={styles.dishPicker}>
-              {allDishes.map((d) => (
-                <Pressable key={d.id} onPress={() => toggleDishInCourse(idx, d.id)} style={styles.dishPick}>
-                  <Ionicons
-                    name={course.recipeIds.includes(d.id) ? 'checkbox' : 'square-outline'}
-                    size={18}
-                    color={course.recipeIds.includes(d.id) ? colors.primary : colors.textMuted}
-                  />
-                  <Text style={styles.dishPickText} numberOfLines={1}>{d.title}</Text>
-                </Pressable>
-              ))}
+              {visibleDishes.length === 0 ? (
+                <Text style={formKit.hint}>Geen gerechten gevonden.</Text>
+              ) : (
+                visibleDishes.map((d) => {
+                  const checked = course.recipeIds.includes(d.id);
+                  return (
+                    <Pressable key={d.id} onPress={() => toggleDishInCourse(idx, d.id)} style={styles.dishPick}>
+                      <Ionicons
+                        name={checked ? 'checkbox' : 'square-outline'}
+                        size={18}
+                        color={checked ? colors.primary : colors.textMuted}
+                      />
+                      <Text style={styles.dishPickText} numberOfLines={1}>{d.title}</Text>
+                      <Text style={styles.dishPickCat}>{d.category}</Text>
+                    </Pressable>
+                  );
+                })
+              )}
             </View>
           </Field>
         </View>
@@ -210,60 +257,23 @@ export function MenuForm({ menuId, onSaved, onCancel }: MenuFormProps) {
 
       <Pressable
         onPress={() => setCourses((p) => [...p, { type: 'hoofdgerecht', title: '', recipeIds: [] }])}
-        style={styles.addRow}
+        style={formKit.addRow}
       >
         <Ionicons name="add" size={18} color={colors.primary} />
-        <Text style={styles.addRowText}>Gang toevoegen</Text>
+        <Text style={formKit.addRowText}>Gang toevoegen</Text>
       </Pressable>
 
-      <Pressable onPress={save} disabled={saving} style={({ pressed }) => [styles.saveButton, pressed && styles.pressed, saving && styles.disabled]}>
-        {saving ? <ActivityIndicator size="small" color={colors.textOnPrimary} /> : <Text style={styles.saveButtonText}>Opslaan</Text>}
-      </Pressable>
-    </View>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      {children}
+      <SaveButton saving={saving} onPress={save} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.lg },
-  formHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  formTitle: { ...typography.heading, color: colors.textPrimary },
-  section: { gap: spacing.sm, backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, ...shadow.soft },
-  sectionTitle: { ...typography.heading, color: colors.textPrimary },
+  warning: { ...typography.caption, color: colors.fat },
   courseHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  field: { gap: 4 },
-  label: { ...typography.label, color: colors.textSecondary },
-  input: {
-    ...typography.body,
-    color: colors.textPrimary,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  disabledInput: { opacity: 0.6 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  dishPicker: { gap: spacing.xs, maxHeight: 220, overflow: 'scroll' },
+  dishPicker: { gap: spacing.xs, maxHeight: 240, overflow: 'scroll' },
   dishPick: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 2 },
   dishPickText: { ...typography.body, color: colors.textPrimary, flex: 1 },
-  iconButton: { padding: spacing.xs },
-  addRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: spacing.xs },
-  addRowText: { ...typography.label, color: colors.primary },
-  error: { ...typography.bodyStrong, color: colors.fat },
-  saveButton: { backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: spacing.md, alignItems: 'center' },
-  saveButtonText: { ...typography.bodyStrong, color: colors.textOnPrimary },
-  ghost: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
-  ghostText: { ...typography.label, color: colors.textSecondary },
-  pressed: { opacity: 0.85 },
-  disabled: { opacity: 0.6 },
+  dishPickCat: { ...typography.caption, color: colors.textMuted },
 });

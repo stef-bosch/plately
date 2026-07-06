@@ -21,12 +21,12 @@ import {
   type MenuRow,
 } from '../data/adminApi';
 import { PlatelyLogo } from '../components/BrandIcons';
-import { mealTypeLabel } from '../constants/labels';
+import { DISH_CATEGORIES, dishCategory } from '../constants/labels';
 import { reloadContent } from '../data/content';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/useAuth';
 import { colors, radius, shadow, spacing, typography } from '../theme';
-import type { MealType } from '../types';
+import type { Recipe } from '../types';
 import { DishForm } from './DishForm';
 import { MenuForm } from './MenuForm';
 
@@ -35,20 +35,15 @@ async function confirmAsync(message: string): Promise<boolean> {
   return true;
 }
 
-type Tab = 'dishes' | 'overig' | 'menus';
+type Tab = 'dishes' | 'menus';
 type FormState =
-  | { kind: 'dish'; id?: string; overig?: boolean }
+  | { kind: 'dish'; id?: string }
   | { kind: 'menu'; id?: string }
   | null;
 
-// A dish belongs to the "Overig" tab when it has a free-text overig category.
-const overigCategoryOf = (row: DishRow): string =>
-  ((row.data as { overigCategory?: string })?.overigCategory ?? '').trim();
-const isOverigRow = (row: DishRow): boolean => overigCategoryOf(row) !== '';
-const overigLabel = (row: DishRow): string => overigCategoryOf(row) || 'Overig';
-
-// Order used to group the Gerechten list by meal type.
-const MEAL_ORDER: MealType[] = ['ontbijt', 'lunch', 'diner', 'tussendoortje'];
+// The category a dish is grouped under in the Gerechten list.
+const categoryOf = (row: DishRow): string =>
+  dishCategory(row.data as Recipe);
 
 export function AdminApp() {
   const { session, ready } = useAuth();
@@ -115,7 +110,9 @@ function Dashboard({ email }: { email: string }) {
   const [menus, setMenus] = useState<MenuRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyMsg, setBusyMsg] = useState<string | null>(null);
-  // Which meal-type groups in the Gerechten list are collapsed.
+  const [query, setQuery] = useState('');
+  const [flash, setFlash] = useState<string | null>(null);
+  // Which category groups in the Gerechten list are collapsed.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const refresh = useCallback(async () => {
@@ -151,37 +148,29 @@ function Dashboard({ email }: { email: string }) {
 
   const onFormDone = () => {
     setForm(null);
+    setFlash('Opgeslagen');
+    setTimeout(() => setFlash(null), 2500);
     refresh();
   };
 
   if (form?.kind === 'dish') {
     return (
-      <DishForm
-        dishId={form.id}
-        overig={form.overig}
-        onSaved={onFormDone}
-        onCancel={() => setForm(null)}
-      />
+      <DishForm dishId={form.id} onSaved={onFormDone} onCancel={() => setForm(null)} />
     );
   }
   if (form?.kind === 'menu') {
     return <MenuForm menuId={form.id} onSaved={onFormDone} onCancel={() => setForm(null)} />;
   }
 
-  const normalDishes = dishes.filter((r) => !isOverigRow(r));
-  const overigDishes = dishes.filter(isOverigRow);
-
-  const renderDishCard = (row: DishRow, isOverigList: boolean) => (
+  const renderDishCard = (row: DishRow) => (
     <View key={row.id} style={styles.itemCard}>
       <View style={{ flex: 1 }}>
         <Text style={styles.itemTitle} numberOfLines={1}>{row.title}</Text>
         <Text style={styles.itemMeta}>
-          {isOverigList
-            ? overigLabel(row)
-            : row.kind === 'reactive' ? 'energie-varianten' : 'enkel'}
+          {(row.data as Recipe)?.nutrition?.calories ?? '—'} kcal
         </Text>
       </View>
-      <Pressable onPress={() => setForm({ kind: 'dish', id: row.id, overig: isOverigList })} style={styles.iconButton}>
+      <Pressable onPress={() => setForm({ kind: 'dish', id: row.id })} style={styles.iconButton}>
         <Ionicons name="create-outline" size={20} color={colors.primary} />
       </Pressable>
       <Pressable onPress={() => removeDish(row)} style={styles.iconButton}>
@@ -190,15 +179,15 @@ function Dashboard({ email }: { email: string }) {
     </View>
   );
 
-  const renderMealGroups = (rows: DishRow[]) => {
-    const known = new Set<string>(MEAL_ORDER);
-    const groups = MEAL_ORDER.map((mt) => ({
-      key: mt,
-      label: mealTypeLabel[mt],
-      rows: rows.filter((r) => r.meal_type === mt),
+  // Group the dishes by category, in the app's category order.
+  const renderCategoryGroups = (rows: DishRow[]) => {
+    const known = new Set(DISH_CATEGORIES);
+    const groups = DISH_CATEGORIES.map((c) => ({
+      key: c,
+      rows: rows.filter((r) => categoryOf(r) === c),
     }));
-    const leftover = rows.filter((r) => !known.has(r.meal_type ?? ''));
-    if (leftover.length) groups.push({ key: 'overig' as MealType, label: 'Overig', rows: leftover });
+    const leftover = rows.filter((r) => !known.has(categoryOf(r)));
+    if (leftover.length) groups.push({ key: 'Overig', rows: leftover });
     return groups
       .filter((g) => g.rows.length > 0)
       .map((g) => {
@@ -214,40 +203,19 @@ function Dashboard({ email }: { email: string }) {
                 size={16}
                 color={colors.textSecondary}
               />
-              <Text style={styles.mealGroupTitle}>{g.label} ({g.rows.length})</Text>
+              <Text style={styles.mealGroupTitle}>{g.key} ({g.rows.length})</Text>
             </Pressable>
             {isCollapsed ? null : (
-              <View style={styles.grid}>{g.rows.map((r) => renderDishCard(r, false))}</View>
+              <View style={styles.grid}>{g.rows.map((r) => renderDishCard(r))}</View>
             )}
           </View>
         );
       });
   };
 
-  const renderDishList = (rows: DishRow[], title: string, isOverigList: boolean) => (
-    <>
-      <View style={styles.listHeader}>
-        <Text style={styles.h2}>{title} ({rows.length})</Text>
-        <Pressable onPress={() => setForm({ kind: 'dish', overig: isOverigList })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
-          <Ionicons name="add" size={18} color={colors.textOnPrimary} />
-          <Text style={styles.newButtonText}>Nieuw</Text>
-        </Pressable>
-      </View>
-      {loading ? (
-        <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
-      ) : rows.length === 0 ? (
-        <Text style={styles.empty}>
-          {isOverigList
-            ? 'Nog geen overige items (cocktails/sauzen). Voeg er een toe.'
-            : 'Nog geen gerechten. Voeg er een toe.'}
-        </Text>
-      ) : isOverigList ? (
-        <View style={styles.grid}>{rows.map((r) => renderDishCard(r, true))}</View>
-      ) : (
-        <View style={styles.mealGroups}>{renderMealGroups(rows)}</View>
-      )}
-    </>
-  );
+  const q = query.trim().toLowerCase();
+  const filteredDishes = q ? dishes.filter((r) => r.title.toLowerCase().includes(q)) : dishes;
+  const filteredMenus = q ? menus.filter((r) => r.title.toLowerCase().includes(q)) : menus;
 
   return (
     <View style={styles.dashboard}>
@@ -263,20 +231,48 @@ function Dashboard({ email }: { email: string }) {
 
       <View style={styles.tabs}>
         <TabButton label="Gerechten" active={tab === 'dishes'} onPress={() => setTab('dishes')} />
-        <TabButton label="Overig" active={tab === 'overig'} onPress={() => setTab('overig')} />
         <TabButton label="Menu's" active={tab === 'menus'} onPress={() => setTab('menus')} />
       </View>
 
       {busyMsg ? <Text style={styles.message}>{busyMsg}</Text> : null}
+      {flash ? <Text style={styles.flash}>{flash}</Text> : null}
+
+      <View style={styles.searchBox}>
+        <Ionicons name="search" size={18} color={colors.textMuted} />
+        <TextInput
+          style={styles.searchInput}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Zoeken op naam…"
+          placeholderTextColor={colors.textMuted}
+          autoCapitalize="none"
+        />
+        {query ? (
+          <Ionicons name="close-circle" size={18} color={colors.textMuted} onPress={() => setQuery('')} />
+        ) : null}
+      </View>
 
       {tab === 'dishes' ? (
-        renderDishList(normalDishes, 'Gerechten', false)
-      ) : tab === 'overig' ? (
-        renderDishList(overigDishes, 'Overig', true)
+        <>
+          <View style={styles.listHeader}>
+            <Text style={styles.h2}>Gerechten ({filteredDishes.length})</Text>
+            <Pressable onPress={() => setForm({ kind: 'dish' })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
+              <Ionicons name="add" size={18} color={colors.textOnPrimary} />
+              <Text style={styles.newButtonText}>Nieuw</Text>
+            </Pressable>
+          </View>
+          {loading ? (
+            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+          ) : filteredDishes.length === 0 ? (
+            <Text style={styles.empty}>{query ? 'Geen gerechten gevonden.' : 'Nog geen gerechten. Voeg er een toe.'}</Text>
+          ) : (
+            <View style={styles.mealGroups}>{renderCategoryGroups(filteredDishes)}</View>
+          )}
+        </>
       ) : (
         <>
           <View style={styles.listHeader}>
-            <Text style={styles.h2}>Menu's ({menus.length})</Text>
+            <Text style={styles.h2}>Menu's ({filteredMenus.length})</Text>
             <Pressable onPress={() => setForm({ kind: 'menu' })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
               <Ionicons name="add" size={18} color={colors.textOnPrimary} />
               <Text style={styles.newButtonText}>Nieuw</Text>
@@ -284,11 +280,11 @@ function Dashboard({ email }: { email: string }) {
           </View>
           {loading ? (
             <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
-          ) : menus.length === 0 ? (
-            <Text style={styles.empty}>Nog geen menu's. Importeer de ingebouwde set of voeg er een toe.</Text>
+          ) : filteredMenus.length === 0 ? (
+            <Text style={styles.empty}>{query ? "Geen menu's gevonden." : "Nog geen menu's. Voeg er een toe."}</Text>
           ) : (
             <View style={styles.grid}>
-              {menus.map((row) => (
+              {filteredMenus.map((row) => (
                 <View key={row.id} style={styles.itemCard}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.itemTitle} numberOfLines={1}>{row.title}</Text>
@@ -333,6 +329,13 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: colors.primary },
   tabText: { ...typography.label, color: colors.textSecondary },
   tabTextActive: { color: colors.textOnPrimary },
+  flash: { ...typography.label, color: colors.primary, backgroundColor: colors.primarySoft, borderRadius: radius.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+  searchBox: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: colors.surface, borderRadius: radius.md,
+    paddingHorizontal: spacing.md, paddingVertical: spacing.sm, ...shadow.soft,
+  },
+  searchInput: { ...typography.body, color: colors.textPrimary, flex: 1 },
   listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.sm },
   h2: { ...typography.heading, color: colors.textPrimary },
   mealGroups: { gap: spacing.lg },

@@ -84,6 +84,35 @@ function isReactive(data: unknown): data is ReactiveRecipe {
   );
 }
 
+const EMPTY_NUTRITION = {
+  calories: 0,
+  protein: 0,
+  carbs: 0,
+  fat: 0,
+  fiber: 0,
+  micronutrients: {},
+  isIndicative: true,
+};
+
+/**
+ * Defensive fill for a dish coming from the backend so a partially-formed row
+ * can't crash a screen. The stored fields win; only missing ones get defaults.
+ */
+function normalizeRecipe(data: unknown): Recipe {
+  const r = (data ?? {}) as Partial<Recipe>;
+  return {
+    ...(r as Recipe),
+    seasons: Array.isArray(r.seasons) && r.seasons.length ? r.seasons : ['lente-zomer'],
+    tags: Array.isArray(r.tags) ? r.tags : [],
+    ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
+    instructions: Array.isArray(r.instructions) ? r.instructions : [],
+    prepTime: typeof r.prepTime === 'number' ? r.prepTime : 0,
+    cookTime: typeof r.cookTime === 'number' ? r.cookTime : 0,
+    baseServings: typeof r.baseServings === 'number' ? r.baseServings : 1,
+    nutrition: r.nutrition ? { ...EMPTY_NUTRITION, ...r.nutrition } : EMPTY_NUTRITION,
+  };
+}
+
 /**
  * Loads dishes from Supabase and replaces the bundled set. On any error, or
  * when there are no rows yet, the bundled fallback is kept. Safe to call when
@@ -105,7 +134,7 @@ export async function loadContent(): Promise<void> {
         if (row.kind === 'reactive' && isReactive(row.data)) {
           reactiveDishes.push(row.data);
         } else {
-          staticDishes.push(row.data as Recipe);
+          staticDishes.push(normalizeRecipe(row.data));
         }
       }
       state = buildState(staticDishes, reactiveDishes);
