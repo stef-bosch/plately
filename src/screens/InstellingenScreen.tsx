@@ -5,19 +5,17 @@ import { PlatelyLogo } from '../components/BrandIcons';
 import { FilterChip } from '../components/FilterChip';
 import { Screen } from '../components/Screen';
 import { Stepper } from '../components/Stepper';
-import { dietaryLabel, energyNeedLabel } from '../constants/labels';
+import { dietaryLabel } from '../constants/labels';
 import { useSettings } from '../context/SettingsContext';
 import { colors, radius, shadow, spacing, typography } from '../theme';
-import type { DietaryPreference, EnergyNeed } from '../types';
-
-const ENERGY_NEEDS: EnergyNeed[] = ['laag', 'gemiddeld', 'hoog'];
+import type { DietaryPreference } from '../types';
 
 const DIETS: DietaryPreference[] = [
-  'vegetarisch',
-  'vegan',
-  'lactosevrij',
   'glutenvrij',
   'halal',
+  'lactosevrij',
+  'vegan',
+  'vegetarisch',
 ];
 
 export function InstellingenScreen() {
@@ -41,21 +39,6 @@ export function InstellingenScreen() {
             value={settings.defaultServings}
             onChange={(n) => updateSettings({ defaultServings: n })}
           />
-        </View>
-      </SettingCard>
-
-      {/* Energy need */}
-      <SettingCard title="Energiebehoefte">
-        <View style={styles.grid}>
-          {ENERGY_NEEDS.map((level) => (
-            <FilterChip
-              key={level}
-              label={energyNeedLabel[level]}
-              active={settings.energyNeed === level}
-              onPress={() => updateSettings({ energyNeed: level })}
-              style={styles.gridItemThird}
-            />
-          ))}
         </View>
       </SettingCard>
 

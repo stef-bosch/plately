@@ -6,7 +6,6 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -52,9 +51,6 @@ const MACRO_LABEL: Record<(typeof MACROS)[number], string> = {
 const MACRO_UNIT: Record<(typeof MACROS)[number], string> = {
   calories: 'kcal', protein: 'g', carbs: 'g', fat: 'g', fiber: 'g',
 };
-
-const DEFAULT_LOW_PCT = '80';
-const DEFAULT_HIGH_PCT = '125';
 
 function nutritionToStrings(n: Nutrition): Record<string, string> {
   return {
@@ -130,13 +126,6 @@ export function DishForm({
   const [macros, setMacros] = useState<Record<string, string>>({});
   const [imageUrl, setImageUrl] = useState('');
   const [uploading, setUploading] = useState(false);
-  // Reactive dishes scale ingredients + nutrition with the user's energy need.
-  // Overig items (cocktails/sauzen) don't scale, so they default to off.
-  const [reactive, setReactive] = useState(!overig);
-  const [lowPct, setLowPct] = useState(DEFAULT_LOW_PCT);
-  const [highPct, setHighPct] = useState(DEFAULT_HIGH_PCT);
-  const [lowOverrides, setLowOverrides] = useState<Record<string, string>>({});
-  const [highOverrides, setHighOverrides] = useState<Record<string, string>>({});
   // Preserved across edits so diet swaps aren't silently dropped.
   const [dietSwaps, setDietSwaps] = useState<DietSwap[] | undefined>(undefined);
 
@@ -148,11 +137,10 @@ export function DishForm({
         if (!row) {
           setError('Gerecht niet gevonden.');
         } else if (row.kind === 'reactive') {
-          // Reactive: base the form on the "gemiddeld" variant and keep the
-          // stored laag/hoog values as explicit overrides (lossless editing).
+          // Older reactive dishes: load the "gemiddeld" variant as the base.
+          // Saving turns it into a plain (static) dish.
           const rr = row.data as ReactiveRecipe;
           const base = rr.energy.gemiddeld;
-          setReactive(true);
           setTitle(rr.title);
           setIdValue(rr.id);
           setIdTouched(true);
@@ -167,16 +155,8 @@ export function DishForm({
           setGroups(groupsFromIngredients(base.ingredients));
           setSteps(rr.instructions.length ? rr.instructions : ['']);
           setMacros(nutritionToStrings(base.nutrition));
-          setLowOverrides(nutritionToStrings(rr.energy.laag.nutrition));
-          setHighOverrides(nutritionToStrings(rr.energy.hoog.nutrition));
-          const baseCal = base.nutrition.calories;
-          if (baseCal > 0) {
-            setLowPct(String(Math.round((rr.energy.laag.nutrition.calories / baseCal) * 100)));
-            setHighPct(String(Math.round((rr.energy.hoog.nutrition.calories / baseCal) * 100)));
-          }
         } else {
           const r = row.data as Recipe;
-          setReactive(false);
           setTitle(r.title);
           setIdValue(r.id);
           setIdTouched(true);
@@ -206,17 +186,10 @@ export function DishForm({
 
   const effectiveId = idTouched ? idValue : slugify(title);
 
-  const pctToFactor = (value: string, fallback: number) => {
-    const v = Number((value ?? '').replace(',', '.'));
-    return !v || Number.isNaN(v) ? fallback : v / 100;
-  };
-  const lowFactor = pctToFactor(lowPct, 0.8);
-  const highFactor = pctToFactor(highPct, 1.25);
   const baseMacro = (key: string) => {
     const v = Number((macros[key] ?? '').replace(',', '.'));
     return Number.isNaN(v) ? 0 : v;
   };
-
 
   // Web-only: pick a file and upload it to the public `dish-images` bucket,
   // then store its public URL as the dish photo.
@@ -304,93 +277,25 @@ export function DishForm({
 
     setSaving(true);
     try {
-      if (reactive) {
-        // Scale each group's scalable numeric quantities by the level factor,
-        // keeping the group headings intact.
-        const scaleGroups = (f: number): IngredientGroup[] =>
-          baseGroups.map((g) => ({
-            category: g.category,
-            items: g.items.map((it) =>
-              it.scalable && typeof it.quantity === 'number'
-                ? { ...it, quantity: Math.round(it.quantity * f * 100) / 100 }
-                : it,
-            ),
-          }));
-        // Nutrition for a level: an explicit override wins, else base × factor.
-        const levelNutrition = (
-          f: number,
-          overrides: Record<string, string>,
-        ): Nutrition => {
-          const pick = (key: string) => {
-            const raw = (overrides[key] ?? '').replace(',', '.').trim();
-            if (raw !== '') {
-              const n = Number(raw);
-              if (!Number.isNaN(n)) return n;
-            }
-            return Math.round(baseMacro(key) * f);
-          };
-          return {
-            calories: pick('calories'),
-            protein: pick('protein'),
-            carbs: pick('carbs'),
-            fat: pick('fat'),
-            fiber: pick('fiber'),
-            micronutrients: {},
-            isIndicative: true,
-          };
-        };
-
-        const reactiveRecipe: ReactiveRecipe = {
-          id: effectiveId,
-          title: title.trim(),
-          subtitle: subtitle.trim() || undefined,
-          image,
-          mealType,
-          seasons: seasonsOut,
-          baseServings: 1,
-          prepTime: Number(totalTime) || 0,
-          cookTime: 0,
-          tags,
-          instructions,
-          energy: {
-            laag: {
-              ingredients: scaleGroups(lowFactor),
-              nutrition: levelNutrition(lowFactor, lowOverrides),
-            },
-            gemiddeld: {
-              ingredients: baseGroups,
-              nutrition: baseNutrition,
-            },
-            hoog: {
-              ingredients: scaleGroups(highFactor),
-              nutrition: levelNutrition(highFactor, highOverrides),
-            },
-          },
-          suitableFor,
-          dietSwaps,
-        };
-        await saveDish(reactiveRecipe, 'reactive');
-      } else {
-        const recipe: Recipe = {
-          id: effectiveId,
-          title: title.trim(),
-          subtitle: subtitle.trim() || undefined,
-          image,
-          mealType,
-          seasons: seasonsOut,
-          baseServings: 1,
-          prepTime: Number(totalTime) || 0,
-          cookTime: 0,
-          tags,
-          ingredients: baseGroups,
-          instructions,
-          nutrition: baseNutrition,
-          suitableFor: suitableFor.length ? suitableFor : undefined,
-          dietSwaps,
-          overigCategory: overigCat,
-        };
-        await saveDish(recipe, 'static');
-      }
+      const recipe: Recipe = {
+        id: effectiveId,
+        title: title.trim(),
+        subtitle: subtitle.trim() || undefined,
+        image,
+        mealType,
+        seasons: seasonsOut,
+        baseServings: 1,
+        prepTime: Number(totalTime) || 0,
+        cookTime: 0,
+        tags,
+        ingredients: baseGroups,
+        instructions,
+        nutrition: baseNutrition,
+        suitableFor: suitableFor.length ? suitableFor : undefined,
+        dietSwaps,
+        overigCategory: overigCat,
+      };
+      await saveDish(recipe, 'static');
       await reloadContent();
       onSaved();
     } catch (e) {
@@ -448,42 +353,6 @@ export function DishForm({
           <TextInput value={totalTime} onChangeText={setTotalTime} keyboardType="numeric" style={styles.input} />
         </Field>
       </Section>
-
-      {!overig ? (
-      <Section title="Energiebehoefte">
-        <View style={styles.switchRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Past aan op energiebehoefte</Text>
-            <Text style={styles.hint}>
-              Aan: hoeveelheden én voedingswaarden schalen mee met de instelling
-              (laag/gemiddeld/hoog) van de gebruiker. Uit: het gerecht is voor
-              iedereen gelijk (bijv. sauzen, cocktails).
-            </Text>
-          </View>
-          <Switch
-            value={reactive}
-            onValueChange={setReactive}
-            trackColor={{ false: colors.border, true: colors.primary }}
-            thumbColor={colors.surface}
-            ios_backgroundColor={colors.border}
-            // `activeThumbColor` is a react-native-web prop: without it the web
-            // Switch falls back to a teal thumb when on. Keep the knob white so
-            // the control reads as fully orange, like the frontend settings.
-            {...({ activeThumbColor: colors.surface } as object)}
-          />
-        </View>
-        {reactive ? (
-          <View style={styles.twoCol}>
-            <Field label="Laag (% van gemiddeld)" style={{ flex: 1 }}>
-              <TextInput value={lowPct} onChangeText={setLowPct} keyboardType="numeric" placeholder={DEFAULT_LOW_PCT} placeholderTextColor={colors.textMuted} style={styles.input} />
-            </Field>
-            <Field label="Hoog (% van gemiddeld)" style={{ flex: 1 }}>
-              <TextInput value={highPct} onChangeText={setHighPct} keyboardType="numeric" placeholder={DEFAULT_HIGH_PCT} placeholderTextColor={colors.textMuted} style={styles.input} />
-            </Field>
-          </View>
-        ) : null}
-      </Section>
-      ) : null}
 
       <Section title="Foto">
         <Text style={styles.hint}>
@@ -556,9 +425,6 @@ export function DishForm({
         <Text style={styles.hint}>
           Groepeer ingrediënten onder een kop (bijv. "Basis", "Topping"). De kop
           verschijnt in de app boven de betreffende ingrediënten.
-          {reactive
-            ? ` Schaalbare hoeveelheden passen automatisch mee (laag ${Math.round(lowFactor * 100)}% / hoog ${Math.round(highFactor * 100)}%); "naar smaak" blijft gelijk.`
-            : ''}
         </Text>
         {groups.map((group, gi) => (
           <View key={gi} style={styles.groupBlock}>
@@ -619,7 +485,7 @@ export function DishForm({
         </Pressable>
       </Section>
 
-      <Section title={reactive ? 'Voedingswaarden (gemiddeld, per portie)' : 'Voedingswaarden (per portie)'}>
+      <Section title="Voedingswaarden (per portie)">
         <View style={styles.macroGrid}>
           {MACROS.map((m) => (
             <Field key={m} label={`${MACRO_LABEL[m]} (${MACRO_UNIT[m]})`} style={styles.macroField}>
@@ -627,44 +493,6 @@ export function DishForm({
             </Field>
           ))}
         </View>
-        {reactive ? (
-          <View style={styles.overrideBlock}>
-            <Text style={styles.hint}>
-              Laag/hoog worden automatisch berekend uit gemiddeld. Vul een veld
-              alleen in om te overschrijven (bijv. voor ronde getallen); laat leeg
-              voor automatisch.
-            </Text>
-            <View style={styles.overrideRow}>
-              <Text style={[styles.label, styles.overrideLabel]} />
-              <Text style={[styles.label, styles.overrideInput]}>Laag</Text>
-              <Text style={[styles.label, styles.overrideInput]}>Hoog</Text>
-            </View>
-            {MACROS.map((m) => {
-              const b = baseMacro(m);
-              return (
-                <View key={m} style={styles.overrideRow}>
-                  <Text style={[styles.label, styles.overrideLabel]}>{`${MACRO_LABEL[m]} (${MACRO_UNIT[m]})`}</Text>
-                  <TextInput
-                    value={lowOverrides[m] ?? ''}
-                    onChangeText={(t) => setLowOverrides((p) => ({ ...p, [m]: t }))}
-                    keyboardType="numeric"
-                    placeholder={String(Math.round(b * lowFactor))}
-                    placeholderTextColor={colors.textMuted}
-                    style={[styles.input, styles.overrideInput]}
-                  />
-                  <TextInput
-                    value={highOverrides[m] ?? ''}
-                    onChangeText={(t) => setHighOverrides((p) => ({ ...p, [m]: t }))}
-                    keyboardType="numeric"
-                    placeholder={String(Math.round(b * highFactor))}
-                    placeholderTextColor={colors.textMuted}
-                    style={[styles.input, styles.overrideInput]}
-                  />
-                </View>
-              );
-            })}
-          </View>
-        ) : null}
       </Section>
 
       <Pressable onPress={save} disabled={saving} style={({ pressed }) => [styles.saveButton, pressed && styles.pressed, saving && styles.disabled]}>
@@ -701,11 +529,6 @@ const styles = StyleSheet.create({
   hint: { ...typography.caption, color: colors.textMuted },
   preview: { width: '100%', height: 180, borderRadius: radius.md, backgroundColor: colors.background },
   photoActions: { flexDirection: 'row', gap: spacing.sm },
-  switchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  overrideBlock: { gap: spacing.xs, marginTop: spacing.sm },
-  overrideRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  overrideLabel: { width: 128 },
-  overrideInput: { flex: 1 },
   field: { gap: 4 },
   label: { ...typography.label, color: colors.textSecondary },
   input: {
@@ -720,7 +543,6 @@ const styles = StyleSheet.create({
   },
   disabledInput: { opacity: 0.6 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  twoCol: { flexDirection: 'row', gap: spacing.md },
   groupBlock: { gap: spacing.xs, paddingLeft: spacing.sm, borderLeftWidth: 2, borderLeftColor: colors.border, marginBottom: spacing.sm },
   groupHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: 2 },
   groupTitleInput: { ...typography.bodyStrong },
