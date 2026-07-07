@@ -1,0 +1,174 @@
+// PostgreSQL data model for the nutrition backend.
+// The JSON columns hold the flexible bits (preferences, instructions, the
+// snapshot of a scaled meal); the strongly-typed columns drive the calculations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Sex {
+  male
+  female
+  other
+}
+
+enum ActivityLevel {
+  sedentary
+  light
+  moderate
+  active
+  very_active
+}
+
+enum Goal {
+  maintain
+  lose
+  gain
+  muscle_gain
+}
+
+enum MealType {
+  breakfast
+  lunch
+  snack
+  dinner
+}
+
+enum IngredientState {
+  raw
+  cooked
+  dry
+  drained
+  prepared
+}
+
+enum IngredientRole {
+  carb_base
+  protein_base
+  fat_source
+  vegetable
+  fruit
+  dairy_sauce
+  sauce_base
+  flavouring
+  garnish
+  liquid
+  optional_topping
+}
+
+model User {
+  id                  String        @id @default(cuid())
+  sex                 Sex
+  birthDate           DateTime      @map("birth_date")
+  heightCm            Float         @map("height_cm")
+  weightKg            Float         @map("weight_kg")
+  activityLevel       ActivityLevel @map("activity_level")
+  goal                Goal
+  manualKcalTarget    Int?          @map("manual_kcal_target")
+  dietaryPreferences  Json          @default("[]") @map("dietary_preferences")
+  allergies           Json          @default("[]")
+  dislikedIngredients Json          @default("[]") @map("disliked_ingredients")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  scaledMealOutputs ScaledMealOutput[]
+
+  @@map("users")
+}
+
+model FoodItem {
+  id                 String   @id @default(cuid())
+  name               String
+  kcalPer100g        Float    @map("kcal_per_100g")
+  proteinPer100g     Float    @map("protein_per_100g")
+  carbsPer100g       Float    @map("carbs_per_100g")
+  fatPer100g         Float    @map("fat_per_100g")
+  fiberPer100g       Float?   @map("fiber_per_100g")
+  saltPer100g        Float?   @map("salt_per_100g")
+  saturatedFatPer100g Float?  @map("saturated_fat_per_100g")
+  foodGroup          String   @map("food_group")
+  schijfVanVijf      Boolean  @default(false) @map("schijf_van_vijf")
+  source             String?
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  recipeIngredients RecipeIngredient[]
+
+  @@map("food_items")
+}
+
+model Recipe {
+  id                String   @id @default(cuid())
+  name              String
+  mealType          MealType @map("meal_type")
+  cuisine           String?
+  season            Json     @default("[]")
+  baseServings      Int      @default(1) @map("base_servings")
+  baseKcal          Float    @map("base_kcal")
+  baseProtein       Float    @map("base_protein")
+  baseCarbs         Float    @map("base_carbs")
+  baseFat           Float    @map("base_fat")
+  activeTimeMinutes Int?     @map("active_time_minutes")
+  totalTimeMinutes  Int?     @map("total_time_minutes")
+  tags              Json     @default("[]")
+  description       String?
+  instructions      Json     @default("[]")
+  wasteFreeTip      String?  @map("waste_free_tip")
+  tasteBalance      String?  @map("taste_balance")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  ingredients       RecipeIngredient[]
+  scaledMealOutputs ScaledMealOutput[]
+
+  @@map("recipes")
+}
+
+model RecipeIngredient {
+  id              String          @id @default(cuid())
+  recipeId        String          @map("recipe_id")
+  foodItemId      String          @map("food_item_id")
+  displayName     String          @map("display_name")
+  amountG         Float           @map("amount_g")
+  unit            String
+  state           IngredientState @default(raw)
+  role            IngredientRole
+  scalable        Boolean         @default(true)
+  minG            Float?          @map("min_g")
+  maxG            Float?          @map("max_g")
+  stepG           Float?          @map("step_g")
+  scalePriorityUp   Int           @default(0) @map("scale_priority_up")
+  scalePriorityDown Int           @default(0) @map("scale_priority_down")
+  scalingGroup    String?         @map("scaling_group")
+  required        Boolean         @default(true)
+  notes           String?
+
+  recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  foodItem FoodItem @relation(fields: [foodItemId], references: [id])
+
+  @@index([recipeId])
+  @@map("recipe_ingredients")
+}
+
+model ScaledMealOutput {
+  id                    String   @id @default(cuid())
+  userId                String   @map("user_id")
+  recipeId              String   @map("recipe_id")
+  targetKcal            Float    @map("target_kcal")
+  actualKcal            Float    @map("actual_kcal")
+  protein               Float
+  carbs                 Float
+  fat                   Float
+  scaledIngredientsJson Json     @map("scaled_ingredients_json")
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id])
+  recipe Recipe @relation(fields: [recipeId], references: [id])
+
+  @@map("scaled_meal_outputs")
+}

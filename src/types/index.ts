@@ -56,6 +56,37 @@ export type RecipeTag =
   | 'Cocktails'
   | 'Sauzen';
 
+/** The role an ingredient plays in a dish — drives how the calc-engine scales it. */
+export type IngredientRole =
+  | 'carb_base'
+  | 'protein_base'
+  | 'fat_source'
+  | 'vegetable'
+  | 'fruit'
+  | 'dairy_sauce'
+  | 'sauce_base'
+  | 'flavouring'
+  | 'garnish'
+  | 'liquid'
+  | 'optional_topping';
+
+/**
+ * Optional per-ingredient metadata that lets the nutrition engine personalise a
+ * recipe. When present (and amounts are in grams), the ingredient can be scaled
+ * component-wise; when absent the ingredient is left untouched by the engine.
+ */
+export interface IngredientScaling {
+  role: IngredientRole;
+  minG?: number;
+  maxG?: number;
+  stepG?: number;
+  /** Nutrition per 100 g so the engine can compute per-ingredient kcal/macros. */
+  kcalPer100g: number;
+  proteinPer100g: number;
+  carbsPer100g: number;
+  fatPer100g: number;
+}
+
 export interface Ingredient {
   name: string;
   /**
@@ -74,6 +105,8 @@ export interface Ingredient {
    * like "½ aubergine" where the raw number (0.5) reads poorly on its own.
    */
   display?: string;
+  /** Optional metadata for the personalisation engine (see IngredientScaling). */
+  scaling?: IngredientScaling;
 }
 
 export interface IngredientGroup {
@@ -230,6 +263,29 @@ export type DietaryPreference =
   | 'glutenvrij'
   | 'halal';
 
+/* Fields the nutrition calc-engine needs to personalise portions. */
+export type BodySex = 'male' | 'female' | 'other';
+export type CalcActivityLevel =
+  | 'sedentary'
+  | 'light'
+  | 'moderate'
+  | 'active'
+  | 'very_active';
+export type CalcGoal = 'maintain' | 'lose' | 'gain' | 'muscle_gain';
+export type ProteinProfile = 'standard' | 'active' | 'muscle';
+
+export interface NutritionProfile {
+  sex: BodySex;
+  ageYears: number;
+  heightCm: number;
+  weightKg: number;
+  activityLevel: CalcActivityLevel;
+  goal: CalcGoal;
+  proteinProfile: ProteinProfile;
+  /** When set (>0) it overrides the calculated kcal target. */
+  manualKcalTarget: number | null;
+}
+
 export interface Settings {
   goal: Goal;
   defaultServings: number;
@@ -237,6 +293,8 @@ export interface Settings {
   preferredSeason: Season;
   dietaryPreferences: DietaryPreference[];
   showMicronutrients: boolean;
+  /** Body/goal data used to compute the daily kcal + macro targets. */
+  nutritionProfile: NutritionProfile;
 }
 
 /* ---------- Reactive recipes ---------- */
