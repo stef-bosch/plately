@@ -1,31 +1,12 @@
-import type {
-  DietaryPreference,
-  Nutrition,
-  Recipe,
-  ReactiveRecipe,
-  Settings,
-} from '../types';
-
-/** Settings that influence how a reactive recipe resolves. */
-export type ResolveSettings = Pick<Settings, 'energyNeed' | 'dietaryPreferences'>;
-
-/** Default resolution: the medium portion. */
-export const DEFAULT_RESOLVE: ResolveSettings = {
-  energyNeed: 'gemiddeld',
-  dietaryPreferences: [],
-};
+import type { DietaryPreference, Recipe, ReactiveRecipe } from '../types';
 
 /**
- * Collapses a reactive recipe into a concrete `Recipe` for the given settings.
- * Only the energy need matters here (it picks the portion + nutrition); dietary
+ * Collapses a reactive recipe into a concrete `Recipe`. Reactive dishes carry
+ * portion variants; the app shows the medium (`gemiddeld`) portion. Dietary
  * preferences are handled by filtering the list, not by morphing the recipe.
  */
-export function resolveRecipe(
-  base: ReactiveRecipe,
-  settings: ResolveSettings = DEFAULT_RESOLVE,
-): Recipe {
-  const energy = base.energy[settings.energyNeed] ?? base.energy.gemiddeld;
-  const nutrition: Nutrition = energy.nutrition;
+export function resolveRecipe(base: ReactiveRecipe): Recipe {
+  const energy = base.energy.gemiddeld;
 
   return {
     id: base.id,
@@ -40,7 +21,7 @@ export function resolveRecipe(
     tags: base.tags,
     ingredients: energy.ingredients,
     instructions: base.instructions,
-    nutrition,
+    nutrition: energy.nutrition,
     suitableFor: base.suitableFor,
     dietSwaps: base.dietSwaps,
   };

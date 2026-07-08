@@ -1,10 +1,6 @@
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import type { Menu, MenuCourseType, Recipe, ReactiveRecipe } from '../types';
-import {
-  DEFAULT_RESOLVE,
-  resolveRecipe,
-  type ResolveSettings,
-} from '../utils/resolveRecipe';
+import { resolveRecipe } from '../utils/resolveRecipe';
 
 /**
  * Content store for dishes and menus.
@@ -156,30 +152,20 @@ export async function reloadContent(): Promise<void> {
 }
 
 /**
- * Resolves a recipe by id. Reactive dishes are collapsed to the right portion
- * for the given settings; static dishes are returned as-is.
+ * Resolves a recipe by id. Reactive dishes are collapsed to their portion;
+ * static dishes are returned as-is.
  */
-export function getRecipeById(
-  id: string,
-  settings: ResolveSettings = DEFAULT_RESOLVE,
-): Recipe | undefined {
+export function getRecipeById(id: string): Recipe | undefined {
   const s = dishState();
   const reactive = s.reactiveById[id];
-  if (reactive) return resolveRecipe(reactive, settings);
+  if (reactive) return resolveRecipe(reactive);
   return s.staticById[id];
 }
 
-/**
- * The full browseable recipe list (reactive dishes + static dishes), resolved
- * for the given settings. Used by the recipe overview.
- */
-export function getAllRecipes(
-  settings: ResolveSettings = DEFAULT_RESOLVE,
-): Recipe[] {
+/** The full browseable recipe list (reactive dishes + static dishes). */
+export function getAllRecipes(): Recipe[] {
   const s = dishState();
-  const resolvedReactive = s.reactiveDishes.map((recipe) =>
-    resolveRecipe(recipe, settings),
-  );
+  const resolvedReactive = s.reactiveDishes.map((recipe) => resolveRecipe(recipe));
   return [...resolvedReactive, ...s.staticDishes];
 }
 

@@ -1,7 +1,6 @@
 import { getRecipeById } from '../data/recipes';
 import type { Recipe, WeeklyPlan } from '../types';
 import { escapeHtml, printHtml } from './printHtml';
-import type { ResolveSettings } from './resolveRecipe';
 import { displayIngredientName, formatQuantity } from './scaling';
 
 /**
@@ -24,17 +23,14 @@ interface ShoppingItem {
 }
 
 /** All recipes for the week, with repeats kept so quantities add up correctly. */
-function collectWeekRecipes(
-  plan: WeeklyPlan,
-  settings?: ResolveSettings,
-): Recipe[] {
+function collectWeekRecipes(plan: WeeklyPlan): Recipe[] {
   const ids: string[] = [];
   plan.days.forEach((day) => {
     const { ontbijt, lunch, diner, tussendoortje } = day.meals;
     ids.push(ontbijt, lunch, diner, ...tussendoortje);
   });
   return ids
-    .map((id) => getRecipeById(id, settings))
+    .map((id) => getRecipeById(id))
     .filter((recipe): recipe is Recipe => Boolean(recipe));
 }
 
@@ -171,9 +167,8 @@ function buildShoppingListHtml(
 export async function printWeekShoppingList(
   plan: WeeklyPlan,
   weekNumber: number,
-  settings?: ResolveSettings,
 ): Promise<void> {
-  const recipes = collectWeekRecipes(plan, settings);
+  const recipes = collectWeekRecipes(plan);
   const items = aggregateIngredients(recipes);
   await printHtml(buildShoppingListHtml(items, weekNumber));
 }

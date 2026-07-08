@@ -29,16 +29,13 @@ export function DashboardScreen() {
   const dayPlan = plan.days.find((d) => d.day === todayName) ?? plan.days[0];
   const meals = dayPlan.meals;
 
-  const totals = useMemo(
-    () => getDailyTotals(meals, settings),
-    [meals, settings],
-  );
+  const totals = useMemo(() => getDailyTotals(meals), [meals]);
 
-  const ontbijt = getRecipeById(meals.ontbijt, settings);
-  const lunch = getRecipeById(meals.lunch, settings);
-  const diner = getRecipeById(meals.diner, settings);
+  const ontbijt = getRecipeById(meals.ontbijt);
+  const lunch = getRecipeById(meals.lunch);
+  const diner = getRecipeById(meals.diner);
   const snacks = meals.tussendoortje
-    .map((id) => getRecipeById(id, settings))
+    .map((id) => getRecipeById(id))
     .filter((r): r is NonNullable<typeof r> => Boolean(r));
 
   return (

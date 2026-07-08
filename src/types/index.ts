@@ -252,8 +252,6 @@ export interface WeeklyPlan {
 
 /* ---------- Settings ---------- */
 
-export type EnergyNeed = 'laag' | 'gemiddeld' | 'hoog';
-
 export type DietaryPreference =
   | 'vegetarisch'
   | 'vegan'
@@ -286,7 +284,6 @@ export interface NutritionProfile {
 
 export interface Settings {
   defaultServings: number;
-  energyNeed: EnergyNeed;
   preferredSeason: Season;
   dietaryPreferences: DietaryPreference[];
   /** Body/goal data used to compute the daily kcal + macro targets. */
@@ -296,12 +293,15 @@ export interface Settings {
 /* ---------- Reactive recipes ---------- */
 
 /**
- * A recipe whose portion (ingredients + nutrition) follows the user's
- * `energyNeed`. Dietary preferences are NOT used to morph the recipe; instead a
- * recipe declares which diets it suits (as-is or via a trivial swap shown as a
- * hint), and the recipe browser filters on that. `resolveRecipe` collapses one
- * of these into a plain `Recipe` for the UI.
+ * A recipe authored with several portion sizes. Dietary preferences are NOT
+ * used to morph the recipe; instead a recipe declares which diets it suits
+ * (as-is or via a trivial swap shown as a hint), and the recipe browser filters
+ * on that. `resolveRecipe` collapses one of these into a plain `Recipe` for the
+ * UI, using the medium (`gemiddeld`) portion.
  */
+
+/** The portion sizes a reactive recipe can be authored for. */
+export type EnergyNeed = 'laag' | 'gemiddeld' | 'hoog';
 
 /** One full ingredient + nutrition set for a single energy level. */
 export interface EnergyVariant {

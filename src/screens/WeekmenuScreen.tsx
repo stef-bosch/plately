@@ -17,7 +17,6 @@ import {
   getIsoWeekNumber,
   weekDayFromDate,
 } from '../constants/labels';
-import { useSettings } from '../context/SettingsContext';
 import { getRecipeById } from '../data/recipes';
 import { getWeeklyPlanForDate } from '../data/weeklyPlans';
 import { useOpenRecipe } from '../navigation/hooks';
@@ -28,7 +27,6 @@ import { printWeekShoppingList } from '../utils/shoppingListPdf';
 
 export function WeekmenuScreen() {
   const openRecipe = useOpenRecipe();
-  const { settings } = useSettings();
 
   const today = useMemo(() => new Date(), []);
   const weekNumber = getIsoWeekNumber(today);
@@ -41,16 +39,13 @@ export function WeekmenuScreen() {
   const dayPlan =
     plan.days.find((d) => d.day === selectedDay) ?? plan.days[0];
   const meals = dayPlan.meals;
-  const totals = useMemo(
-    () => getDailyTotals(meals, settings),
-    [meals, settings],
-  );
+  const totals = useMemo(() => getDailyTotals(meals), [meals]);
 
-  const ontbijt = getRecipeById(meals.ontbijt, settings);
-  const lunch = getRecipeById(meals.lunch, settings);
-  const diner = getRecipeById(meals.diner, settings);
+  const ontbijt = getRecipeById(meals.ontbijt);
+  const lunch = getRecipeById(meals.lunch);
+  const diner = getRecipeById(meals.diner);
   const snacks = meals.tussendoortje
-    .map((id) => getRecipeById(id, settings))
+    .map((id) => getRecipeById(id))
     .filter((r): r is NonNullable<typeof r> => Boolean(r));
 
   const [downloading, setDownloading] = useState(false);
@@ -58,7 +53,7 @@ export function WeekmenuScreen() {
     if (downloading) return;
     try {
       setDownloading(true);
-      await printWeekShoppingList(plan, weekNumber, settings);
+      await printWeekShoppingList(plan, weekNumber);
     } catch (error) {
       console.warn('Boodschappenlijst maken mislukt', error);
     } finally {

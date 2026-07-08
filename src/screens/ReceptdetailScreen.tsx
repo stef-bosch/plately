@@ -39,7 +39,7 @@ export function ReceptdetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'Receptdetail'>>();
   const { settings } = useSettings();
 
-  const recipe = getRecipeById(route.params.recipeId, settings);
+  const recipe = getRecipeById(route.params.recipeId);
 
   // Dishes written for a fixed party size (e.g. a 4-person menu dish) open at
   // their base servings so the quantities read cleanly; single-serving recipes

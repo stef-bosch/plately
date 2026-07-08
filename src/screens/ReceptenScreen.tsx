@@ -59,8 +59,8 @@ export function ReceptenScreen() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Recipes resolved for the current settings.
-  const allRecipes = useMemo(() => getAllRecipes(settings), [settings]);
+  // The full dish list (loaded once from Supabase at startup).
+  const allRecipes = useMemo(() => getAllRecipes(), []);
 
   const filteredRecipes = useMemo(() => {
     const q = query.trim().toLowerCase();
