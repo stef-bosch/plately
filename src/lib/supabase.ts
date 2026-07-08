@@ -9,7 +9,8 @@ import { Platform } from 'react-native';
  * in the database decides what can actually be read/written.
  *
  * When the env vars are absent the client is `null` and `isSupabaseConfigured`
- * is false, so the app falls back to its bundled recipe data and nothing breaks.
+ * is false; the content store then stays empty (no dishes/menus load), but the
+ * app still runs without crashing.
  */
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;

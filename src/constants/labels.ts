@@ -1,9 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-
 import type {
   DietaryPreference,
-  EnergyNeed,
-  Goal,
   MealType,
   Recipe,
   Season,
@@ -69,19 +65,6 @@ export function dishCategory(
   return custom || MEALTYPE_TO_CATEGORY[recipe.mealType];
 }
 
-export const mealTypeIcon: Record<MealType, keyof typeof Ionicons.glyphMap> = {
-  ontbijt: 'sunny-outline',
-  lunch: 'restaurant-outline',
-  diner: 'moon-outline',
-  tussendoortje: 'nutrition-outline',
-};
-
-export const energyNeedLabel: Record<EnergyNeed, string> = {
-  laag: 'Laag',
-  gemiddeld: 'Gemiddeld',
-  hoog: 'Hoog',
-};
-
 export const seasonLabel: Record<Season, string> = {
   'lente-zomer': 'Lente / zomer',
   'herfst-winter': 'Herfst / winter',
@@ -116,13 +99,6 @@ export const dayOrder: WeekDayName[] = [
   'zaterdag',
   'zondag',
 ];
-
-export const goalLabel: Record<Goal, string> = {
-  'gezond-eten': 'Gezond eten',
-  spierbehoud: 'Spierbehoud',
-  afvallen: 'Afvallen',
-  aankomen: 'Aankomen',
-};
 
 export const dietaryLabel: Record<DietaryPreference, string> = {
   vegetarisch: 'Vegetarisch',

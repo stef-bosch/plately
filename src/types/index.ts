@@ -197,8 +197,8 @@ export interface Recipe {
 
 /**
  * A course within a multi-dish menu. `type` drives the icon/emoji and ordering;
- * `recipeIds` reference full recipes in ../data/recipes.ts so each dish keeps
- * its own detail screen, scaling and nutrition.
+ * `recipeIds` reference full dishes (stored in Supabase) so each keeps its own
+ * detail screen, scaling and nutrition.
  */
 export type MenuCourseType =
   | 'welkom'
@@ -252,8 +252,6 @@ export interface WeeklyPlan {
 
 /* ---------- Settings ---------- */
 
-export type Goal = 'gezond-eten' | 'spierbehoud' | 'afvallen' | 'aankomen';
-
 export type EnergyNeed = 'laag' | 'gemiddeld' | 'hoog';
 
 export type DietaryPreference =
@@ -287,12 +285,10 @@ export interface NutritionProfile {
 }
 
 export interface Settings {
-  goal: Goal;
   defaultServings: number;
   energyNeed: EnergyNeed;
   preferredSeason: Season;
   dietaryPreferences: DietaryPreference[];
-  showMicronutrients: boolean;
   /** Body/goal data used to compute the daily kcal + macro targets. */
   nutritionProfile: NutritionProfile;
 }

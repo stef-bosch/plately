@@ -4,7 +4,7 @@ import type { Season, WeeklyPlan } from '../types';
 /**
  * Two full seasonal week plans (maandag t/m zondag).
  *
- * Meals reference recipe ids from ./recipes.ts. To edit a plan, just swap an
+ * Meals reference dish ids stored in Supabase. To edit a plan, just swap an
  * id — the dashboard, week screen and detail screen all resolve ids lazily.
  */
 

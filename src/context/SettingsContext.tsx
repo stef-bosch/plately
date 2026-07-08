@@ -18,12 +18,10 @@ import type { Settings } from '../types';
 const STORAGE_KEY = 'plately.settings.v1';
 
 const DEFAULT_SETTINGS: Settings = {
-  goal: 'gezond-eten',
   defaultServings: 1,
   energyNeed: 'gemiddeld',
   preferredSeason: 'lente-zomer',
   dietaryPreferences: [],
-  showMicronutrients: true,
   nutritionProfile: {
     sex: 'male',
     ageYears: 30,

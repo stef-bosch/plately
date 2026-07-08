@@ -114,9 +114,9 @@ function normalizeRecipe(data: unknown): Recipe {
 }
 
 /**
- * Loads dishes from Supabase and replaces the bundled set. On any error, or
- * when there are no rows yet, the bundled fallback is kept. Safe to call when
- * Supabase isn't configured (it's a no-op).
+ * Loads dishes and menus from Supabase into the content store. On any error, or
+ * when there are no rows yet, the store keeps whatever it already had (empty on
+ * first load). Safe to call when Supabase isn't configured (it's a no-op).
  */
 export async function loadContent(): Promise<void> {
   if (!isSupabaseConfigured || !supabase) return;
@@ -146,7 +146,7 @@ export async function loadContent(): Promise<void> {
       menus = buildMenuState(menuRows.map((row) => row.data));
     }
   } catch {
-    // Network/down — keep the bundled fallback.
+    // Network/down — keep whatever is already loaded.
   }
 }
 
@@ -183,7 +183,7 @@ export function getAllRecipes(
   return [...resolvedReactive, ...s.staticDishes];
 }
 
-/** All menus (from Supabase when loaded, else bundled). */
+/** All menus loaded from Supabase (empty until loadContent runs). */
 export function getMenus(): Menu[] {
   return menuState().menus;
 }
