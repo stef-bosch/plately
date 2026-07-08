@@ -1,5 +1,6 @@
-import React from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { PlatelyLogo } from '../components/BrandIcons';
 import { FilterChip } from '../components/FilterChip';
@@ -82,35 +83,35 @@ export function InstellingenScreen() {
           </View>
         </Field>
         <View style={styles.numberRow}>
-          <NumberField label="Leeftijd" value={profile.ageYears} unit="jr" onChange={(v) => setProfile({ ageYears: v })} />
-          <NumberField label="Lengte" value={profile.heightCm} unit="cm" onChange={(v) => setProfile({ heightCm: v })} />
-          <NumberField label="Gewicht" value={profile.weightKg} unit="kg" onChange={(v) => setProfile({ weightKg: v })} />
+          <NumberField label="Leeftijd" value={profile.ageYears} onChange={(v) => setProfile({ ageYears: v })} />
+          <NumberField label="Lengte (cm)" value={profile.heightCm} onChange={(v) => setProfile({ heightCm: v })} />
+          <NumberField label="Gewicht (kg)" value={profile.weightKg} onChange={(v) => setProfile({ weightKg: v })} />
         </View>
       </SettingCard>
 
       {/* Activity & goal */}
       <SettingCard title="Activiteit & doel">
-        <Field label="Activiteitsniveau">
-          <View style={styles.grid}>
-            {ACTIVITIES.map((a) => (
-              <FilterChip key={a} label={ACTIVITY_LABEL[a]} active={profile.activityLevel === a} onPress={() => setProfile({ activityLevel: a })} />
-            ))}
-          </View>
-        </Field>
-        <Field label="Doel">
-          <View style={styles.grid}>
-            {GOALS.map((g) => (
-              <FilterChip key={g} label={GOAL_LABEL[g]} active={profile.goal === g} onPress={() => setProfile({ goal: g })} />
-            ))}
-          </View>
-        </Field>
-        <Field label="Eiwitbehoefte">
-          <View style={styles.grid}>
-            {PROTEINS.map((p) => (
-              <FilterChip key={p} label={PROTEIN_LABEL[p]} active={profile.proteinProfile === p} onPress={() => setProfile({ proteinProfile: p })} />
-            ))}
-          </View>
-        </Field>
+        <Dropdown
+          label="Activiteitsniveau"
+          value={profile.activityLevel}
+          options={ACTIVITIES}
+          labels={ACTIVITY_LABEL}
+          onSelect={(v) => setProfile({ activityLevel: v })}
+        />
+        <Dropdown
+          label="Doel"
+          value={profile.goal}
+          options={GOALS}
+          labels={GOAL_LABEL}
+          onSelect={(v) => setProfile({ goal: v })}
+        />
+        <Dropdown
+          label="Eiwitbehoefte"
+          value={profile.proteinProfile}
+          options={PROTEINS}
+          labels={PROTEIN_LABEL}
+          onSelect={(v) => setProfile({ proteinProfile: v })}
+        />
         <Field label="Handmatig kcal-doel (optioneel)">
           <TextInput
             style={styles.input}
@@ -177,15 +178,66 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+/** Lightweight, cross-platform dropdown (tap to expand a single-choice list). */
+function Dropdown<T extends string>({
+  label,
+  value,
+  options,
+  labels,
+  onSelect,
+}: {
+  label: string;
+  value: T;
+  options: readonly T[];
+  labels: Record<T, string>;
+  onSelect: (value: T) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <Pressable
+        onPress={() => setOpen((o) => !o)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        style={styles.dropdownField}
+      >
+        <Text style={styles.dropdownValue}>{labels[value]}</Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textSecondary} />
+      </Pressable>
+      {open ? (
+        <View style={styles.dropdownMenu}>
+          {options.map((o, i) => {
+            const active = o === value;
+            return (
+              <Pressable
+                key={o}
+                onPress={() => {
+                  onSelect(o);
+                  setOpen(false);
+                }}
+                style={[styles.dropdownItem, i > 0 && styles.dropdownItemBorder, active && styles.dropdownItemActive]}
+              >
+                <Text style={[styles.dropdownItemText, active && styles.dropdownItemTextActive]}>
+                  {labels[o]}
+                </Text>
+                {active ? <Ionicons name="checkmark" size={18} color={colors.primary} /> : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 function NumberField({
   label,
   value,
-  unit,
   onChange,
 }: {
   label: string;
   value: number;
-  unit: string;
   onChange: (v: number) => void;
 }) {
   return (
@@ -201,7 +253,6 @@ function NumberField({
             onChange(Number.isNaN(n) ? 0 : n);
           }}
         />
-        <Text style={styles.numberUnit}>{unit}</Text>
       </View>
     </View>
   );
@@ -235,6 +286,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
+  dropdownField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  dropdownValue: { ...typography.body, color: colors.textPrimary },
+  dropdownMenu: {
+    marginTop: spacing.xs,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    ...shadow.soft,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  dropdownItemBorder: { borderTopWidth: 1, borderTopColor: colors.border },
+  dropdownItemActive: { backgroundColor: colors.primarySoft },
+  dropdownItemText: { ...typography.body, color: colors.textPrimary },
+  dropdownItemTextActive: { color: colors.primary },
   numberRow: { flexDirection: 'row', gap: spacing.sm },
   numberField: { flex: 1, gap: spacing.xs },
   numberInputWrap: {
@@ -247,7 +330,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   numberInput: { ...typography.body, color: colors.textPrimary, flex: 1, paddingVertical: spacing.sm },
-  numberUnit: { ...typography.caption, color: colors.textMuted },
   targetRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.xs },
   targetValue: { ...typography.display, fontSize: 40, color: colors.textPrimary },
   targetUnit: { ...typography.subheading, color: colors.textSecondary, marginBottom: 6 },

@@ -10,7 +10,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native';
@@ -51,11 +50,13 @@ export function ReceptdetailScreen() {
       : Math.max(settings.defaultServings, 1),
   );
   const [printing, setPrinting] = useState(false);
-  const [personalize, setPersonalize] = useState(false);
 
+  // Personalisation is always on: every dish is scaled to the user's daily
+  // target automatically. Dishes without scaling metadata simply come back as
+  // not scalable and the section is hidden until their data is filled in.
   const personalized = useMemo(
-    () => (recipe && personalize ? personalizeRecipe(recipe, settings.nutritionProfile) : null),
-    [recipe, personalize, settings.nutritionProfile],
+    () => (recipe ? personalizeRecipe(recipe, settings.nutritionProfile) : null),
+    [recipe, settings.nutritionProfile],
   );
 
   useLayoutEffect(() => {
@@ -233,71 +234,48 @@ export function ReceptdetailScreen() {
         </View>
       </Section>
 
-      {/* Personalise to the user's energy need */}
-      <Section title="Persoonlijke portie">
-        <View style={styles.card}>
-          <View style={styles.personalizeRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.personalizeTitle}>Pas aan op mijn energiebehoefte</Text>
-              <Text style={styles.personalizeHint}>
-                Schaalt de ingrediënten naar jouw dagdoel (uit de instellingen),
-                per rol — smaakmakers blijven gelijk.
-              </Text>
+      {/* Personalised portion — automatically tuned to the user's daily target */}
+      {personalized && personalized.scalable ? (
+        <Section title="Persoonlijke portie">
+          <View style={styles.card}>
+            <Text style={styles.personalizeHint}>
+              Automatisch afgestemd op jouw dagdoel uit de instellingen — per rol
+              geschaald, smaakmakers blijven gelijk.
+            </Text>
+            <View style={[styles.calorieRow, styles.personalizeResult]}>
+              <Text style={styles.calorieValue}>{personalized.nutrition.kcal}</Text>
+              <Text style={styles.calorieUnit}>kcal · doel {personalized.targetKcal}</Text>
             </View>
-            <Switch
-              value={personalize}
-              onValueChange={setPersonalize}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={colors.surface}
-              ios_backgroundColor={colors.border}
-              {...({ activeThumbColor: colors.surface } as object)}
+            <MacroSummary
+              items={[
+                { label: 'Koolhydraten', value: personalized.nutrition.carbsG, unit: 'g', color: colors.carbs },
+                { label: 'Eiwitten', value: personalized.nutrition.proteinG, unit: 'g', color: colors.protein },
+                { label: 'Vetten', value: personalized.nutrition.fatG, unit: 'g', color: colors.fat },
+              ]}
             />
-          </View>
-
-          {personalize && personalized ? (
-            personalized.scalable ? (
-              <View style={styles.personalizeResult}>
-                <View style={styles.calorieRow}>
-                  <Text style={styles.calorieValue}>{personalized.nutrition.kcal}</Text>
-                  <Text style={styles.calorieUnit}>kcal · doel {personalized.targetKcal}</Text>
-                </View>
-                <MacroSummary
-                  items={[
-                    { label: 'Koolhydraten', value: personalized.nutrition.carbsG, unit: 'g', color: colors.carbs },
-                    { label: 'Eiwitten', value: personalized.nutrition.proteinG, unit: 'g', color: colors.protein },
-                    { label: 'Vetten', value: personalized.nutrition.fatG, unit: 'g', color: colors.fat },
-                  ]}
-                />
-                {personalized.changes.length > 0 ? (
-                  <View style={styles.changeList}>
-                    {personalized.changes.map((c) => (
-                      <View key={c.name} style={styles.changeRow}>
-                        <Text style={styles.changeName} numberOfLines={1}>{c.name}</Text>
-                        <Text style={styles.changeAmount}>
-                          {c.baseG} g → {c.scaledG} g
-                          <Text style={c.changeG > 0 ? styles.changeUp : styles.changeDown}>
-                            {'  '}{c.changeG > 0 ? '+' : ''}{c.changeG} g
-                          </Text>
-                        </Text>
-                      </View>
-                    ))}
+            {personalized.changes.length > 0 ? (
+              <View style={styles.changeList}>
+                {personalized.changes.map((c) => (
+                  <View key={c.name} style={styles.changeRow}>
+                    <Text style={styles.changeName} numberOfLines={1}>{c.name}</Text>
+                    <Text style={styles.changeAmount}>
+                      {c.baseG} g → {c.scaledG} g
+                      <Text style={c.changeG > 0 ? styles.changeUp : styles.changeDown}>
+                        {'  '}{c.changeG > 0 ? '+' : ''}{c.changeG} g
+                      </Text>
+                    </Text>
                   </View>
-                ) : (
-                  <Text style={styles.indicative}>Basisportie past al bij jouw doel.</Text>
-                )}
-                {personalized.warnings.map((w) => (
-                  <Text key={w} style={styles.warning}>⚠ {w}</Text>
                 ))}
               </View>
             ) : (
-              <Text style={styles.indicative}>
-                Dit gerecht is nog niet ingesteld voor personalisatie (geen
-                schaalbare ingrediënten met voedingswaarden).
-              </Text>
-            )
-          ) : null}
-        </View>
-      </Section>
+              <Text style={styles.indicative}>Basisportie past al bij jouw doel.</Text>
+            )}
+            {personalized.warnings.map((w) => (
+              <Text key={w} style={styles.warning}>⚠ {w}</Text>
+            ))}
+          </View>
+        </Section>
+      ) : null}
 
       {/* Print / save as PDF */}
       <Pressable
@@ -565,10 +543,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginBottom: spacing.lg,
   },
-  personalizeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  personalizeTitle: { ...typography.bodyStrong, color: colors.textPrimary },
   personalizeHint: { ...typography.caption, color: colors.textSecondary },
-  personalizeResult: { marginTop: spacing.lg, gap: spacing.sm },
+  personalizeResult: { marginTop: spacing.md },
   changeList: { gap: spacing.xs, marginTop: spacing.sm },
   changeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   changeName: { ...typography.body, color: colors.textPrimary, flex: 1 },
