@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { FilterChip } from '../components/FilterChip';
 import { colors, spacing, typography } from '../theme';
 import type { Ingredient, IngredientGroup, IngredientRole, IngredientScaling } from '../types';
-import { formKit } from './formKit';
+import { MoveButtons, formKit, moveInList } from './formKit';
 
 export interface IngredientDraft {
   name: string;
@@ -108,6 +108,11 @@ export function IngredientGroupsEditor({ groups, setGroups }: Props) {
       ),
     );
 
+  const moveItem = (gi: number, idx: number, dir: -1 | 1) =>
+    setGroups((p) => p.map((g, i) => (i === gi ? { ...g, items: moveInList(g.items, idx, dir) } : g)));
+
+  const moveGroup = (gi: number, dir: -1 | 1) => setGroups((p) => moveInList(p, gi, dir));
+
   return (
     <>
       <Text style={formKit.hint}>
@@ -126,9 +131,18 @@ export function IngredientGroupsEditor({ groups, setGroups }: Props) {
               style={[formKit.input, styles.groupTitleInput, { flex: 1 }]}
             />
             {groups.length > 1 ? (
-              <Pressable onPress={() => setGroups((p) => p.filter((_, i) => i !== gi))} style={formKit.iconButton}>
-                <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
-              </Pressable>
+              <>
+                <MoveButtons
+                  onUp={() => moveGroup(gi, -1)}
+                  onDown={() => moveGroup(gi, 1)}
+                  disableUp={gi === 0}
+                  disableDown={gi === groups.length - 1}
+                  label="kop"
+                />
+                <Pressable onPress={() => setGroups((p) => p.filter((_, i) => i !== gi))} style={formKit.iconButton}>
+                  <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
+                </Pressable>
+              </>
             ) : null}
           </View>
 
@@ -138,6 +152,15 @@ export function IngredientGroupsEditor({ groups, setGroups }: Props) {
                 <TextInput value={ing.quantity} onChangeText={(t) => patchItem(gi, idx, { quantity: t })} placeholder="100" placeholderTextColor={colors.textMuted} style={[formKit.input, styles.qtyInput]} />
                 <TextInput value={ing.unit} onChangeText={(t) => patchItem(gi, idx, { unit: t })} placeholder="g" placeholderTextColor={colors.textMuted} style={[formKit.input, styles.unitInput]} />
                 <TextInput value={ing.name} onChangeText={(t) => patchItem(gi, idx, { name: t })} placeholder="ingrediënt" placeholderTextColor={colors.textMuted} style={[formKit.input, { flex: 1 }]} />
+                {group.items.length > 1 ? (
+                  <MoveButtons
+                    onUp={() => moveItem(gi, idx, -1)}
+                    onDown={() => moveItem(gi, idx, 1)}
+                    disableUp={idx === 0}
+                    disableDown={idx === group.items.length - 1}
+                    label="ingrediënt"
+                  />
+                ) : null}
                 <Pressable
                   onPress={() => patchItem(gi, idx, { advancedOpen: !ing.advancedOpen })}
                   style={formKit.iconButton}

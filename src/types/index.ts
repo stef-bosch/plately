@@ -191,6 +191,12 @@ export interface Recipe {
    * categories appear). Empty/undefined means a normal dish.
    */
   overigCategory?: string;
+  /**
+   * Whether this dish may appear in the weekly menu. Defaults to true
+   * (undefined = included) so existing dishes keep showing up; set to false in
+   * the admin to keep a dish out of the weekly menu.
+   */
+  includeInWeekmenu?: boolean;
 }
 
 /* ---------- Menus ---------- */

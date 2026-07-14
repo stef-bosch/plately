@@ -9,7 +9,7 @@ import {
   OTHER_CATEGORIES,
   dishCategory,
 } from '../constants/labels';
-import { getDishRow, saveDish } from '../data/adminApi';
+import { deleteDish, getDishRow, saveDish } from '../data/adminApi';
 import { reloadContent } from '../data/content';
 import { colors, spacing, typography } from '../theme';
 import type {
@@ -25,7 +25,7 @@ import type {
   RecipeTag,
   Season,
 } from '../types';
-import { Field, FormHeader, SaveButton, Section, formKit } from './formKit';
+import { Checkbox, Field, FormHeader, MoveButtons, SaveButton, Section, formKit, moveInList } from './formKit';
 import {
   GroupDraft,
   IngredientDraft,
@@ -77,6 +77,9 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
   const [title, setTitle] = useState('');
   const [idValue, setIdValue] = useState('');
   const [idTouched, setIdTouched] = useState(false);
+  // The id the dish was loaded under, so a rename can clean up the old row.
+  const [originalId, setOriginalId] = useState<string | null>(null);
+  const [includeInWeekmenu, setIncludeInWeekmenu] = useState(true);
   const [subtitle, setSubtitle] = useState('');
   // The dish category (one of the app's categories). Meal categories map back
   // to a mealType on save; the rest are stored as overigCategory.
@@ -106,6 +109,7 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
           setTitle(rr.title);
           setIdValue(rr.id);
           setIdTouched(true);
+          setOriginalId(rr.id);
           setSubtitle(rr.subtitle ?? '');
           setCategory(dishCategory(rr));
           setSeasons(rr.seasons);
@@ -122,6 +126,8 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
           setTitle(r.title);
           setIdValue(r.id);
           setIdTouched(true);
+          setOriginalId(r.id);
+          setIncludeInWeekmenu(r.includeInWeekmenu !== false);
           setSubtitle(r.subtitle ?? '');
           setCategory(dishCategory(r));
           setSeasons(r.seasons);
@@ -157,10 +163,14 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
     if (!title.trim()) return setError('Geef het gerecht een naam.');
     if (!effectiveId) return setError('De id mag niet leeg zijn.');
 
+    // When editing, whether the id was changed to a new value.
+    const renaming = isEdit && originalId != null && effectiveId !== originalId;
+
     setSaving(true);
     try {
-      // Guard against silently overwriting an existing dish with the same id.
-      if (!isEdit) {
+      // Guard against silently overwriting a different dish that already uses
+      // the target id (on create, or when renaming to a new id).
+      if (!isEdit || renaming) {
         const existing = await getDishRow(effectiveId);
         if (existing) {
           setSaving(false);
@@ -230,8 +240,11 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
         suitableFor: suitableFor.length ? suitableFor : undefined,
         dietSwaps,
         overigCategory: overigCat,
+        includeInWeekmenu,
       };
       await saveDish(recipe, 'static');
+      // A renamed dish is written under the new id; remove the stale old row.
+      if (renaming && originalId) await deleteDish(originalId);
       await reloadContent();
       onSaved();
     } catch (e) {
@@ -255,7 +268,10 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
           <TextInput value={title} onChangeText={setTitle} style={formKit.input} placeholder="Bijv. Griekse salade" placeholderTextColor={colors.textMuted} />
         </Field>
         <Field label="Id (uniek)">
-          <TextInput value={effectiveId} onChangeText={(t) => { setIdTouched(true); setIdValue(t); }} editable={!isEdit} style={[formKit.input, isEdit && formKit.disabledInput]} autoCapitalize="none" />
+          <TextInput value={effectiveId} onChangeText={(t) => { setIdTouched(true); setIdValue(t); }} style={formKit.input} autoCapitalize="none" autoCorrect={false} />
+          {isEdit ? (
+            <Text style={formKit.hint}>Pas je de id aan, dan wordt de oude id vervangen.</Text>
+          ) : null}
         </Field>
         <Field label="Ondertitel">
           <TextInput value={subtitle} onChangeText={setSubtitle} style={formKit.input} placeholder="Korte tagline" placeholderTextColor={colors.textMuted} />
@@ -286,6 +302,11 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
         <Field label="Bereidingstijd (min)">
           <TextInput value={totalTime} onChangeText={setTotalTime} keyboardType="numeric" style={formKit.input} />
         </Field>
+        <Checkbox
+          checked={includeInWeekmenu}
+          onToggle={() => setIncludeInWeekmenu((v) => !v)}
+          label="Inbegrepen in weekmenu"
+        />
       </Section>
 
       <Section title="Foto">
@@ -314,6 +335,15 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
           <View key={idx} style={styles.stepRow}>
             <Text style={styles.stepNum}>{idx + 1}</Text>
             <TextInput value={step} onChangeText={(t) => setSteps((p) => p.map((x, i) => (i === idx ? t : x)))} placeholder="Stap…" placeholderTextColor={colors.textMuted} multiline style={[formKit.input, { flex: 1 }]} />
+            {steps.length > 1 ? (
+              <MoveButtons
+                onUp={() => setSteps((p) => moveInList(p, idx, -1))}
+                onDown={() => setSteps((p) => moveInList(p, idx, 1))}
+                disableUp={idx === 0}
+                disableDown={idx === steps.length - 1}
+                label="stap"
+              />
+            ) : null}
             <Pressable onPress={() => setSteps((p) => p.filter((_, i) => i !== idx))} style={formKit.iconButton}>
               <Ionicons name="close" size={18} color={colors.textMuted} />
             </Pressable>

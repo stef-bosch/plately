@@ -48,7 +48,7 @@ export function RecipeCard({ recipe, onPress }: RecipeCardProps) {
           <View style={styles.statDivider} />
           <Stat value={`${recipe.nutrition.protein}g`} label="eiwitten" />
           <View style={styles.statDivider} />
-          <Stat value={`${recipe.nutrition.fiber}g`} label="vezels" />
+          <Stat value={`${recipe.nutrition.carbs}g`} label="koolhydraten" />
         </View>
 
         <View style={styles.tagRow}>

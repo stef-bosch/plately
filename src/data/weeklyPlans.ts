@@ -1,156 +1,48 @@
-import { getIsoWeekNumber, seasonFromDate } from '../constants/labels';
-import type { Season, WeeklyPlan } from '../types';
+import { dayOrder, dishCategory, getIsoWeekNumber, seasonFromDate } from '../constants/labels';
+import { getAllRecipes } from './content';
+import type { Recipe, Season, WeekDay, WeeklyPlan } from '../types';
 
 /**
- * Two full seasonal week plans (maandag t/m zondag).
- *
- * Meals reference dish ids stored in Supabase. To edit a plan, just swap an
- * id — the dashboard, week screen and detail screen all resolve ids lazily.
+ * The weekly menu is built on the fly from the dishes that are flagged
+ * "inbegrepen in weekmenu" in the admin. Each meal slot draws from its own
+ * category pool (Ontbijt / Lunch / Diner / Tussendoortjes), cycling through the
+ * pool so the whole week fills out even with only a handful of dishes. Dishes
+ * with an "Overig" category (sauces, drinks, …) never enter the meal slots.
  */
 
-export const weeklyPlans: WeeklyPlan[] = [
-  {
-    season: 'lente-zomer',
-    days: [
-      {
-        day: 'maandag',
-        meals: {
-          ontbijt: 'ontbijt-mango-overnight-oats',
-          lunch: 'lunch-hummus-avocado-sandwich',
-          tussendoortje: ['snack-kwark-bessen'],
-          diner: 'diner-pasta-norma',
-        },
-      },
-      {
-        day: 'dinsdag',
-        meals: {
-          ontbijt: 'ontbijt-volkoren-toast-avocado',
-          lunch: 'lunch-roggebrood-makreel',
-          tussendoortje: ['snack-appel-amandel'],
-          diner: 'diner-couscous-halloumi',
-        },
-      },
-      {
-        day: 'woensdag',
-        meals: {
-          ontbijt: 'ontbijt-skyr-bowl-bessen',
-          lunch: 'lunch-pastasalade-witte-bonen',
-          tussendoortje: ['snack-hummus-groente'],
-          diner: 'diner-kip-teriyaki-rijst',
-        },
-      },
-      {
-        day: 'donderdag',
-        meals: {
-          ontbijt: 'ontbijt-smoothie-bowl',
-          lunch: 'lunch-couscous-kikkererwten-feta',
-          tussendoortje: ['snack-kwark-bessen'],
-          diner: 'diner-pasta-norma',
-        },
-      },
-      {
-        day: 'vrijdag',
-        meals: {
-          ontbijt: 'ontbijt-zomerkwark-perzik',
-          lunch: 'lunch-hummus-avocado-sandwich',
-          tussendoortje: ['snack-appel-amandel'],
-          diner: 'diner-couscous-halloumi',
-        },
-      },
-      {
-        day: 'zaterdag',
-        meals: {
-          ontbijt: 'ontbijt-mango-overnight-oats',
-          lunch: 'lunch-roggebrood-makreel',
-          tussendoortje: ['snack-hummus-groente', 'snack-kwark-bessen'],
-          diner: 'diner-kip-teriyaki-rijst',
-        },
-      },
-      {
-        day: 'zondag',
-        meals: {
-          ontbijt: 'ontbijt-volkoren-toast-avocado',
-          lunch: 'lunch-pastasalade-witte-bonen',
-          tussendoortje: ['snack-appel-amandel'],
-          diner: 'diner-pasta-norma',
-        },
-      },
-    ],
-  },
-  {
-    season: 'herfst-winter',
-    days: [
-      {
-        day: 'maandag',
-        meals: {
-          ontbijt: 'ontbijt-skyr-bowl-bessen',
-          lunch: 'lunch-couscous-kikkererwten-feta',
-          tussendoortje: ['snack-noten-fruit'],
-          diner: 'diner-kikkererwten-curry',
-        },
-      },
-      {
-        day: 'dinsdag',
-        meals: {
-          ontbijt: 'ontbijt-smoothie-bowl',
-          lunch: 'lunch-hummus-avocado-sandwich',
-          tussendoortje: ['snack-appel-amandel'],
-          diner: 'diner-zalm-zoete-aardappel',
-        },
-      },
-      {
-        day: 'woensdag',
-        meals: {
-          ontbijt: 'ontbijt-zomerkwark-perzik',
-          lunch: 'lunch-roggebrood-makreel',
-          tussendoortje: ['snack-hummus-groente'],
-          diner: 'diner-zoete-aardappel-bonen',
-        },
-      },
-      {
-        day: 'donderdag',
-        meals: {
-          ontbijt: 'ontbijt-mango-overnight-oats',
-          lunch: 'lunch-pastasalade-witte-bonen',
-          tussendoortje: ['snack-noten-fruit'],
-          diner: 'diner-pasta-norma',
-        },
-      },
-      {
-        day: 'vrijdag',
-        meals: {
-          ontbijt: 'ontbijt-volkoren-toast-avocado',
-          lunch: 'lunch-couscous-kikkererwten-feta',
-          tussendoortje: ['snack-appel-amandel'],
-          diner: 'diner-kip-teriyaki-rijst',
-        },
-      },
-      {
-        day: 'zaterdag',
-        meals: {
-          ontbijt: 'ontbijt-skyr-bowl-bessen',
-          lunch: 'lunch-hummus-avocado-sandwich',
-          tussendoortje: ['snack-noten-fruit', 'snack-hummus-groente'],
-          diner: 'diner-zalm-zoete-aardappel',
-        },
-      },
-      {
-        day: 'zondag',
-        meals: {
-          ontbijt: 'ontbijt-smoothie-bowl',
-          lunch: 'lunch-roggebrood-makreel',
-          tussendoortje: ['snack-appel-amandel'],
-          diner: 'diner-kikkererwten-curry',
-        },
-      },
-    ],
-  },
-];
+/** The dish id at `dayIndex`, cycling through the pool; '' when it's empty. */
+function pick(pool: Recipe[], dayIndex: number): string {
+  return pool.length ? pool[dayIndex % pool.length].id : '';
+}
 
 export function getWeeklyPlan(season: Season): WeeklyPlan {
-  const plan = weeklyPlans.find((p) => p.season === season);
-  // Both seasons are always present; fall back to the first for safety.
-  return plan ?? weeklyPlans[0];
+  const included = getAllRecipes().filter((r) => r.includeInWeekmenu !== false);
+
+  const poolFor = (category: string): Recipe[] => {
+    const inCategory = included.filter((r) => dishCategory(r) === category);
+    // Prefer dishes for the current season; fall back to all if that empties it.
+    const seasonal = inCategory.filter((r) => r.seasons.includes(season));
+    const pool = seasonal.length ? seasonal : inCategory;
+    // Stable order so the generated plan doesn't shuffle between renders.
+    return [...pool].sort((a, b) => a.id.localeCompare(b.id));
+  };
+
+  const breakfast = poolFor('Ontbijt');
+  const lunch = poolFor('Lunch');
+  const dinner = poolFor('Diner');
+  const snack = poolFor('Tussendoortjes');
+
+  const days: WeekDay[] = dayOrder.map((day, i) => ({
+    day,
+    meals: {
+      ontbijt: pick(breakfast, i),
+      lunch: pick(lunch, i),
+      tussendoortje: snack.length ? [pick(snack, i)] : [],
+      diner: pick(dinner, i),
+    },
+  }));
+
+  return { season, days };
 }
 
 /**
