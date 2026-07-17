@@ -24,7 +24,7 @@ import {
 } from '../constants/labels';
 import { useSettings } from '../context/SettingsContext';
 import { getCourseForRecipe, getMenus } from '../data/menus';
-import { getAllRecipes } from '../data/recipes';
+import { getRecipeLibrary } from '../data/recipes';
 import { useOpenMenu, useOpenRecipe } from '../navigation/hooks';
 import { recipeMatchesDiets } from '../utils/resolveRecipe';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
@@ -59,8 +59,8 @@ export function ReceptenScreen() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // The full dish list (loaded once from Supabase at startup).
-  const allRecipes = useMemo(() => getAllRecipes(), []);
+  // The recipe library (weekmenu dishes live in their own collection).
+  const allRecipes = useMemo(() => getRecipeLibrary(), []);
 
   const filteredRecipes = useMemo(() => {
     const q = query.trim().toLowerCase();

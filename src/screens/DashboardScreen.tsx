@@ -9,12 +9,11 @@ import {
   formatDutchDate,
   weekDayFromDate,
 } from '../constants/labels';
-import { getRecipeById } from '../data/recipes';
 import { getWeeklyPlan } from '../data/weeklyPlans';
 import { useSettings } from '../context/SettingsContext';
 import { useAppNavigation, useOpenRecipe } from '../navigation/hooks';
 import { colors, radius, shadow, spacing, typography } from '../theme';
-import { getDailyTotals } from '../utils/nutrition';
+import { getDailyTotals, resolveDayMeals } from '../utils/nutrition';
 
 export function DashboardScreen() {
   const navigation = useAppNavigation();
@@ -29,14 +28,13 @@ export function DashboardScreen() {
   const dayPlan = plan.days.find((d) => d.day === todayName) ?? plan.days[0];
   const meals = dayPlan.meals;
 
-  const totals = useMemo(() => getDailyTotals(meals), [meals]);
-
-  const ontbijt = getRecipeById(meals.ontbijt);
-  const lunch = getRecipeById(meals.lunch);
-  const diner = getRecipeById(meals.diner);
-  const snacks = meals.tussendoortje
-    .map((id) => getRecipeById(id))
-    .filter((r): r is NonNullable<typeof r> => Boolean(r));
+  // Weekmenu dishes are computed for the user's targets; recipes stay general.
+  const day = useMemo(
+    () => resolveDayMeals(meals, settings.nutritionProfile),
+    [meals, settings.nutritionProfile],
+  );
+  const totals = useMemo(() => getDailyTotals(day), [day]);
+  const { ontbijt, lunch, diner, snacks } = day;
 
   return (
     <Screen

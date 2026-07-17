@@ -51,11 +51,13 @@ export function ReceptdetailScreen() {
   );
   const [printing, setPrinting] = useState(false);
 
-  // Personalisation is always on: every dish is scaled to the user's daily
-  // target automatically. Dishes without scaling metadata simply come back as
-  // not scalable and the section is hidden until their data is filled in.
+  // Only weekmenu dishes are computed for the user's targets; normal recipes
+  // keep their general authored values.
   const personalized = useMemo(
-    () => (recipe ? personalizeRecipe(recipe, settings.nutritionProfile) : null),
+    () =>
+      recipe?.usage === 'weekmenu'
+        ? personalizeRecipe(recipe, settings.nutritionProfile)
+        : null,
     [recipe, settings.nutritionProfile],
   );
 

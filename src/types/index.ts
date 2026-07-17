@@ -158,6 +158,17 @@ export interface Nutrition {
   isIndicative: boolean;
 }
 
+/**
+ * Which collection a dish belongs to.
+ *
+ * - `weekmenu`: authored for the weekly menu. Its ingredients carry per-100g
+ *   data, so its nutrition is computed from the ingredients and then scaled to
+ *   the user's targets. These dishes never show up in the recipe library.
+ * - `recept`: a normal recipe with general (authored) nutrition, shown under
+ *   "Recepten" in the app.
+ */
+export type DishUsage = 'weekmenu' | 'recept';
+
 export interface Recipe {
   id: string;
   title: string;
@@ -192,11 +203,10 @@ export interface Recipe {
    */
   overigCategory?: string;
   /**
-   * Whether this dish may appear in the weekly menu. Defaults to true
-   * (undefined = included) so existing dishes keep showing up; set to false in
-   * the admin to keep a dish out of the weekly menu.
+   * Which collection this dish belongs to (see DishUsage). Undefined = 'recept',
+   * so dishes created before the split stay in the recipe library.
    */
-  includeInWeekmenu?: boolean;
+  usage?: DishUsage;
 }
 
 /* ---------- Menus ---------- */

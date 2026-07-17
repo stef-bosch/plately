@@ -4,7 +4,13 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { FilterChip } from '../components/FilterChip';
 import { colors, spacing, typography } from '../theme';
-import type { Ingredient, IngredientGroup, IngredientRole, IngredientScaling } from '../types';
+import type {
+  Ingredient,
+  IngredientGroup,
+  IngredientRole,
+  IngredientScaling,
+  Nutrition,
+} from '../types';
 import { MoveButtons, formKit, moveInList } from './formKit';
 
 export interface IngredientDraft {
@@ -66,6 +72,61 @@ export function scalingFromDraft(d: IngredientDraft): IngredientScaling | undefi
     carbsPer100g: numOrUndef(d.carbs100) ?? 0,
     fatPer100g: numOrUndef(d.fat100) ?? 0,
   };
+}
+
+/** The gram amount of a draft, or undefined when it isn't a plain number. */
+function gramsOf(d: IngredientDraft): number | undefined {
+  const n = numOrUndef(d.quantity);
+  return n != null && n > 0 ? n : undefined;
+}
+
+/**
+ * Per-portion nutrition summed from the ingredients' per-100 g values. Used for
+ * weekmenu dishes, whose nutrition is computed instead of typed by hand. An
+ * ingredient only counts once it has a gram amount and kcal/100 g.
+ */
+export function nutritionFromGroups(groups: GroupDraft[]): Nutrition {
+  let calories = 0;
+  let protein = 0;
+  let carbs = 0;
+  let fat = 0;
+
+  for (const group of groups) {
+    for (const item of group.items) {
+      const grams = gramsOf(item);
+      const kcal100 = numOrUndef(item.kcal100);
+      if (!item.name.trim() || grams == null || kcal100 == null) continue;
+      const factor = grams / 100;
+      calories += kcal100 * factor;
+      protein += (numOrUndef(item.protein100) ?? 0) * factor;
+      carbs += (numOrUndef(item.carbs100) ?? 0) * factor;
+      fat += (numOrUndef(item.fat100) ?? 0) * factor;
+    }
+  }
+
+  return {
+    calories: Math.round(calories),
+    protein: Math.round(protein),
+    carbs: Math.round(carbs),
+    fat: Math.round(fat),
+    fiber: 0,
+    micronutrients: {},
+    isIndicative: true,
+  };
+}
+
+/** Named ingredients that can't be counted yet (no gram amount or no kcal/100 g). */
+export function ingredientsMissingNutrition(groups: GroupDraft[]): string[] {
+  const missing: string[] = [];
+  for (const group of groups) {
+    for (const item of group.items) {
+      if (!item.name.trim()) continue;
+      if (gramsOf(item) == null || numOrUndef(item.kcal100) == null) {
+        missing.push(item.name.trim());
+      }
+    }
+  }
+  return missing;
 }
 
 /** Turn stored ingredient groups back into editable drafts. */

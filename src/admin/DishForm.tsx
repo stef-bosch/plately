@@ -15,6 +15,7 @@ import { colors, spacing, typography } from '../theme';
 import type {
   DietSwap,
   DietaryPreference,
+  DishUsage,
   Ingredient,
   IngredientCategory,
   IngredientGroup,
@@ -25,13 +26,15 @@ import type {
   RecipeTag,
   Season,
 } from '../types';
-import { Checkbox, Field, FormHeader, MoveButtons, SaveButton, Section, formKit, moveInList } from './formKit';
+import { Field, FormHeader, MoveButtons, SaveButton, Section, formKit, moveInList } from './formKit';
 import {
   GroupDraft,
   IngredientDraft,
   IngredientGroupsEditor,
   emptyGroup,
   groupsFromIngredients,
+  ingredientsMissingNutrition,
+  nutritionFromGroups,
   scalingFromDraft,
 } from './IngredientGroupsEditor';
 import { NutritionEditor } from './NutritionEditor';
@@ -63,12 +66,17 @@ function nutritionToStrings(n: Nutrition): Record<string, string> {
 
 interface DishFormProps {
   dishId?: string;
+  /** Which collection this dish belongs to — set by the admin tab it's opened from. */
+  usage: DishUsage;
   onSaved: () => void;
   onCancel: () => void;
 }
 
-export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
+export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
   const isEdit = Boolean(dishId);
+  // Weekmenu dishes get their nutrition computed from the ingredients and
+  // scaled to the user's targets, so they never take hand-typed macros.
+  const isWeekmenu = usage === 'weekmenu';
 
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -79,7 +87,6 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
   const [idTouched, setIdTouched] = useState(false);
   // The id the dish was loaded under, so a rename can clean up the old row.
   const [originalId, setOriginalId] = useState<string | null>(null);
-  const [includeInWeekmenu, setIncludeInWeekmenu] = useState(true);
   const [subtitle, setSubtitle] = useState('');
   // The dish category (one of the app's categories). Meal categories map back
   // to a mealType on save; the rest are stored as overigCategory.
@@ -127,7 +134,6 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
           setIdValue(r.id);
           setIdTouched(true);
           setOriginalId(r.id);
-          setIncludeInWeekmenu(r.includeInWeekmenu !== false);
           setSubtitle(r.subtitle ?? '');
           setCategory(dishCategory(r));
           setSeasons(r.seasons);
@@ -205,15 +211,18 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
         }))
         .filter((g) => g.items.length > 0);
 
-      const baseNutrition: Nutrition = {
-        calories: baseMacro('calories'),
-        protein: baseMacro('protein'),
-        carbs: baseMacro('carbs'),
-        fat: baseMacro('fat'),
-        fiber: baseMacro('fiber'),
-        micronutrients: {},
-        isIndicative: true,
-      };
+      // Weekmenu dishes: computed from the ingredients. Recipes: as typed.
+      const baseNutrition: Nutrition = isWeekmenu
+        ? nutritionFromGroups(groups)
+        : {
+            calories: baseMacro('calories'),
+            protein: baseMacro('protein'),
+            carbs: baseMacro('carbs'),
+            fat: baseMacro('fat'),
+            fiber: baseMacro('fiber'),
+            micronutrients: {},
+            isIndicative: true,
+          };
 
       const instructions = steps.map((s) => s.trim()).filter(Boolean);
       const tags = suitableFor.map((d) => DIET_TO_TAG[d]);
@@ -240,7 +249,7 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
         suitableFor: suitableFor.length ? suitableFor : undefined,
         dietSwaps,
         overigCategory: overigCat,
-        includeInWeekmenu,
+        usage,
       };
       await saveDish(recipe, 'static');
       // A renamed dish is written under the new id; remove the stale old row.
@@ -259,7 +268,18 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
 
   return (
     <View style={styles.wrap}>
-      <FormHeader title={isEdit ? 'Gerecht bewerken' : 'Nieuw gerecht'} onCancel={onCancel} />
+      <FormHeader
+        title={
+          isWeekmenu
+            ? isEdit
+              ? 'Weekmenu-gerecht bewerken'
+              : 'Nieuw weekmenu-gerecht'
+            : isEdit
+              ? 'Gerecht bewerken'
+              : 'Nieuw gerecht'
+        }
+        onCancel={onCancel}
+      />
 
       {error ? <Text style={formKit.error}>{error}</Text> : null}
 
@@ -278,18 +298,25 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
         </Field>
         <Field label="Categorie">
           <View style={styles.categoryGroups}>
-            <Text style={formKit.hint}>Maaltijd</Text>
             <View style={formKit.chipRow}>
               {MEAL_CATEGORIES.map((c) => (
                 <FilterChip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
               ))}
             </View>
-            <Text style={formKit.hint}>Overig</Text>
-            <View style={formKit.chipRow}>
-              {OTHER_CATEGORIES.map((c) => (
-                <FilterChip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
-              ))}
-            </View>
+            {isWeekmenu ? (
+              <Text style={formKit.hint}>
+                Het weekmenu vult per dag een ontbijt, lunch, tussendoortje en diner.
+              </Text>
+            ) : (
+              <>
+                <Text style={formKit.hint}>Overig</Text>
+                <View style={formKit.chipRow}>
+                  {OTHER_CATEGORIES.map((c) => (
+                    <FilterChip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
+                  ))}
+                </View>
+              </>
+            )}
           </View>
         </Field>
         <Field label="Seizoen">
@@ -302,11 +329,6 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
         <Field label="Bereidingstijd (min)">
           <TextInput value={totalTime} onChangeText={setTotalTime} keyboardType="numeric" style={formKit.input} />
         </Field>
-        <Checkbox
-          checked={includeInWeekmenu}
-          onToggle={() => setIncludeInWeekmenu((v) => !v)}
-          label="Inbegrepen in weekmenu"
-        />
       </Section>
 
       <Section title="Foto">
@@ -356,7 +378,11 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
       </Section>
 
       <Section title="Voedingswaarden (per portie)">
-        <NutritionEditor macros={macros} setMacros={setMacros} />
+        {isWeekmenu ? (
+          <ComputedNutrition groups={groups} />
+        ) : (
+          <NutritionEditor macros={macros} setMacros={setMacros} />
+        )}
       </Section>
 
       <SaveButton saving={saving} onPress={save} />
@@ -364,8 +390,59 @@ export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
   );
 }
 
+/**
+ * Read-only per-portion nutrition for a weekmenu dish: summed from the
+ * ingredients' per-100 g values. In the app this base portion is then scaled to
+ * the user's own daily target, so there's nothing to type here.
+ */
+function ComputedNutrition({ groups }: { groups: GroupDraft[] }) {
+  const n = nutritionFromGroups(groups);
+  const missing = ingredientsMissingNutrition(groups);
+
+  return (
+    <View style={styles.computed}>
+      <Text style={formKit.hint}>
+        Automatisch berekend uit de ingrediënten. In de app wordt deze
+        basisportie verder afgestemd op de instellingen van de gebruiker.
+      </Text>
+      <View style={styles.computedRow}>
+        <ComputedValue label="kcal" value={n.calories} />
+        <ComputedValue label="eiwitten (g)" value={n.protein} />
+        <ComputedValue label="koolhydraten (g)" value={n.carbs} />
+        <ComputedValue label="vetten (g)" value={n.fat} />
+      </View>
+      {missing.length ? (
+        <Text style={formKit.error}>
+          Nog geen voedingswaarde voor: {missing.join(', ')}. Vul per ingrediënt
+          de hoeveelheid in gram en kcal/100 g in via ⚙ Schalen.
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+function ComputedValue({ label, value }: { label: string; value: number }) {
+  return (
+    <View style={styles.computedValue}>
+      <Text style={styles.computedNumber}>{value}</Text>
+      <Text style={styles.computedLabel}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   wrap: { gap: spacing.lg },
+  computed: { gap: spacing.sm },
+  computedRow: { flexDirection: 'row', gap: spacing.sm },
+  computedValue: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    paddingVertical: spacing.sm,
+  },
+  computedNumber: { ...typography.subheading, color: colors.textPrimary },
+  computedLabel: { ...typography.caption, color: colors.textMuted, textAlign: 'center' },
   categoryGroups: { gap: spacing.sm },
   stepRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   stepNum: { ...typography.bodyStrong, color: colors.primary, width: 18 },

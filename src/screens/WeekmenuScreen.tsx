@@ -1,7 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,16 +15,16 @@ import {
   getIsoWeekNumber,
   weekDayFromDate,
 } from '../constants/labels';
-import { getRecipeById } from '../data/recipes';
+import { useSettings } from '../context/SettingsContext';
 import { getWeeklyPlanForDate } from '../data/weeklyPlans';
 import { useOpenRecipe } from '../navigation/hooks';
-import { colors, iconSize, radius, spacing, typography } from '../theme';
+import { colors, radius, spacing, typography } from '../theme';
 import type { WeekDayName } from '../types';
-import { getDailyTotals } from '../utils/nutrition';
-import { printWeekShoppingList } from '../utils/shoppingListPdf';
+import { getDailyTotals, resolveDayMeals } from '../utils/nutrition';
 
 export function WeekmenuScreen() {
   const openRecipe = useOpenRecipe();
+  const { settings } = useSettings();
 
   const today = useMemo(() => new Date(), []);
   const weekNumber = getIsoWeekNumber(today);
@@ -39,56 +37,16 @@ export function WeekmenuScreen() {
   const dayPlan =
     plan.days.find((d) => d.day === selectedDay) ?? plan.days[0];
   const meals = dayPlan.meals;
-  const totals = useMemo(() => getDailyTotals(meals), [meals]);
-
-  const ontbijt = getRecipeById(meals.ontbijt);
-  const lunch = getRecipeById(meals.lunch);
-  const diner = getRecipeById(meals.diner);
-  const snacks = meals.tussendoortje
-    .map((id) => getRecipeById(id))
-    .filter((r): r is NonNullable<typeof r> => Boolean(r));
-
-  const [downloading, setDownloading] = useState(false);
-  const handleDownloadList = async () => {
-    if (downloading) return;
-    try {
-      setDownloading(true);
-      await printWeekShoppingList(plan, weekNumber);
-    } catch (error) {
-      console.warn('Boodschappenlijst maken mislukt', error);
-    } finally {
-      setDownloading(false);
-    }
-  };
+  // Weekmenu dishes are computed for the user's targets; recipes stay general.
+  const day = useMemo(
+    () => resolveDayMeals(meals, settings.nutritionProfile),
+    [meals, settings.nutritionProfile],
+  );
+  const totals = useMemo(() => getDailyTotals(day), [day]);
+  const { ontbijt, lunch, diner, snacks } = day;
 
   return (
     <Screen title="Weekmenu" subtitle={`Jouw plan voor week ${weekNumber}`}>
-      {/* Shopping list download */}
-      <Pressable
-        onPress={handleDownloadList}
-        disabled={downloading}
-        accessibilityRole="button"
-        accessibilityLabel="Boodschappenlijst downloaden"
-        style={({ pressed }) => [
-          styles.listButton,
-          pressed && styles.listButtonPressed,
-          downloading && styles.listButtonDisabled,
-        ]}
-      >
-        {downloading ? (
-          <ActivityIndicator size="small" color={colors.primary} />
-        ) : (
-          <Ionicons
-            name="download-outline"
-            size={iconSize.action}
-            color={colors.primary}
-          />
-        )}
-        <Text style={styles.listButtonText}>
-          {downloading ? 'Bezig…' : 'Boodschappenlijst downloaden'}
-        </Text>
-      </Pressable>
-
       {/* Day selector */}
       <ScrollView
         horizontal
@@ -142,28 +100,6 @@ export function WeekmenuScreen() {
 }
 
 const styles = StyleSheet.create({
-  listButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  listButtonPressed: {
-    opacity: 0.85,
-  },
-  listButtonDisabled: {
-    opacity: 0.6,
-  },
-  listButtonText: {
-    ...typography.bodyStrong,
-    color: colors.primary,
-  },
   dayRow: {
     gap: spacing.sm,
     paddingVertical: spacing.xs,

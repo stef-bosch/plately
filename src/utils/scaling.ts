@@ -25,7 +25,7 @@ function tidyNumber(value: number): number {
  * Formats a number as a neat string, preferring vulgar fractions for common
  * values and mixed numbers like "1½".
  */
-export function formatQuantity(value: number): string {
+function formatQuantity(value: number): string {
   const rounded = tidyNumber(value);
   const whole = Math.floor(rounded);
   const remainder = tidyNumber(rounded - whole);
@@ -68,7 +68,7 @@ const KEEP_CAPITAL = new Set([
  * detail screen they follow a bold amount ("60 g volkoren couscous"), so the
  * name should be lowercase per Dutch spelling — unless it's a proper noun.
  */
-export function displayIngredientName(name: string): string {
+function displayIngredientName(name: string): string {
   if (!name) return name;
   const firstWord = name.split(/\s/, 1)[0];
   if (KEEP_CAPITAL.has(firstWord)) return name;

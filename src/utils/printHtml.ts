@@ -49,12 +49,3 @@ export async function printHtml(html: string): Promise<void> {
   }
   await Print.printAsync({ html });
 }
-
-/** Minimal HTML-escaping for text taken from app data. */
-export function escapeHtml(value: string | number): string {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}

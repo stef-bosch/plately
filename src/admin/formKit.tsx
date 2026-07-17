@@ -141,33 +141,6 @@ export function MoveButtons({
   );
 }
 
-/** A labelled checkbox row. */
-export function Checkbox({
-  checked,
-  onToggle,
-  label,
-}: {
-  checked: boolean;
-  onToggle: () => void;
-  label: string;
-}) {
-  return (
-    <Pressable
-      onPress={onToggle}
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked }}
-      style={({ pressed }) => [formKit.checkRow, pressed && formKit.pressed]}
-    >
-      <Ionicons
-        name={checked ? 'checkbox' : 'square-outline'}
-        size={22}
-        color={checked ? colors.primary : colors.textMuted}
-      />
-      <Text style={formKit.checkLabel}>{label}</Text>
-    </Pressable>
-  );
-}
-
 export const formKit = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerTitle: { ...typography.heading, color: colors.textPrimary },
@@ -191,8 +164,6 @@ export const formKit = StyleSheet.create({
   iconButton: { padding: spacing.xs },
   moveGroup: { flexDirection: 'row', alignItems: 'center' },
   moveButton: { paddingHorizontal: 2, paddingVertical: spacing.xs },
-  checkRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs },
-  checkLabel: { ...typography.body, color: colors.textPrimary },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: spacing.xs },
   addRowText: { ...typography.label, color: colors.primary },
   error: { ...typography.bodyStrong, color: colors.fat },

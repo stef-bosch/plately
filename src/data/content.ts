@@ -162,11 +162,24 @@ export function getRecipeById(id: string): Recipe | undefined {
   return s.staticById[id];
 }
 
-/** The full browseable recipe list (reactive dishes + static dishes). */
+/** Every dish, whatever collection it belongs to (reactive + static). */
 export function getAllRecipes(): Recipe[] {
   const s = dishState();
   const resolvedReactive = s.reactiveDishes.map((recipe) => resolveRecipe(recipe));
   return [...resolvedReactive, ...s.staticDishes];
+}
+
+/**
+ * The recipe library shown under "Recepten" — everything except the dishes
+ * authored for the weekly menu.
+ */
+export function getRecipeLibrary(): Recipe[] {
+  return getAllRecipes().filter((r) => r.usage !== 'weekmenu');
+}
+
+/** The dishes authored for the weekly menu. */
+export function getWeekmenuDishes(): Recipe[] {
+  return getAllRecipes().filter((r) => r.usage === 'weekmenu');
 }
 
 /** All menus loaded from Supabase (empty until loadContent runs). */

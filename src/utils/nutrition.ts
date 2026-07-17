@@ -1,5 +1,6 @@
 import { getRecipeById } from '../data/recipes';
-import type { DayMeals, Nutrition } from '../types';
+import { withPersonalNutrition } from '../nutrition/personalize';
+import type { DayMeals, Nutrition, NutritionProfile, Recipe } from '../types';
 
 /**
  * Nutrition aggregation helpers.
@@ -35,13 +36,41 @@ function addNutrition(totals: DailyTotals, nutrition: Nutrition): DailyTotals {
   };
 }
 
-/** Sums the macro totals for one day of meals (1 serving each). */
-export function getDailyTotals(meals: DayMeals): DailyTotals {
-  const ids = [meals.ontbijt, meals.lunch, meals.diner, ...meals.tussendoortje];
+/** One day's meals, resolved to dishes. Slots without a dish stay undefined. */
+export interface DayRecipes {
+  ontbijt?: Recipe;
+  lunch?: Recipe;
+  diner?: Recipe;
+  snacks: Recipe[];
+}
 
-  return ids.reduce((totals, id) => {
+/**
+ * Resolves a day's meal ids to dishes. Weekmenu dishes come back with their
+ * portion computed for this user's targets; normal recipes are unchanged.
+ */
+export function resolveDayMeals(
+  meals: DayMeals,
+  profile: NutritionProfile,
+): DayRecipes {
+  const resolve = (id: string): Recipe | undefined => {
     const recipe = getRecipeById(id);
-    if (!recipe) return totals;
-    return addNutrition(totals, recipe.nutrition);
-  }, EMPTY_TOTALS);
+    return recipe ? withPersonalNutrition(recipe, profile) : undefined;
+  };
+
+  return {
+    ontbijt: resolve(meals.ontbijt),
+    lunch: resolve(meals.lunch),
+    diner: resolve(meals.diner),
+    snacks: meals.tussendoortje
+      .map(resolve)
+      .filter((r): r is Recipe => Boolean(r)),
+  };
+}
+
+/** Sums the macro totals for one day of resolved meals (1 serving each). */
+export function getDailyTotals(day: DayRecipes): DailyTotals {
+  const all = [day.ontbijt, day.lunch, ...day.snacks, day.diner].filter(
+    (r): r is Recipe => Boolean(r),
+  );
+  return all.reduce((totals, r) => addNutrition(totals, r.nutrition), EMPTY_TOTALS);
 }

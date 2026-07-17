@@ -1,13 +1,13 @@
 import { dayOrder, dishCategory, getIsoWeekNumber, seasonFromDate } from '../constants/labels';
-import { getAllRecipes } from './content';
+import { getWeekmenuDishes } from './content';
 import type { Recipe, Season, WeekDay, WeeklyPlan } from '../types';
 
 /**
- * The weekly menu is built on the fly from the dishes that are flagged
- * "inbegrepen in weekmenu" in the admin. Each meal slot draws from its own
- * category pool (Ontbijt / Lunch / Diner / Tussendoortjes), cycling through the
- * pool so the whole week fills out even with only a handful of dishes. Dishes
- * with an "Overig" category (sauces, drinks, …) never enter the meal slots.
+ * The weekly menu is built on the fly from the dishes added under the admin's
+ * "Weekmenu" tab. Each meal slot draws from its own category pool (Ontbijt /
+ * Lunch / Diner / Tussendoortjes), cycling through the pool so the whole week
+ * fills out even with only a handful of dishes. Dishes with an "Overig"
+ * category never enter the meal slots.
  */
 
 /** The dish id at `dayIndex`, cycling through the pool; '' when it's empty. */
@@ -16,10 +16,10 @@ function pick(pool: Recipe[], dayIndex: number): string {
 }
 
 export function getWeeklyPlan(season: Season): WeeklyPlan {
-  const included = getAllRecipes().filter((r) => r.includeInWeekmenu !== false);
+  const dishes = getWeekmenuDishes();
 
   const poolFor = (category: string): Recipe[] => {
-    const inCategory = included.filter((r) => dishCategory(r) === category);
+    const inCategory = dishes.filter((r) => dishCategory(r) === category);
     // Prefer dishes for the current season; fall back to all if that empties it.
     const seasonal = inCategory.filter((r) => r.seasons.includes(season));
     const pool = seasonal.length ? seasonal : inCategory;

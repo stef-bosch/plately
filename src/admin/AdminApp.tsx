@@ -26,7 +26,7 @@ import { reloadContent } from '../data/content';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/useAuth';
 import { colors, radius, shadow, spacing, typography } from '../theme';
-import type { Recipe } from '../types';
+import type { DishUsage, Recipe } from '../types';
 import { DishForm } from './DishForm';
 import { MenuForm } from './MenuForm';
 
@@ -35,15 +35,19 @@ async function confirmAsync(message: string): Promise<boolean> {
   return true;
 }
 
-type Tab = 'dishes' | 'menus';
+type Tab = 'weekmenu' | 'dishes' | 'menus';
 type FormState =
-  | { kind: 'dish'; id?: string }
+  | { kind: 'dish'; id?: string; usage: DishUsage }
   | { kind: 'menu'; id?: string }
   | null;
 
 // The category a dish is grouped under in the Gerechten list.
 const categoryOf = (row: DishRow): string =>
   dishCategory(row.data as Recipe);
+
+/** Which collection a stored dish belongs to (older rows have no usage yet). */
+const usageOf = (row: DishRow): DishUsage =>
+  (row.data as Recipe).usage === 'weekmenu' ? 'weekmenu' : 'recept';
 
 export function AdminApp() {
   const { session, ready } = useAuth();
@@ -155,7 +159,7 @@ function Dashboard({ email }: { email: string }) {
 
   if (form?.kind === 'dish') {
     return (
-      <DishForm dishId={form.id} onSaved={onFormDone} onCancel={() => setForm(null)} />
+      <DishForm dishId={form.id} usage={form.usage} onSaved={onFormDone} onCancel={() => setForm(null)} />
     );
   }
   if (form?.kind === 'menu') {
@@ -170,7 +174,7 @@ function Dashboard({ email }: { email: string }) {
           {(row.data as Recipe)?.nutrition?.calories ?? '—'} kcal
         </Text>
       </View>
-      <Pressable onPress={() => setForm({ kind: 'dish', id: row.id })} style={styles.iconButton}>
+      <Pressable onPress={() => setForm({ kind: 'dish', id: row.id, usage: usageOf(row) })} style={styles.iconButton}>
         <Ionicons name="create-outline" size={20} color={colors.primary} />
       </Pressable>
       <Pressable onPress={() => removeDish(row)} style={styles.iconButton}>
@@ -214,8 +218,11 @@ function Dashboard({ email }: { email: string }) {
   };
 
   const q = query.trim().toLowerCase();
-  const filteredDishes = q ? dishes.filter((r) => r.title.toLowerCase().includes(q)) : dishes;
-  const filteredMenus = q ? menus.filter((r) => r.title.toLowerCase().includes(q)) : menus;
+  const matches = (title: string) => !q || title.toLowerCase().includes(q);
+  // The two dish collections live in the same table, split by `usage`.
+  const filteredDishes = dishes.filter((r) => usageOf(r) === 'recept' && matches(r.title));
+  const filteredWeekmenu = dishes.filter((r) => usageOf(r) === 'weekmenu' && matches(r.title));
+  const filteredMenus = menus.filter((r) => matches(r.title));
 
   return (
     <View style={styles.dashboard}>
@@ -230,6 +237,7 @@ function Dashboard({ email }: { email: string }) {
       </View>
 
       <View style={styles.tabs}>
+        <TabButton label="Weekmenu" active={tab === 'weekmenu'} onPress={() => setTab('weekmenu')} />
         <TabButton label="Gerechten" active={tab === 'dishes'} onPress={() => setTab('dishes')} />
         <TabButton label="Menu's" active={tab === 'menus'} onPress={() => setTab('menus')} />
       </View>
@@ -252,11 +260,33 @@ function Dashboard({ email }: { email: string }) {
         ) : null}
       </View>
 
-      {tab === 'dishes' ? (
+      {tab === 'weekmenu' ? (
+        <>
+          <View style={styles.listHeader}>
+            <Text style={styles.h2}>Weekmenu-gerechten ({filteredWeekmenu.length})</Text>
+            <Pressable onPress={() => setForm({ kind: 'dish', usage: 'weekmenu' })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
+              <Ionicons name="add" size={18} color={colors.textOnPrimary} />
+              <Text style={styles.newButtonText}>Nieuw</Text>
+            </Pressable>
+          </View>
+          <Text style={styles.empty}>
+            Deze gerechten vullen het weekmenu. Hun voedingswaarden worden
+            automatisch berekend uit de ingrediënten en afgestemd op de
+            instellingen van de gebruiker. Ze staan niet bij Recepten in de app.
+          </Text>
+          {loading ? (
+            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+          ) : filteredWeekmenu.length === 0 ? (
+            <Text style={styles.empty}>{query ? 'Geen weekmenu-gerechten gevonden.' : 'Nog geen weekmenu-gerechten. Voeg er een toe.'}</Text>
+          ) : (
+            <View style={styles.mealGroups}>{renderCategoryGroups(filteredWeekmenu)}</View>
+          )}
+        </>
+      ) : tab === 'dishes' ? (
         <>
           <View style={styles.listHeader}>
             <Text style={styles.h2}>Gerechten ({filteredDishes.length})</Text>
-            <Pressable onPress={() => setForm({ kind: 'dish' })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
+            <Pressable onPress={() => setForm({ kind: 'dish', usage: 'recept' })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
               <Ionicons name="add" size={18} color={colors.textOnPrimary} />
               <Text style={styles.newButtonText}>Nieuw</Text>
             </Pressable>

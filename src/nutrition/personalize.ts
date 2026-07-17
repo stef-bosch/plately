@@ -149,6 +149,32 @@ function adaptRecipe(recipe: Recipe): Adapted {
   };
 }
 
+/**
+ * Weekmenu dishes carry per-ingredient data, so their portion is computed for
+ * this user and returned as the dish's nutrition. Everything else (normal
+ * recipes, or weekmenu dishes without usable ingredient data) is returned
+ * unchanged, so recipes keep their general authored values.
+ */
+export function withPersonalNutrition(
+  recipe: Recipe,
+  profile: NutritionProfile,
+  config: SystemConfig = DEFAULT_CONFIG,
+): Recipe {
+  if (recipe.usage !== 'weekmenu') return recipe;
+  const personal = personalizeRecipe(recipe, profile, config);
+  if (!personal.scalable) return recipe;
+  return {
+    ...recipe,
+    nutrition: {
+      ...recipe.nutrition,
+      calories: personal.nutrition.kcal,
+      protein: personal.nutrition.proteinG,
+      carbs: personal.nutrition.carbsG,
+      fat: personal.nutrition.fatG,
+    },
+  };
+}
+
 /** Personalise one recipe to the user's target for that meal. */
 export function personalizeRecipe(
   recipe: Recipe,
