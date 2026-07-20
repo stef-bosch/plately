@@ -349,7 +349,7 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
       </Section>
 
       <Section title="Ingrediënten">
-        <IngredientGroupsEditor groups={groups} setGroups={setGroups} />
+        <IngredientGroupsEditor groups={groups} setGroups={setGroups} nutritionRequired={isWeekmenu} />
       </Section>
 
       <Section title="Bereidingswijze">
@@ -414,7 +414,7 @@ function ComputedNutrition({ groups }: { groups: GroupDraft[] }) {
       {missing.length ? (
         <Text style={formKit.error}>
           Nog geen voedingswaarde voor: {missing.join(', ')}. Vul per ingrediënt
-          de hoeveelheid in gram en kcal/100 g in via ⚙ Schalen.
+          de hoeveelheid in gram en de voedingswaarde per 100 g in.
         </Text>
       ) : null}
     </View>

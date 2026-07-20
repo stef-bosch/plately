@@ -159,9 +159,15 @@ function draftFromIngredient(it: Ingredient): IngredientDraft {
 interface Props {
   groups: GroupDraft[];
   setGroups: React.Dispatch<React.SetStateAction<GroupDraft[]>>;
+  /**
+   * When true (weekmenu dishes) the per-ingredient role + nutrition panel is
+   * always visible, since that data is required to compute and scale the dish.
+   * When false (recipes) it stays behind the ⚙ toggle and is optional.
+   */
+  nutritionRequired?: boolean;
 }
 
-export function IngredientGroupsEditor({ groups, setGroups }: Props) {
+export function IngredientGroupsEditor({ groups, setGroups, nutritionRequired = false }: Props) {
   const patchItem = (gi: number, idx: number, patch: Partial<IngredientDraft>) =>
     setGroups((p) =>
       p.map((g, i) =>
@@ -177,9 +183,9 @@ export function IngredientGroupsEditor({ groups, setGroups }: Props) {
   return (
     <>
       <Text style={formKit.hint}>
-        Groepeer ingrediënten onder een kop (bijv. "Basis", "Topping"). Vul
-        optioneel "Schalen" in om dit ingrediënt door het rekenmodel te laten
-        personaliseren op de energiebehoefte van de gebruiker.
+        {nutritionRequired
+          ? 'Groepeer ingrediënten onder een kop (bijv. "Basis", "Topping"). Vul per ingrediënt de hoeveelheid (g), de rol en de voedingswaarde per 100 g in — daaruit worden de voedingswaarden berekend en wordt het gerecht op maat geschaald.'
+          : 'Groepeer ingrediënten onder een kop (bijv. "Basis", "Topping"). Vul optioneel via ⚙ de rol en voedingswaarde in om dit ingrediënt door het rekenmodel te laten personaliseren.'}
       </Text>
       {groups.map((group, gi) => (
         <View key={gi} style={styles.groupBlock}>
@@ -222,24 +228,43 @@ export function IngredientGroupsEditor({ groups, setGroups }: Props) {
                     label="ingrediënt"
                   />
                 ) : null}
-                <Pressable
-                  onPress={() => patchItem(gi, idx, { advancedOpen: !ing.advancedOpen })}
-                  style={formKit.iconButton}
-                  accessibilityLabel="Schaal-instellingen"
-                >
-                  <Ionicons
-                    name="options-outline"
-                    size={18}
-                    color={ing.role ? colors.primary : colors.textMuted}
-                  />
-                </Pressable>
+                {nutritionRequired ? null : (
+                  <Pressable
+                    onPress={() => patchItem(gi, idx, { advancedOpen: !ing.advancedOpen })}
+                    style={formKit.iconButton}
+                    accessibilityLabel="Schaal-instellingen"
+                  >
+                    <Ionicons
+                      name="options-outline"
+                      size={18}
+                      color={ing.role ? colors.primary : colors.textMuted}
+                    />
+                  </Pressable>
+                )}
                 <Pressable onPress={() => setGroups((p) => p.map((g, i) => (i === gi ? { ...g, items: g.items.filter((_, j) => j !== idx) } : g)))} style={formKit.iconButton}>
                   <Ionicons name="close" size={18} color={colors.textMuted} />
                 </Pressable>
               </View>
 
-              {ing.advancedOpen ? (
+              {nutritionRequired || ing.advancedOpen ? (
                 <View style={styles.advanced}>
+                  {nutritionRequired || ing.role ? (
+                    <>
+                      <Text style={styles.advancedLabel}>Voedingswaarde per 100 g</Text>
+                      <View style={styles.miniRow}>
+                        <MiniField label="kcal" value={ing.kcal100 ?? ''} onChange={(t) => patchItem(gi, idx, { kcal100: t })} />
+                        <MiniField label="eiwit" value={ing.protein100 ?? ''} onChange={(t) => patchItem(gi, idx, { protein100: t })} />
+                        <MiniField label="kh" value={ing.carbs100 ?? ''} onChange={(t) => patchItem(gi, idx, { carbs100: t })} />
+                        <MiniField label="vet" value={ing.fat100 ?? ''} onChange={(t) => patchItem(gi, idx, { fat100: t })} />
+                      </View>
+                      <Text style={formKit.hint}>
+                        {nutritionRequired
+                          ? 'Vul minstens de hoeveelheid (g) en kcal/100 g in, anders telt dit ingrediënt niet mee in de voedingswaarden.'
+                          : 'Zonder kcal/100 g wordt dit ingrediënt niet automatisch geschaald.'}
+                      </Text>
+                    </>
+                  ) : null}
+
                   <Text style={styles.advancedLabel}>Rol in het gerecht</Text>
                   <View style={formKit.chipRow}>
                     <FilterChip label="geen" active={!ing.role} onPress={() => patchItem(gi, idx, { role: '' })} />
@@ -250,22 +275,12 @@ export function IngredientGroupsEditor({ groups, setGroups }: Props) {
 
                   {ing.role ? (
                     <>
-                      <Text style={styles.advancedLabel}>Grenzen (gram)</Text>
+                      <Text style={styles.advancedLabel}>Grenzen (gram, optioneel)</Text>
                       <View style={styles.miniRow}>
                         <MiniField label="min" value={ing.minG ?? ''} onChange={(t) => patchItem(gi, idx, { minG: t })} />
                         <MiniField label="max" value={ing.maxG ?? ''} onChange={(t) => patchItem(gi, idx, { maxG: t })} />
                         <MiniField label="stap" value={ing.stepG ?? ''} onChange={(t) => patchItem(gi, idx, { stepG: t })} />
                       </View>
-                      <Text style={styles.advancedLabel}>Voedingswaarde per 100 g</Text>
-                      <View style={styles.miniRow}>
-                        <MiniField label="kcal" value={ing.kcal100 ?? ''} onChange={(t) => patchItem(gi, idx, { kcal100: t })} />
-                        <MiniField label="eiwit" value={ing.protein100 ?? ''} onChange={(t) => patchItem(gi, idx, { protein100: t })} />
-                        <MiniField label="kh" value={ing.carbs100 ?? ''} onChange={(t) => patchItem(gi, idx, { carbs100: t })} />
-                        <MiniField label="vet" value={ing.fat100 ?? ''} onChange={(t) => patchItem(gi, idx, { fat100: t })} />
-                      </View>
-                      <Text style={formKit.hint}>
-                        Zonder kcal/100 g wordt dit ingrediënt niet automatisch geschaald.
-                      </Text>
                     </>
                   ) : null}
                 </View>
