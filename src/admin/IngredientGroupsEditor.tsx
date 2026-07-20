@@ -144,7 +144,6 @@ function draftFromIngredient(it: Ingredient): IngredientDraft {
     name: it.name,
     quantity: String(it.quantity),
     unit: it.unit,
-    advancedOpen: false,
     role: s?.role ?? '',
     minG: s?.minG != null ? String(s.minG) : '',
     maxG: s?.maxG != null ? String(s.maxG) : '',
@@ -184,7 +183,7 @@ export function IngredientGroupsEditor({ groups, setGroups, nutritionRequired = 
     <>
       <Text style={formKit.hint}>
         {nutritionRequired
-          ? 'Groepeer ingrediënten onder een kop (bijv. "Basis", "Topping"). Vul per ingrediënt de hoeveelheid (g), de rol en de voedingswaarde per 100 g in — daaruit worden de voedingswaarden berekend en wordt het gerecht op maat geschaald.'
+          ? 'Groepeer ingrediënten onder een kop (bijv. "Basis", "Topping"). Vul per ingrediënt de hoeveelheid (g) in, en klap met ⚙ de rol en voedingswaarde per 100 g uit — daaruit worden de voedingswaarden berekend en wordt het gerecht op maat geschaald.'
           : 'Groepeer ingrediënten onder een kop (bijv. "Basis", "Topping"). Vul optioneel via ⚙ de rol en voedingswaarde in om dit ingrediënt door het rekenmodel te laten personaliseren.'}
       </Text>
       {groups.map((group, gi) => (
@@ -213,7 +212,10 @@ export function IngredientGroupsEditor({ groups, setGroups, nutritionRequired = 
             ) : null}
           </View>
 
-          {group.items.map((ing, idx) => (
+          {group.items.map((ing, idx) => {
+            // The role + nutrition panel starts collapsed; the ⚙ toggles it.
+            const panelOpen = ing.advancedOpen === true;
+            return (
             <View key={idx} style={styles.itemBlock}>
               <View style={styles.ingredientRow}>
                 <TextInput value={ing.quantity} onChangeText={(t) => patchItem(gi, idx, { quantity: t })} placeholder="100" placeholderTextColor={colors.textMuted} style={[formKit.input, styles.qtyInput]} />
@@ -228,25 +230,23 @@ export function IngredientGroupsEditor({ groups, setGroups, nutritionRequired = 
                     label="ingrediënt"
                   />
                 ) : null}
-                {nutritionRequired ? null : (
-                  <Pressable
-                    onPress={() => patchItem(gi, idx, { advancedOpen: !ing.advancedOpen })}
-                    style={formKit.iconButton}
-                    accessibilityLabel="Schaal-instellingen"
-                  >
-                    <Ionicons
-                      name="options-outline"
-                      size={18}
-                      color={ing.role ? colors.primary : colors.textMuted}
-                    />
-                  </Pressable>
-                )}
+                <Pressable
+                  onPress={() => patchItem(gi, idx, { advancedOpen: !panelOpen })}
+                  style={formKit.iconButton}
+                  accessibilityLabel="Schaal-instellingen"
+                >
+                  <Ionicons
+                    name="options-outline"
+                    size={18}
+                    color={ing.role ? colors.primary : colors.textMuted}
+                  />
+                </Pressable>
                 <Pressable onPress={() => setGroups((p) => p.map((g, i) => (i === gi ? { ...g, items: g.items.filter((_, j) => j !== idx) } : g)))} style={formKit.iconButton}>
                   <Ionicons name="close" size={18} color={colors.textMuted} />
                 </Pressable>
               </View>
 
-              {nutritionRequired || ing.advancedOpen ? (
+              {panelOpen ? (
                 <View style={styles.advanced}>
                   {nutritionRequired || ing.role ? (
                     <>
@@ -286,7 +286,8 @@ export function IngredientGroupsEditor({ groups, setGroups, nutritionRequired = 
                 </View>
               ) : null}
             </View>
-          ))}
+            );
+          })}
 
           <Pressable onPress={() => setGroups((p) => p.map((g, i) => (i === gi ? { ...g, items: [...g.items, emptyItem()] } : g)))} style={formKit.addRow}>
             <Ionicons name="add" size={18} color={colors.primary} />
