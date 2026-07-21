@@ -31,6 +31,7 @@ import {
   GroupDraft,
   IngredientDraft,
   IngredientGroupsEditor,
+  effectiveGrams,
   emptyGroup,
   groupsFromIngredients,
   ingredientsMissingNutrition,
@@ -193,12 +194,14 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
             const n = Number(i.quantity.replace(',', '.'));
             const scalable = i.quantity.trim() !== '' && !Number.isNaN(n);
             const scaling = scalingFromDraft(i);
+            const grams = effectiveGrams(i);
             return {
               name: i.name.trim(),
               quantity: scalable ? n : i.quantity.trim() || 'naar smaak',
               unit: i.unit.trim(),
               scalable,
               ...(scaling ? { scaling } : {}),
+              ...(grams != null ? { grams } : {}),
             };
           });
 

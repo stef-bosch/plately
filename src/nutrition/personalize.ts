@@ -60,7 +60,13 @@ function adaptRecipe(recipe: Recipe): Adapted {
   for (const group of recipe.ingredients) {
     for (const it of group.items) {
       const s = it.scaling;
-      const grams = typeof it.quantity === 'number' ? it.quantity : NaN;
+      // Prefer the explicit gram weight; fall back to a gram-unit quantity.
+      const grams =
+        typeof it.grams === 'number'
+          ? it.grams
+          : typeof it.quantity === 'number'
+            ? it.quantity
+            : NaN;
       if (s && !Number.isNaN(grams) && grams > 0) {
         const fid = `f${counter}`;
         foods.set(fid, {

@@ -107,6 +107,12 @@ export interface Ingredient {
   display?: string;
   /** Optional metadata for the personalisation engine (see IngredientScaling). */
   scaling?: IngredientScaling;
+  /**
+   * Weight in grams of this ingredient in one base portion. Bridges the display
+   * unit (tl, el, stuks, …) to the grams the nutrition/scaling engine needs.
+   * When absent, a gram-unit quantity is used as-is.
+   */
+  grams?: number;
 }
 
 export interface IngredientGroup {

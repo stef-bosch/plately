@@ -19,6 +19,8 @@ export interface IngredientDraft {
   unit: string;
   // Optional calc-engine metadata (per-ingredient scaling).
   advancedOpen?: boolean;
+  /** Weight in grams of this ingredient in one portion (for non-gram units). */
+  grams?: string;
   role?: IngredientRole | '';
   minG?: string;
   maxG?: string;
@@ -74,10 +76,25 @@ export function scalingFromDraft(d: IngredientDraft): IngredientScaling | undefi
   };
 }
 
-/** The gram amount of a draft, or undefined when it isn't a plain number. */
-function gramsOf(d: IngredientDraft): number | undefined {
-  const n = numOrUndef(d.quantity);
-  return n != null && n > 0 ? n : undefined;
+/** Units that already express grams, so the quantity is the weight itself. */
+function isGramUnit(unit: string): boolean {
+  const u = unit.trim().toLowerCase();
+  return u === '' || u === 'g' || u === 'gr' || u === 'gram';
+}
+
+/**
+ * Weight in grams of an ingredient in one portion: the explicit `grams` field
+ * when set, otherwise the quantity when the unit is already grams. Undefined for
+ * non-gram units without a weight, and for "naar smaak" (no numeric amount).
+ */
+export function effectiveGrams(d: IngredientDraft): number | undefined {
+  const explicit = numOrUndef(d.grams);
+  if (explicit != null && explicit > 0) return explicit;
+  if (isGramUnit(d.unit)) {
+    const q = numOrUndef(d.quantity);
+    if (q != null && q > 0) return q;
+  }
+  return undefined;
 }
 
 /**
@@ -93,7 +110,7 @@ export function nutritionFromGroups(groups: GroupDraft[]): Nutrition {
 
   for (const group of groups) {
     for (const item of group.items) {
-      const grams = gramsOf(item);
+      const grams = effectiveGrams(item);
       const kcal100 = numOrUndef(item.kcal100);
       if (!item.name.trim() || grams == null || kcal100 == null) continue;
       const factor = grams / 100;
@@ -115,13 +132,20 @@ export function nutritionFromGroups(groups: GroupDraft[]): Nutrition {
   };
 }
 
-/** Named ingredients that can't be counted yet (no gram amount or no kcal/100 g). */
+/**
+ * Named ingredients that look measured (a numeric quantity or an explicit
+ * weight) but can't be counted yet, so nutrition is incomplete. "Naar smaak"
+ * ingredients (no numeric amount) are intentionally skipped, not flagged.
+ */
 export function ingredientsMissingNutrition(groups: GroupDraft[]): string[] {
   const missing: string[] = [];
   for (const group of groups) {
     for (const item of group.items) {
       if (!item.name.trim()) continue;
-      if (gramsOf(item) == null || numOrUndef(item.kcal100) == null) {
+      const isMeasured =
+        numOrUndef(item.quantity) != null || numOrUndef(item.grams) != null;
+      if (!isMeasured) continue;
+      if (effectiveGrams(item) == null || numOrUndef(item.kcal100) == null) {
         missing.push(item.name.trim());
       }
     }
@@ -144,6 +168,7 @@ function draftFromIngredient(it: Ingredient): IngredientDraft {
     name: it.name,
     quantity: String(it.quantity),
     unit: it.unit,
+    grams: it.grams != null ? String(it.grams) : '',
     role: s?.role ?? '',
     minG: s?.minG != null ? String(s.minG) : '',
     maxG: s?.maxG != null ? String(s.maxG) : '',
@@ -183,7 +208,7 @@ export function IngredientGroupsEditor({ groups, setGroups, nutritionRequired = 
     <>
       <Text style={formKit.hint}>
         {nutritionRequired
-          ? 'Groepeer ingrediënten onder een kop (bijv. "Basis", "Topping"). Vul per ingrediënt de hoeveelheid (g) in, en klap met ⚙ de rol en voedingswaarde per 100 g uit — daaruit worden de voedingswaarden berekend en wordt het gerecht op maat geschaald.'
+          ? 'Groepeer ingrediënten onder een kop (bijv. "Basis", "Topping"). Klap per ingrediënt met ⚙ het gewicht (g), de voedingswaarde per 100 g en de rol uit — daaruit worden de voedingswaarden berekend en wordt het gerecht op maat geschaald.'
           : 'Groepeer ingrediënten onder een kop (bijv. "Basis", "Topping").'}
       </Text>
       {groups.map((group, gi) => (
@@ -250,6 +275,19 @@ export function IngredientGroupsEditor({ groups, setGroups, nutritionRequired = 
 
               {nutritionRequired && panelOpen ? (
                 <View style={styles.advanced}>
+                  <Text style={styles.advancedLabel}>Gewicht per portie (g)</Text>
+                  <View style={styles.miniRow}>
+                    <MiniField label="gram" value={ing.grams ?? ''} onChange={(t) => patchItem(gi, idx, { grams: t })} />
+                    <View style={styles.miniField} />
+                    <View style={styles.miniField} />
+                    <View style={styles.miniField} />
+                  </View>
+                  <Text style={formKit.hint}>
+                    Het gewicht in gram van dit ingrediënt in één portie. Bij eenheid "g"
+                    wordt de hoeveelheid gebruikt; voor tl/el/stuks vul je hier het gewicht in.
+                    Laat leeg voor "naar smaak" — dat telt niet mee.
+                  </Text>
+
                   <Text style={styles.advancedLabel}>Voedingswaarde per 100 g</Text>
                   <View style={styles.miniRow}>
                     <MiniField label="kcal" value={ing.kcal100 ?? ''} onChange={(t) => patchItem(gi, idx, { kcal100: t })} />
@@ -258,7 +296,7 @@ export function IngredientGroupsEditor({ groups, setGroups, nutritionRequired = 
                     <MiniField label="vet" value={ing.fat100 ?? ''} onChange={(t) => patchItem(gi, idx, { fat100: t })} />
                   </View>
                   <Text style={formKit.hint}>
-                    Vul minstens de hoeveelheid (g) en kcal/100 g in, anders telt dit ingrediënt niet mee in de voedingswaarden.
+                    Zonder kcal/100 g telt dit ingrediënt niet mee in de voedingswaarden.
                   </Text>
 
                   <Text style={styles.advancedLabel}>Rol in het gerecht</Text>
