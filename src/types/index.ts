@@ -262,6 +262,21 @@ export interface DayMeals {
   diner: string;
 }
 
+/** The meal slots a week-menu day can hold. */
+export type MealSlot = 'ontbijt' | 'lunch' | 'diner' | 'tussendoortje';
+
+/**
+ * A week menu assembled by hand in the admin, stored per ISO week. Weeks
+ * without a stored menu fall back to the automatically generated plan.
+ */
+export interface StoredWeekMenu {
+  /** ISO week id, e.g. "2026-W30". */
+  id: string;
+  year: number;
+  week: number;
+  days: Record<WeekDayName, DayMeals>;
+}
+
 export interface WeekDay {
   day: WeekDayName;
   meals: DayMeals;

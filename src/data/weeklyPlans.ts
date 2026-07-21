@@ -1,6 +1,7 @@
 import { dayOrder, dishCategory, getIsoWeekNumber, seasonFromDate } from '../constants/labels';
-import { getWeekmenuDishes } from './content';
-import type { Recipe, Season, WeekDay, WeeklyPlan } from '../types';
+import { weekIdFor } from '../utils/isoWeek';
+import { getStoredWeekMenu, getWeekmenuDishes } from './content';
+import type { Recipe, Season, StoredWeekMenu, WeekDay, WeeklyPlan } from '../types';
 
 /**
  * The weekly menu is built on the fly from the dishes added under the admin's
@@ -63,13 +64,29 @@ function rotatePlan(plan: WeeklyPlan, offset: number): WeeklyPlan {
   };
 }
 
+/** Turns a hand-built week menu into the plan shape the screens consume. */
+function planFromStored(stored: StoredWeekMenu, season: Season): WeeklyPlan {
+  return {
+    season,
+    days: dayOrder.map((day) => ({
+      day,
+      meals: stored.days?.[day] ?? { ontbijt: '', lunch: '', tussendoortje: [], diner: '' },
+    })),
+  };
+}
+
 /**
- * Picks the week plan for a given date: the season follows the calendar
- * (herfst/winter dishes in the cold months) and odd ISO weeks get a rotated
- * variation of the seasonal plan so the menu alternates week to week.
+ * The week plan for a given date. A week assembled by hand in the admin always
+ * wins; weeks that were never built fall back to the generated plan (the season
+ * follows the calendar, and odd ISO weeks get a rotated variation so the menu
+ * alternates week to week).
  */
 export function getWeeklyPlanForDate(date: Date): WeeklyPlan {
-  const basePlan = getWeeklyPlan(seasonFromDate(date));
+  const season = seasonFromDate(date);
+  const stored = getStoredWeekMenu(weekIdFor(date));
+  if (stored) return planFromStored(stored, season);
+
+  const basePlan = getWeeklyPlan(season);
   const isOddWeek = getIsoWeekNumber(date) % 2 === 1;
   return isOddWeek ? rotatePlan(basePlan, 3) : basePlan;
 }

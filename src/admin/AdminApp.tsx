@@ -37,6 +37,7 @@ import { colors, radius, shadow, spacing, typography } from '../theme';
 import type { DishUsage, Recipe } from '../types';
 import { DishForm } from './DishForm';
 import { MenuForm } from './MenuForm';
+import { WeekmenuBuilder } from './WeekmenuBuilder';
 
 async function confirmAsync(message: string): Promise<boolean> {
   if (Platform.OS === 'web' && typeof window !== 'undefined') return window.confirm(message);
@@ -263,7 +264,6 @@ function AdminShell({ email }: { email: string }) {
   const matches = (title: string) => !q || title.toLowerCase().includes(q);
   // The two dish collections live in the same table, split by `usage`.
   const filteredDishes = dishes.filter((r) => usageOf(r) === 'recept' && matches(r.title));
-  const filteredWeekmenu = dishes.filter((r) => usageOf(r) === 'weekmenu' && matches(r.title));
   const filteredMenus = menus.filter((r) => matches(r.title));
 
   const searchBox = (
@@ -289,29 +289,7 @@ function AdminShell({ email }: { email: string }) {
       {busyMsg ? <Text style={styles.message}>{busyMsg}</Text> : null}
       {flash ? <Text style={styles.flash}>{flash}</Text> : null}
 
-      {tab === 'weekmenu' ? (
-        <>
-          <View style={styles.listHeader}>
-            <Text style={styles.h2}>Weekmenu-gerechten ({filteredWeekmenu.length})</Text>
-            <Pressable onPress={() => setForm({ kind: 'dish', usage: 'weekmenu' })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
-              <Ionicons name="add" size={18} color={colors.textOnPrimary} />
-              <Text style={styles.newButtonText}>Nieuw</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.empty}>
-            Deze gerechten vullen het weekmenu. Hun voedingswaarden worden
-            automatisch berekend uit de ingrediënten en afgestemd op de
-            instellingen van de gebruiker. Ze staan niet bij Recepten in de app.
-          </Text>
-          {loading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
-          ) : filteredWeekmenu.length === 0 ? (
-            <Text style={styles.empty}>{query ? 'Geen weekmenu-gerechten gevonden.' : 'Nog geen weekmenu-gerechten. Voeg er een toe.'}</Text>
-          ) : (
-            <View style={styles.mealGroups}>{renderCategoryGroups(filteredWeekmenu)}</View>
-          )}
-        </>
-      ) : tab === 'dishes' ? (
+      {tab === 'dishes' ? (
         <>
           <View style={styles.listHeader}>
             <Text style={styles.h2}>Gerechten ({filteredDishes.length})</Text>
@@ -402,6 +380,12 @@ function AdminShell({ email }: { email: string }) {
       <MenuForm menuId={form.id} onSaved={onFormDone} onCancel={() => setForm(null)} />
     ) : tab === 'dashboard' ? (
       dashboardView
+    ) : tab === 'weekmenu' ? (
+      <WeekmenuBuilder
+        dishRows={weekmenuRows}
+        onNewDish={() => setForm({ kind: 'dish', usage: 'weekmenu' })}
+        onEditDish={(row) => setForm({ kind: 'dish', id: row.id, usage: 'weekmenu' })}
+      />
     ) : (
       listView
     );

@@ -1,5 +1,11 @@
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import type { Menu, MenuCourseType, Recipe, ReactiveRecipe } from '../types';
+import type {
+  Menu,
+  MenuCourseType,
+  Recipe,
+  ReactiveRecipe,
+  StoredWeekMenu,
+} from '../types';
 import { resolveRecipe } from '../utils/resolveRecipe';
 
 /**
@@ -68,6 +74,14 @@ function menuState(): MenuState {
   return menus;
 }
 
+/** Hand-built week menus by ISO week id ("2026-W30"). */
+let weekMenus: Record<string, StoredWeekMenu> = {};
+
+/** The stored week menu for an ISO week id, if one was built in the admin. */
+export function getStoredWeekMenu(id: string): StoredWeekMenu | undefined {
+  return weekMenus[id];
+}
+
 /** True once dishes have been replaced by data loaded from Supabase. */
 export let loadedFromBackend = false;
 
@@ -117,9 +131,12 @@ function normalizeRecipe(data: unknown): Recipe {
 export async function loadContent(): Promise<void> {
   if (!isSupabaseConfigured || !supabase) return;
   try {
-    const [dishRes, menuRes] = await Promise.all([
+    const [dishRes, menuRes, weekRes] = await Promise.all([
       supabase.from('dishes').select('kind, data'),
       supabase.from('menus').select('data'),
+      // The week_menus table is optional; a missing table just means no
+      // hand-built weeks yet, so the generated plan keeps being used.
+      supabase.from('week_menus').select('id, data'),
     ]);
 
     const dishRows = dishRes.data as { kind: string; data: unknown }[] | null;
@@ -140,6 +157,14 @@ export async function loadContent(): Promise<void> {
     const menuRows = menuRes.data as { data: Menu }[] | null;
     if (!menuRes.error && menuRows && menuRows.length > 0) {
       menus = buildMenuState(menuRows.map((row) => row.data));
+    }
+
+    const weekRows = weekRes.data as { id: string; data: StoredWeekMenu }[] | null;
+    if (!weekRes.error && weekRows) {
+      weekMenus = weekRows.reduce<Record<string, StoredWeekMenu>>((acc, row) => {
+        if (row.data) acc[row.id] = row.data;
+        return acc;
+      }, {});
     }
   } catch {
     // Network/down — keep whatever is already loaded.

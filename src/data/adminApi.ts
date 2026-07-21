@@ -1,6 +1,6 @@
 import { dishCategory } from '../constants/labels';
 import { supabase } from '../lib/supabase';
-import type { Menu, Recipe, ReactiveRecipe } from '../types';
+import type { Menu, Recipe, ReactiveRecipe, StoredWeekMenu } from '../types';
 
 /**
  * Admin write/read operations against Supabase. These require an authenticated
@@ -108,5 +108,33 @@ export async function saveMenu(menu: Menu): Promise<void> {
 
 export async function deleteMenu(id: string): Promise<void> {
   const { error } = await client().from('menus').delete().eq('id', id);
+  if (error) throw error;
+}
+
+/* ---------- Week menus ---------- */
+
+/** The hand-built week menu for one ISO week, or null when it isn't built yet. */
+export async function getWeekMenu(id: string): Promise<StoredWeekMenu | null> {
+  const { data, error } = await client()
+    .from('week_menus')
+    .select('data')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return ((data as { data: StoredWeekMenu } | null)?.data) ?? null;
+}
+
+export async function saveWeekMenu(weekMenu: StoredWeekMenu): Promise<void> {
+  const { error } = await client().from('week_menus').upsert({
+    id: weekMenu.id,
+    year: weekMenu.year,
+    week: weekMenu.week,
+    data: weekMenu,
+  });
+  if (error) throw error;
+}
+
+export async function deleteWeekMenu(id: string): Promise<void> {
+  const { error } = await client().from('week_menus').delete().eq('id', id);
   if (error) throw error;
 }
