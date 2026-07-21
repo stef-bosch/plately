@@ -16,14 +16,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   deleteDish,
   deleteMenu,
+  getDishRow,
   listDishes,
   listMenus,
+  saveDish,
   type DishRow,
   type MenuRow,
 } from '../data/adminApi';
 import { PlatelyLogo } from '../components/BrandIcons';
 import {
-  DISH_CATEGORIES,
   MEAL_CATEGORIES,
   dayLabel,
   dishCategory,
@@ -37,6 +38,7 @@ import { colors, radius, shadow, spacing, typography } from '../theme';
 import type { Recipe } from '../types';
 import { DishForm } from './DishForm';
 import { MenuForm } from './MenuForm';
+import { RecipesView } from './RecipesView';
 import { WeekmenuBuilder } from './WeekmenuBuilder';
 
 async function confirmAsync(message: string): Promise<boolean> {
@@ -154,8 +156,6 @@ function AdminShell({ email }: { email: string }) {
   const [busyMsg, setBusyMsg] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [flash, setFlash] = useState<string | null>(null);
-  // Which category groups in the Recepten list are collapsed.
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const signOut = () => supabase?.auth.signOut();
   // Switching section always leaves any open form.
@@ -191,6 +191,23 @@ function AdminShell({ email }: { email: string }) {
     refresh();
   };
 
+  /** Copies a recipe under a free "-kopie" id so it can be edited separately. */
+  const duplicateDish = async (row: DishRow) => {
+    try {
+      let id = `${row.id}-kopie`;
+      let n = 2;
+      while (await getDishRow(id)) id = `${row.id}-kopie-${n++}`;
+      const copy = { ...(row.data as object), id, title: `${row.title} (kopie)` };
+      await saveDish(copy as Parameters<typeof saveDish>[0], row.kind);
+      await reloadContent();
+      setFlash(`"${row.title}" gekopieerd`);
+      setTimeout(() => setFlash(null), 2500);
+      refresh();
+    } catch (e) {
+      setBusyMsg(`Kopiëren mislukt: ${(e as Error).message}`);
+    }
+  };
+
   const removeMenu = async (row: MenuRow) => {
     if (!(await confirmAsync(`"${row.title}" verwijderen?`))) return;
     await deleteMenu(row.id);
@@ -205,60 +222,8 @@ function AdminShell({ email }: { email: string }) {
     refresh();
   };
 
-  const renderDishCard = (row: DishRow) => (
-    <View key={row.id} style={styles.itemCard}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.itemTitle} numberOfLines={1}>{row.title}</Text>
-        <Text style={styles.itemMeta}>
-          {(row.data as Recipe)?.nutrition?.calories ?? '—'} kcal
-        </Text>
-      </View>
-      <Pressable onPress={() => setForm({ kind: 'dish', id: row.id })} style={styles.iconButton}>
-        <Ionicons name="create-outline" size={20} color={colors.primary} />
-      </Pressable>
-      <Pressable onPress={() => removeDish(row)} style={styles.iconButton}>
-        <Ionicons name="trash-outline" size={20} color={colors.fat} />
-      </Pressable>
-    </View>
-  );
-
-  // Group the dishes by category, in the app's category order.
-  const renderCategoryGroups = (rows: DishRow[]) => {
-    const known = new Set(DISH_CATEGORIES);
-    const groups = DISH_CATEGORIES.map((c) => ({
-      key: c,
-      rows: rows.filter((r) => categoryOf(r) === c),
-    }));
-    const leftover = rows.filter((r) => !known.has(categoryOf(r)));
-    if (leftover.length) groups.push({ key: 'Overig', rows: leftover });
-    return groups
-      .filter((g) => g.rows.length > 0)
-      .map((g) => {
-        const isCollapsed = collapsed[g.key];
-        return (
-          <View key={g.key} style={styles.mealGroup}>
-            <Pressable
-              onPress={() => setCollapsed((p) => ({ ...p, [g.key]: !p[g.key] }))}
-              style={({ pressed }) => [styles.mealGroupHeader, pressed && styles.pressed]}
-            >
-              <Ionicons
-                name={isCollapsed ? 'chevron-forward' : 'chevron-down'}
-                size={16}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.mealGroupTitle}>{g.key} ({g.rows.length})</Text>
-            </Pressable>
-            {isCollapsed ? null : (
-              <View style={styles.grid}>{g.rows.map((r) => renderDishCard(r))}</View>
-            )}
-          </View>
-        );
-      });
-  };
-
   const q = query.trim().toLowerCase();
   const matches = (title: string) => !q || title.toLowerCase().includes(q);
-  const filteredDishes = dishes.filter((r) => matches(r.title));
   const filteredMenus = menus.filter((r) => matches(r.title));
 
   const searchBox = (
@@ -284,25 +249,7 @@ function AdminShell({ email }: { email: string }) {
       {busyMsg ? <Text style={styles.message}>{busyMsg}</Text> : null}
       {flash ? <Text style={styles.flash}>{flash}</Text> : null}
 
-      {tab === 'dishes' ? (
-        <>
-          <View style={styles.listHeader}>
-            <Text style={styles.h2}>Recepten ({filteredDishes.length})</Text>
-            <Pressable onPress={() => setForm({ kind: 'dish' })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
-              <Ionicons name="add" size={18} color={colors.textOnPrimary} />
-              <Text style={styles.newButtonText}>Nieuw</Text>
-            </Pressable>
-          </View>
-          {loading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
-          ) : filteredDishes.length === 0 ? (
-            <Text style={styles.empty}>{query ? 'Geen recepten gevonden.' : 'Nog geen recepten. Voeg er een toe.'}</Text>
-          ) : (
-            <View style={styles.mealGroups}>{renderCategoryGroups(filteredDishes)}</View>
-          )}
-        </>
-      ) : (
-        <>
+      <>
           <View style={styles.listHeader}>
             <Text style={styles.h2}>Menu's ({filteredMenus.length})</Text>
             <Pressable onPress={() => setForm({ kind: 'menu' })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
@@ -332,8 +279,7 @@ function AdminShell({ email }: { email: string }) {
               ))}
             </View>
           )}
-        </>
-      )}
+      </>
     </View>
   );
 
@@ -355,6 +301,27 @@ function AdminShell({ email }: { email: string }) {
     }
   }
 
+  // Unique recipes planned in the current week (real, from the saved/generated plan).
+  const plannedIds = new Set(
+    getWeeklyPlanForDate(new Date()).days.flatMap((d) =>
+      [d.meals.ontbijt, d.meals.lunch, d.meals.diner, ...d.meals.tussendoortje].filter(Boolean),
+    ),
+  );
+
+  const recipesView = (
+    <RecipesView
+      rows={dishes}
+      loading={loading}
+      plannedIds={plannedIds}
+      onNew={() => setForm({ kind: 'dish' })}
+      onNewMenu={() => setForm({ kind: 'menu' })}
+      onGoToWeekmenu={() => goTo('weekmenu')}
+      onEdit={(row) => setForm({ kind: 'dish', id: row.id })}
+      onDuplicate={duplicateDish}
+      onDelete={removeDish}
+    />
+  );
+
   const dashboardView = (
     <DashboardView
       loading={loading}
@@ -374,6 +341,8 @@ function AdminShell({ email }: { email: string }) {
       <MenuForm menuId={form.id} onSaved={onFormDone} onCancel={() => setForm(null)} />
     ) : tab === 'dashboard' ? (
       dashboardView
+    ) : tab === 'dishes' ? (
+      recipesView
     ) : tab === 'weekmenu' ? (
       <WeekmenuBuilder
         dishRows={weekmenuRows}

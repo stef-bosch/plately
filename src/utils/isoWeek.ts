@@ -64,3 +64,11 @@ export function dayDateInWeek(date: Date, dayIndex: number): Date {
 export function formatDayShort(date: Date): string {
   return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
 }
+
+/** e.g. "26 mei 2026"; returns '—' for a missing/unparsable timestamp. */
+export function formatDateLong(value?: string): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
