@@ -22,7 +22,13 @@ import {
   type MenuRow,
 } from '../data/adminApi';
 import { PlatelyLogo } from '../components/BrandIcons';
-import { DISH_CATEGORIES, MEAL_CATEGORIES, dayLabel, dishCategory } from '../constants/labels';
+import {
+  DISH_CATEGORIES,
+  MEAL_CATEGORIES,
+  dayLabel,
+  dishCategory,
+  getIsoWeekNumber,
+} from '../constants/labels';
 import { getRecipeById, reloadContent } from '../data/content';
 import { getWeeklyPlanForDate } from '../data/weeklyPlans';
 import { supabase } from '../lib/supabase';
@@ -553,13 +559,7 @@ function DashboardView({
 
       {/* This week's menu */}
       <View style={styles.panel}>
-        <View style={styles.panelHeader}>
-          <Text style={styles.panelTitle}>Weekmenu deze week</Text>
-          <Pressable onPress={() => onNewDish('weekmenu')} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
-            <Ionicons name="add" size={18} color={colors.textOnPrimary} />
-            <Text style={styles.newButtonText}>Weekmenu-gerecht</Text>
-          </Pressable>
-        </View>
+        <Text style={styles.panelTitle}>Weekmenu week {getIsoWeekNumber(new Date())}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View>
             <View style={styles.weekRow}>
@@ -609,13 +609,7 @@ function DashboardView({
       {/* Dishes + menus side by side */}
       <View style={styles.twoCol}>
         <View style={[styles.panel, styles.colPanel]}>
-          <View style={styles.panelHeader}>
-            <Text style={styles.panelTitle}>Gerechten</Text>
-            <Pressable onPress={() => onNewDish('recept')} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
-              <Ionicons name="add" size={18} color={colors.textOnPrimary} />
-              <Text style={styles.newButtonText}>Gerecht</Text>
-            </Pressable>
-          </View>
+          <Text style={styles.panelTitle}>Gerechten</Text>
           {recentDishes.length === 0 ? (
             <Text style={styles.empty}>Nog geen gerechten.</Text>
           ) : (
@@ -637,13 +631,7 @@ function DashboardView({
         </View>
 
         <View style={[styles.panel, styles.colPanel]}>
-          <View style={styles.panelHeader}>
-            <Text style={styles.panelTitle}>Menu's</Text>
-            <Pressable onPress={onNewMenu} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
-              <Ionicons name="add" size={18} color={colors.textOnPrimary} />
-              <Text style={styles.newButtonText}>Menu</Text>
-            </Pressable>
-          </View>
+          <Text style={styles.panelTitle}>Menu's</Text>
           {menus.length === 0 ? (
             <Text style={styles.empty}>Nog geen menu's.</Text>
           ) : (
@@ -819,7 +807,7 @@ const styles = StyleSheet.create({
   sidebarFooter: { marginTop: 'auto', gap: spacing.sm, paddingHorizontal: spacing.sm },
   sidebarEmail: { ...typography.caption, color: colors.textMuted },
   contentScroll: { flex: 1 },
-  contentInner: { padding: spacing.xl, gap: spacing.lg, maxWidth: 1180, width: '100%' },
+  contentInner: { padding: spacing.xl, gap: spacing.lg, width: '100%' },
   listView: { gap: spacing.lg },
 
   // Top bar: title, notification bell, account chip.
@@ -874,7 +862,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg,
     gap: spacing.md, ...shadow.soft,
   },
-  panelHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   panelTitle: { ...typography.heading, color: colors.textPrimary },
   twoCol: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg },
   colPanel: { flexGrow: 1, flexBasis: 380 },
