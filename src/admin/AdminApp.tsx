@@ -22,8 +22,9 @@ import {
   type MenuRow,
 } from '../data/adminApi';
 import { PlatelyLogo } from '../components/BrandIcons';
-import { DISH_CATEGORIES, dishCategory } from '../constants/labels';
-import { reloadContent } from '../data/content';
+import { DISH_CATEGORIES, MEAL_CATEGORIES, dayLabel, dishCategory } from '../constants/labels';
+import { getRecipeById, reloadContent } from '../data/content';
+import { getWeeklyPlanForDate } from '../data/weeklyPlans';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/useAuth';
 import { colors, radius, shadow, spacing, typography } from '../theme';
@@ -36,7 +37,7 @@ async function confirmAsync(message: string): Promise<boolean> {
   return true;
 }
 
-type Tab = 'weekmenu' | 'dishes' | 'menus';
+type Tab = 'dashboard' | 'weekmenu' | 'dishes' | 'menus';
 type FormState =
   | { kind: 'dish'; id?: string; usage: DishUsage }
   | { kind: 'menu'; id?: string }
@@ -46,9 +47,24 @@ type FormState =
 const DESKTOP_MIN_WIDTH = 900;
 
 const NAV: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'dashboard', label: 'Dashboard', icon: 'home-outline' },
   { key: 'weekmenu', label: 'Weekmenu', icon: 'calendar-outline' },
   { key: 'dishes', label: 'Gerechten', icon: 'restaurant-outline' },
   { key: 'menus', label: "Menu's", icon: 'albums-outline' },
+];
+
+const TAB_TITLE: Record<Tab, string> = {
+  dashboard: 'Dashboard',
+  weekmenu: 'Weekmenu',
+  dishes: 'Gerechten',
+  menus: "Menu's",
+};
+
+/** The meal rows shown in the dashboard's week grid. */
+const WEEK_ROWS: { key: 'ontbijt' | 'lunch' | 'diner'; label: string }[] = [
+  { key: 'ontbijt', label: 'Ontbijt' },
+  { key: 'lunch', label: 'Lunch' },
+  { key: 'diner', label: 'Diner' },
 ];
 
 // The category a dish is grouped under in the Gerechten list.
@@ -127,7 +143,7 @@ function AdminShell({ email }: { email: string }) {
   // Lets the user proceed on a small screen after the desktop notice.
   const [bypass, setBypass] = useState(false);
 
-  const [tab, setTab] = useState<Tab>('weekmenu');
+  const [tab, setTab] = useState<Tab>('dashboard');
   const [form, setForm] = useState<FormState>(null);
   const [dishes, setDishes] = useState<DishRow[]>([]);
   const [menus, setMenus] = useState<MenuRow[]>([]);
@@ -149,6 +165,9 @@ function AdminShell({ email }: { email: string }) {
     setLoading(true);
     try {
       const [d, m] = await Promise.all([listDishes(), listMenus()]);
+      // Keep the content store in sync so the dashboard's week grid (which is
+      // generated from the weekmenu dishes) reflects the current data.
+      await reloadContent();
       setDishes(d);
       setMenus(m);
     } catch (e) {
@@ -339,11 +358,44 @@ function AdminShell({ email }: { email: string }) {
     </View>
   );
 
+  // Real signals worth flagging in the notification bell — no invented data.
+  const weekmenuRows = dishes.filter((r) => usageOf(r) === 'weekmenu');
+  const issues: string[] = [];
+  if (busyMsg) issues.push(busyMsg);
+  const withoutNutrition = weekmenuRows.filter(
+    (r) => !(r.data as Recipe)?.nutrition?.calories,
+  ).length;
+  if (withoutNutrition > 0) {
+    issues.push(
+      `${withoutNutrition} weekmenu-gerecht${withoutNutrition === 1 ? '' : 'en'} zonder berekende voedingswaarden.`,
+    );
+  }
+  for (const c of MEAL_CATEGORIES) {
+    if (!weekmenuRows.some((r) => categoryOf(r) === c)) {
+      issues.push(`Nog geen "${c}" in het weekmenu — die dagen blijven leeg.`);
+    }
+  }
+
+  const dashboardView = (
+    <DashboardView
+      loading={loading}
+      weekmenuRows={weekmenuRows}
+      recipeRows={dishes.filter((r) => usageOf(r) === 'recept')}
+      menus={menus}
+      onGoTo={goTo}
+      onNewDish={(usage) => setForm({ kind: 'dish', usage })}
+      onNewMenu={() => setForm({ kind: 'menu' })}
+      onEditDish={(row) => setForm({ kind: 'dish', id: row.id, usage: usageOf(row) })}
+    />
+  );
+
   const body =
     form?.kind === 'dish' ? (
       <DishForm dishId={form.id} usage={form.usage} onSaved={onFormDone} onCancel={() => setForm(null)} />
     ) : form?.kind === 'menu' ? (
       <MenuForm menuId={form.id} onSaved={onFormDone} onCancel={() => setForm(null)} />
+    ) : tab === 'dashboard' ? (
+      dashboardView
     ) : (
       listView
     );
@@ -360,6 +412,7 @@ function AdminShell({ email }: { email: string }) {
       <View style={styles.shell}>
         <Sidebar tab={tab} onSelect={goTo} email={email} onSignOut={signOut} />
         <ScrollView style={styles.contentScroll} contentContainerStyle={styles.contentInner}>
+          <TopBar title={TAB_TITLE[tab]} email={email} issues={issues} />
           {body}
         </ScrollView>
       </View>
@@ -382,8 +435,283 @@ function AdminShell({ email }: { email: string }) {
           </Pressable>
         ))}
       </View>
+      <TopBar title={TAB_TITLE[tab]} email={email} issues={issues} />
       {body}
     </ScrollView>
+  );
+}
+
+/** Section title, notification bell (real warnings) and the account chip. */
+function TopBar({
+  title,
+  email,
+  issues,
+}: {
+  title: string;
+  email: string;
+  issues: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const initial = (email.trim()[0] ?? 'A').toUpperCase();
+
+  return (
+    <View style={styles.topBarWrap}>
+      <View style={styles.topBar}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.topBarTitle}>{title}</Text>
+          <Text style={styles.topBarSubtitle}>Beheer je weekmenu, gerechten en menu's.</Text>
+        </View>
+
+        <Pressable
+          onPress={() => setOpen((v) => !v)}
+          accessibilityLabel={`Meldingen (${issues.length})`}
+          style={({ pressed }) => [styles.bellButton, pressed && styles.pressed]}
+        >
+          <Ionicons name="notifications-outline" size={20} color={colors.textSecondary} />
+          {issues.length > 0 ? (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>{issues.length}</Text>
+            </View>
+          ) : null}
+        </Pressable>
+
+        <View style={styles.userChip}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initial}</Text>
+          </View>
+          <View>
+            <Text style={styles.userName} numberOfLines={1}>{email}</Text>
+            <Text style={styles.userRole}>Admin</Text>
+          </View>
+        </View>
+      </View>
+
+      {open ? (
+        <View style={styles.notifPanel}>
+          {issues.length === 0 ? (
+            <Text style={styles.notifEmpty}>Geen meldingen — alles ziet er goed uit.</Text>
+          ) : (
+            issues.map((msg) => (
+              <View key={msg} style={styles.notifRow}>
+                <Ionicons name="alert-circle-outline" size={16} color={colors.fat} />
+                <Text style={styles.notifText}>{msg}</Text>
+              </View>
+            ))
+          )}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** Admin home: counts, this week's menu, recent dishes/menus and quick actions. */
+function DashboardView({
+  loading,
+  weekmenuRows,
+  recipeRows,
+  menus,
+  onGoTo,
+  onNewDish,
+  onNewMenu,
+  onEditDish,
+}: {
+  loading: boolean;
+  weekmenuRows: DishRow[];
+  recipeRows: DishRow[];
+  menus: MenuRow[];
+  onGoTo: (t: Tab) => void;
+  onNewDish: (usage: DishUsage) => void;
+  onNewMenu: () => void;
+  onEditDish: (row: DishRow) => void;
+}) {
+  const plan = getWeeklyPlanForDate(new Date());
+  const titleFor = (id: string) => (id ? getRecipeById(id)?.title ?? null : null);
+
+  // How many meal slots this week actually resolve to a dish.
+  const plannedItems = plan.days.reduce((total, d) => {
+    const ids = [d.meals.ontbijt, d.meals.lunch, d.meals.diner, ...d.meals.tussendoortje];
+    return total + ids.filter((id) => titleFor(id)).length;
+  }, 0);
+
+  const recentDishes = [...recipeRows]
+    .sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))
+    .slice(0, 5);
+
+  if (loading) {
+    return <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />;
+  }
+
+  return (
+    <View style={styles.dash}>
+      {/* Counts */}
+      <View style={styles.statRow}>
+        <StatCard icon="calendar-outline" label="Weekmenu-gerechten" value={weekmenuRows.length} />
+        <StatCard icon="restaurant-outline" label="Gerechten" value={recipeRows.length} />
+        <StatCard icon="albums-outline" label="Menu's" value={menus.length} />
+        <StatCard icon="checkmark-done-outline" label="Geplande items deze week" value={plannedItems} />
+      </View>
+
+      {/* This week's menu */}
+      <View style={styles.panel}>
+        <View style={styles.panelHeader}>
+          <Text style={styles.panelTitle}>Weekmenu deze week</Text>
+          <Pressable onPress={() => onNewDish('weekmenu')} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
+            <Ionicons name="add" size={18} color={colors.textOnPrimary} />
+            <Text style={styles.newButtonText}>Weekmenu-gerecht</Text>
+          </Pressable>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View>
+            <View style={styles.weekRow}>
+              <View style={styles.weekLabelCell} />
+              {plan.days.map((d) => (
+                <View key={d.day} style={styles.weekHeadCell}>
+                  <Text style={styles.weekHeadText}>{dayLabel[d.day]}</Text>
+                </View>
+              ))}
+            </View>
+            {WEEK_ROWS.map((row) => (
+              <View key={row.key} style={styles.weekRow}>
+                <View style={styles.weekLabelCell}>
+                  <Text style={styles.weekLabelText}>{row.label}</Text>
+                </View>
+                {plan.days.map((d) => {
+                  const title = titleFor(d.meals[row.key]);
+                  return (
+                    <View key={d.day} style={styles.weekCell}>
+                      <Text style={title ? styles.weekCellText : styles.weekCellEmpty} numberOfLines={3}>
+                        {title ?? '—'}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            ))}
+            <View style={styles.weekRow}>
+              <View style={styles.weekLabelCell}>
+                <Text style={styles.weekLabelText}>Snack</Text>
+              </View>
+              {plan.days.map((d) => {
+                const title = titleFor(d.meals.tussendoortje[0] ?? '');
+                return (
+                  <View key={d.day} style={styles.weekCell}>
+                    <Text style={title ? styles.weekCellText : styles.weekCellEmpty} numberOfLines={3}>
+                      {title ?? '—'}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* Dishes + menus side by side */}
+      <View style={styles.twoCol}>
+        <View style={[styles.panel, styles.colPanel]}>
+          <View style={styles.panelHeader}>
+            <Text style={styles.panelTitle}>Gerechten</Text>
+            <Pressable onPress={() => onNewDish('recept')} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
+              <Ionicons name="add" size={18} color={colors.textOnPrimary} />
+              <Text style={styles.newButtonText}>Gerecht</Text>
+            </Pressable>
+          </View>
+          {recentDishes.length === 0 ? (
+            <Text style={styles.empty}>Nog geen gerechten.</Text>
+          ) : (
+            recentDishes.map((row) => (
+              <Pressable
+                key={row.id}
+                onPress={() => onEditDish(row)}
+                style={({ pressed }) => [styles.listRow, pressed && styles.pressed]}
+              >
+                <Text style={styles.listRowTitle} numberOfLines={1}>{row.title}</Text>
+                <Text style={styles.listRowMeta}>{categoryOf(row)}</Text>
+              </Pressable>
+            ))
+          )}
+          <Pressable onPress={() => onGoTo('dishes')} style={styles.linkRow}>
+            <Text style={styles.linkText}>Bekijk alle gerechten</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          </Pressable>
+        </View>
+
+        <View style={[styles.panel, styles.colPanel]}>
+          <View style={styles.panelHeader}>
+            <Text style={styles.panelTitle}>Menu's</Text>
+            <Pressable onPress={onNewMenu} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
+              <Ionicons name="add" size={18} color={colors.textOnPrimary} />
+              <Text style={styles.newButtonText}>Menu</Text>
+            </Pressable>
+          </View>
+          {menus.length === 0 ? (
+            <Text style={styles.empty}>Nog geen menu's.</Text>
+          ) : (
+            menus.slice(0, 5).map((row) => (
+              <View key={row.id} style={styles.listRow}>
+                <Text style={styles.listRowTitle} numberOfLines={1}>{row.title}</Text>
+                <Text style={styles.listRowMeta}>{row.data?.courses?.length ?? 0} gangen</Text>
+              </View>
+            ))
+          )}
+          <Pressable onPress={() => onGoTo('menus')} style={styles.linkRow}>
+            <Text style={styles.linkText}>Bekijk alle menu's</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Quick actions */}
+      <View style={styles.panel}>
+        <Text style={styles.panelTitle}>Snelle acties</Text>
+        <View style={styles.quickRow}>
+          <QuickAction icon="calendar-outline" label="Weekmenu-gerecht toevoegen" onPress={() => onNewDish('weekmenu')} />
+          <QuickAction icon="restaurant-outline" label="Gerecht toevoegen" onPress={() => onNewDish('recept')} />
+          <QuickAction icon="albums-outline" label="Menu toevoegen" onPress={onNewMenu} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: number;
+}) {
+  return (
+    <View style={styles.statCard}>
+      <View style={styles.statIcon}>
+        <Ionicons name={icon} size={22} color={colors.primary} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.statLabel}>{label}</Text>
+        <Text style={styles.statValue}>{value}</Text>
+      </View>
+    </View>
+  );
+}
+
+function QuickAction({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.quickAction, pressed && styles.pressed]}>
+      <View style={styles.statIcon}>
+        <Ionicons name={icon} size={20} color={colors.primary} />
+      </View>
+      <Text style={styles.quickActionText}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -491,8 +819,91 @@ const styles = StyleSheet.create({
   sidebarFooter: { marginTop: 'auto', gap: spacing.sm, paddingHorizontal: spacing.sm },
   sidebarEmail: { ...typography.caption, color: colors.textMuted },
   contentScroll: { flex: 1 },
-  contentInner: { padding: spacing.xl, gap: spacing.lg, maxWidth: 920, width: '100%' },
+  contentInner: { padding: spacing.xl, gap: spacing.lg, maxWidth: 1180, width: '100%' },
   listView: { gap: spacing.lg },
+
+  // Top bar: title, notification bell, account chip.
+  topBarWrap: { gap: spacing.sm },
+  topBar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  topBarTitle: { ...typography.title, color: colors.textPrimary },
+  topBarSubtitle: { ...typography.caption, color: colors.textSecondary },
+  bellButton: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface,
+    alignItems: 'center', justifyContent: 'center', ...shadow.soft,
+  },
+  bellBadge: {
+    position: 'absolute', top: 2, right: 2, minWidth: 18, height: 18, borderRadius: 9,
+    backgroundColor: colors.fat, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
+  },
+  bellBadgeText: { ...typography.caption, fontSize: 10, color: colors.white },
+  userChip: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: colors.surface, borderRadius: radius.pill,
+    paddingVertical: spacing.xs, paddingHorizontal: spacing.sm, maxWidth: 260, ...shadow.soft,
+  },
+  avatar: {
+    width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarText: { ...typography.label, color: colors.textOnPrimary },
+  userName: { ...typography.label, color: colors.textPrimary, maxWidth: 170 },
+  userRole: { ...typography.caption, color: colors.textMuted },
+  notifPanel: {
+    backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md,
+    gap: spacing.sm, ...shadow.soft,
+  },
+  notifRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  notifText: { ...typography.body, color: colors.textSecondary, flex: 1 },
+  notifEmpty: { ...typography.body, color: colors.textMuted },
+
+  // Dashboard
+  dash: { gap: spacing.lg },
+  statRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  statCard: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg,
+    flexGrow: 1, flexBasis: 220, ...shadow.soft,
+  },
+  statIcon: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primarySoft,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  statLabel: { ...typography.caption, color: colors.textSecondary },
+  statValue: { ...typography.title, color: colors.textPrimary },
+  panel: {
+    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg,
+    gap: spacing.md, ...shadow.soft,
+  },
+  panelHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  panelTitle: { ...typography.heading, color: colors.textPrimary },
+  twoCol: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg },
+  colPanel: { flexGrow: 1, flexBasis: 380 },
+  weekRow: { flexDirection: 'row' },
+  weekLabelCell: { width: 90, paddingVertical: spacing.sm, justifyContent: 'center' },
+  weekLabelText: { ...typography.label, color: colors.textSecondary },
+  weekHeadCell: { width: 122, paddingVertical: spacing.sm, paddingHorizontal: spacing.xs },
+  weekHeadText: { ...typography.label, color: colors.textPrimary },
+  weekCell: {
+    width: 122, padding: spacing.sm, marginRight: spacing.xs, marginBottom: spacing.xs,
+    backgroundColor: colors.background, borderRadius: radius.sm, minHeight: 56, justifyContent: 'center',
+  },
+  weekCellText: { ...typography.caption, color: colors.textPrimary },
+  weekCellEmpty: { ...typography.caption, color: colors.textMuted },
+  listRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm,
+    paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  listRowTitle: { ...typography.body, color: colors.textPrimary, flex: 1 },
+  listRowMeta: { ...typography.caption, color: colors.textSecondary },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: spacing.xs },
+  linkText: { ...typography.label, color: colors.primary },
+  quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  quickAction: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    backgroundColor: colors.background, borderRadius: radius.md, padding: spacing.md,
+    flexGrow: 1, flexBasis: 240,
+  },
+  quickActionText: { ...typography.bodyStrong, color: colors.textPrimary, flex: 1 },
 
   // Small-screen fallback (after the desktop notice).
   mobileScroll: { padding: spacing.xl, paddingBottom: spacing.xxxl, gap: spacing.lg },
