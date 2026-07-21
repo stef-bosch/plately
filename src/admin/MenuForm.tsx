@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { FilterChip } from '../components/FilterChip';
 import { dishCategory } from '../constants/labels';
 import { getMenuRow, saveMenu } from '../data/adminApi';
-import { getRecipeLibrary, reloadContent } from '../data/content';
+import { getAllRecipes, reloadContent } from '../data/content';
 import { colors, spacing, typography } from '../theme';
 import type { Menu, MenuCourse, MenuCourseType, RecipeTag } from '../types';
 import { Field, FormHeader, SaveButton, formKit } from './formKit';
@@ -30,7 +30,7 @@ interface DishOption {
 }
 
 const dishOptions = (): DishOption[] =>
-  getRecipeLibrary().map((r) => ({ id: r.id, title: r.title, category: dishCategory(r) }));
+  getAllRecipes().map((r) => ({ id: r.id, title: r.title, category: dishCategory(r) }));
 
 interface MenuFormProps {
   menuId?: string;
@@ -63,7 +63,7 @@ export function MenuForm({ menuId, onSaved, onCancel }: MenuFormProps) {
 
   useEffect(() => {
     (async () => {
-      if (getRecipeLibrary().length === 0) await reloadContent();
+      if (getAllRecipes().length === 0) await reloadContent();
       setAllDishes(dishOptions());
     })();
   }, []);

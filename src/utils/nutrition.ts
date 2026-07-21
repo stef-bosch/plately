@@ -1,6 +1,5 @@
 import { getRecipeById } from '../data/recipes';
-import { withPersonalNutrition } from '../nutrition/personalize';
-import type { DayMeals, Nutrition, NutritionProfile, Recipe } from '../types';
+import type { DayMeals, Nutrition, Recipe } from '../types';
 
 /**
  * Nutrition aggregation helpers.
@@ -44,25 +43,14 @@ export interface DayRecipes {
   snacks: Recipe[];
 }
 
-/**
- * Resolves a day's meal ids to dishes. Weekmenu dishes come back with their
- * portion computed for this user's targets; normal recipes are unchanged.
- */
-export function resolveDayMeals(
-  meals: DayMeals,
-  profile: NutritionProfile,
-): DayRecipes {
-  const resolve = (id: string): Recipe | undefined => {
-    const recipe = getRecipeById(id);
-    return recipe ? withPersonalNutrition(recipe, profile) : undefined;
-  };
-
+/** Resolves a day's meal ids to the dishes they point at. */
+export function resolveDayMeals(meals: DayMeals): DayRecipes {
   return {
-    ontbijt: resolve(meals.ontbijt),
-    lunch: resolve(meals.lunch),
-    diner: resolve(meals.diner),
+    ontbijt: getRecipeById(meals.ontbijt),
+    lunch: getRecipeById(meals.lunch),
+    diner: getRecipeById(meals.diner),
     snacks: meals.tussendoortje
-      .map(resolve)
+      .map((id) => getRecipeById(id))
       .filter((r): r is Recipe => Boolean(r)),
   };
 }

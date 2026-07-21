@@ -16,7 +16,7 @@ export const mealTypeLabel: Record<MealType, string> = {
 };
 
 /**
- * Dish categories shown on the "Gerechten" tab. The four meal categories are
+ * Recipe categories shown on the "Recepten" tab. The four meal categories are
  * derived from a dish's `mealType`; the rest come from its free-text
  * `overigCategory` (set in the admin). Order = display order in the filter.
  */
@@ -57,7 +57,7 @@ export const CATEGORY_TO_MEALTYPE: Record<string, MealType> = {
   Diner: 'diner',
 };
 
-/** The single category a dish belongs to in the "Gerechten" overview. */
+/** The single category a recipe belongs to in the "Recepten" overview. */
 export function dishCategory(
   recipe: Pick<Recipe, 'mealType' | 'overigCategory'>,
 ): string {

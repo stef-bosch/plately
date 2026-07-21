@@ -56,37 +56,6 @@ export type RecipeTag =
   | 'Cocktails'
   | 'Sauzen';
 
-/** The role an ingredient plays in a dish — drives how the calc-engine scales it. */
-export type IngredientRole =
-  | 'carb_base'
-  | 'protein_base'
-  | 'fat_source'
-  | 'vegetable'
-  | 'fruit'
-  | 'dairy_sauce'
-  | 'sauce_base'
-  | 'flavouring'
-  | 'garnish'
-  | 'liquid'
-  | 'optional_topping';
-
-/**
- * Optional per-ingredient metadata that lets the nutrition engine personalise a
- * recipe. When present (and amounts are in grams), the ingredient can be scaled
- * component-wise; when absent the ingredient is left untouched by the engine.
- */
-export interface IngredientScaling {
-  role: IngredientRole;
-  minG?: number;
-  maxG?: number;
-  stepG?: number;
-  /** Nutrition per 100 g so the engine can compute per-ingredient kcal/macros. */
-  kcalPer100g: number;
-  proteinPer100g: number;
-  carbsPer100g: number;
-  fatPer100g: number;
-}
-
 export interface Ingredient {
   name: string;
   /**
@@ -105,14 +74,6 @@ export interface Ingredient {
    * like "½ aubergine" where the raw number (0.5) reads poorly on its own.
    */
   display?: string;
-  /** Optional metadata for the personalisation engine (see IngredientScaling). */
-  scaling?: IngredientScaling;
-  /**
-   * Weight in grams of this ingredient in one base portion. Bridges the display
-   * unit (tl, el, stuks, …) to the grams the nutrition/scaling engine needs.
-   * When absent, a gram-unit quantity is used as-is.
-   */
-  grams?: number;
 }
 
 export interface IngredientGroup {
@@ -164,17 +125,6 @@ export interface Nutrition {
   isIndicative: boolean;
 }
 
-/**
- * Which collection a dish belongs to.
- *
- * - `weekmenu`: authored for the weekly menu. Its ingredients carry per-100g
- *   data, so its nutrition is computed from the ingredients and then scaled to
- *   the user's targets. These dishes never show up in the recipe library.
- * - `recept`: a normal recipe with general (authored) nutrition, shown under
- *   "Recepten" in the app.
- */
-export type DishUsage = 'weekmenu' | 'recept';
-
 export interface Recipe {
   id: string;
   title: string;
@@ -208,11 +158,6 @@ export interface Recipe {
    * categories appear). Empty/undefined means a normal dish.
    */
   overigCategory?: string;
-  /**
-   * Which collection this dish belongs to (see DishUsage). Undefined = 'recept',
-   * so dishes created before the split stay in the recipe library.
-   */
-  usage?: DishUsage;
 }
 
 /* ---------- Menus ---------- */

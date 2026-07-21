@@ -24,7 +24,7 @@ import {
 } from '../constants/labels';
 import { useSettings } from '../context/SettingsContext';
 import { getCourseForRecipe, getMenus } from '../data/menus';
-import { getRecipeLibrary } from '../data/recipes';
+import { getAllRecipes } from '../data/recipes';
 import { useOpenMenu, useOpenRecipe } from '../navigation/hooks';
 import { recipeMatchesDiets } from '../utils/resolveRecipe';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
@@ -41,7 +41,7 @@ type CategoryFilter = string;
 type SeasonFilter = Season | 'alle';
 
 const CATEGORIES: { key: Category; label: string }[] = [
-  { key: 'gerechten', label: 'Gerechten' },
+  { key: 'gerechten', label: 'Recepten' },
   { key: 'menus', label: "Menu's" },
 ];
 
@@ -60,7 +60,7 @@ export function ReceptenScreen() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // The recipe library (weekmenu dishes live in their own collection).
-  const allRecipes = useMemo(() => getRecipeLibrary(), []);
+  const allRecipes = useMemo(() => getAllRecipes(), []);
 
   const filteredRecipes = useMemo(() => {
     const q = query.trim().toLowerCase();

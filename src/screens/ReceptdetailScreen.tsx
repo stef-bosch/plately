@@ -3,7 +3,7 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native';
-import React, { useLayoutEffect, useMemo, useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -27,7 +27,6 @@ import {
 } from '../constants/labels';
 import { getRecipeById } from '../data/recipes';
 import { useSettings } from '../context/SettingsContext';
-import { personalizeRecipe } from '../nutrition/personalize';
 import { useAppNavigation } from '../navigation/hooks';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
@@ -50,16 +49,6 @@ export function ReceptdetailScreen() {
       : Math.max(settings.defaultServings, 1),
   );
   const [printing, setPrinting] = useState(false);
-
-  // Only weekmenu dishes are computed for the user's targets; normal recipes
-  // keep their general authored values.
-  const personalized = useMemo(
-    () =>
-      recipe?.usage === 'weekmenu'
-        ? personalizeRecipe(recipe, settings.nutritionProfile)
-        : null,
-    [recipe, settings.nutritionProfile],
-  );
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: recipe ? 'Recept' : 'Niet gevonden' });
@@ -235,49 +224,6 @@ export function ReceptdetailScreen() {
           ) : null}
         </View>
       </Section>
-
-      {/* Personalised portion — automatically tuned to the user's daily target */}
-      {personalized && personalized.scalable ? (
-        <Section title="Persoonlijke portie">
-          <View style={styles.card}>
-            <Text style={styles.personalizeHint}>
-              Automatisch afgestemd op jouw dagdoel uit de instellingen — per rol
-              geschaald, smaakmakers blijven gelijk.
-            </Text>
-            <View style={[styles.calorieRow, styles.personalizeResult]}>
-              <Text style={styles.calorieValue}>{personalized.nutrition.kcal}</Text>
-              <Text style={styles.calorieUnit}>kcal · doel {personalized.targetKcal}</Text>
-            </View>
-            <MacroSummary
-              items={[
-                { label: 'Koolhydraten', value: personalized.nutrition.carbsG, unit: 'g', color: colors.carbs },
-                { label: 'Eiwitten', value: personalized.nutrition.proteinG, unit: 'g', color: colors.protein },
-                { label: 'Vetten', value: personalized.nutrition.fatG, unit: 'g', color: colors.fat },
-              ]}
-            />
-            {personalized.changes.length > 0 ? (
-              <View style={styles.changeList}>
-                {personalized.changes.map((c) => (
-                  <View key={c.name} style={styles.changeRow}>
-                    <Text style={styles.changeName} numberOfLines={1}>{c.name}</Text>
-                    <Text style={styles.changeAmount}>
-                      {c.baseG} g → {c.scaledG} g
-                      <Text style={c.changeG > 0 ? styles.changeUp : styles.changeDown}>
-                        {'  '}{c.changeG > 0 ? '+' : ''}{c.changeG} g
-                      </Text>
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.indicative}>Basisportie past al bij jouw doel.</Text>
-            )}
-            {personalized.warnings.map((w) => (
-              <Text key={w} style={styles.warning}>⚠ {w}</Text>
-            ))}
-          </View>
-        </Section>
-      ) : null}
 
       {/* Print / save as PDF */}
       <Pressable

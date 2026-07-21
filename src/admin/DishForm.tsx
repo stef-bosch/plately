@@ -15,7 +15,6 @@ import { colors, spacing, typography } from '../theme';
 import type {
   DietSwap,
   DietaryPreference,
-  DishUsage,
   Ingredient,
   IngredientCategory,
   IngredientGroup,
@@ -31,12 +30,8 @@ import {
   GroupDraft,
   IngredientDraft,
   IngredientGroupsEditor,
-  effectiveGrams,
   emptyGroup,
   groupsFromIngredients,
-  ingredientsMissingNutrition,
-  nutritionFromGroups,
-  scalingFromDraft,
 } from './IngredientGroupsEditor';
 import { NutritionEditor } from './NutritionEditor';
 import { PhotoField } from './PhotoField';
@@ -67,18 +62,12 @@ function nutritionToStrings(n: Nutrition): Record<string, string> {
 
 interface DishFormProps {
   dishId?: string;
-  /** Which collection this dish belongs to — set by the admin tab it's opened from. */
-  usage: DishUsage;
   onSaved: () => void;
   onCancel: () => void;
 }
 
-export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
+export function DishForm({ dishId, onSaved, onCancel }: DishFormProps) {
   const isEdit = Boolean(dishId);
-  // Weekmenu dishes get their nutrition computed from the ingredients and
-  // scaled to the user's targets, so they never take hand-typed macros.
-  const isWeekmenu = usage === 'weekmenu';
-
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +97,7 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
       try {
         const row = await getDishRow(dishId);
         if (!row) {
-          setError('Gerecht niet gevonden.');
+          setError('Recept niet gevonden.');
         } else if (row.kind === 'reactive') {
           // Older reactive dishes: load the "gemiddeld" variant as the base.
           // Saving turns it into a plain (static) dish.
@@ -167,7 +156,7 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
 
   const save = async () => {
     setError(null);
-    if (!title.trim()) return setError('Geef het gerecht een naam.');
+    if (!title.trim()) return setError('Geef het recept een naam.');
     if (!effectiveId) return setError('De id mag niet leeg zijn.');
 
     // When editing, whether the id was changed to a new value.
@@ -182,7 +171,7 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
         if (existing) {
           setSaving(false);
           return setError(
-            'Er bestaat al een gerecht met deze id. Kies een andere naam of pas de id aan.',
+            'Er bestaat al een recept met deze id. Kies een andere naam of pas de id aan.',
           );
         }
       }
@@ -193,15 +182,11 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
           .map((i) => {
             const n = Number(i.quantity.replace(',', '.'));
             const scalable = i.quantity.trim() !== '' && !Number.isNaN(n);
-            const scaling = scalingFromDraft(i);
-            const grams = effectiveGrams(i);
             return {
               name: i.name.trim(),
               quantity: scalable ? n : i.quantity.trim() || 'naar smaak',
               unit: i.unit.trim(),
               scalable,
-              ...(scaling ? { scaling } : {}),
-              ...(grams != null ? { grams } : {}),
             };
           });
 
@@ -214,18 +199,15 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
         }))
         .filter((g) => g.items.length > 0);
 
-      // Weekmenu dishes: computed from the ingredients. Recipes: as typed.
-      const baseNutrition: Nutrition = isWeekmenu
-        ? nutritionFromGroups(groups)
-        : {
-            calories: baseMacro('calories'),
-            protein: baseMacro('protein'),
-            carbs: baseMacro('carbs'),
-            fat: baseMacro('fat'),
-            fiber: baseMacro('fiber'),
-            micronutrients: {},
-            isIndicative: true,
-          };
+      const baseNutrition: Nutrition = {
+        calories: baseMacro('calories'),
+        protein: baseMacro('protein'),
+        carbs: baseMacro('carbs'),
+        fat: baseMacro('fat'),
+        fiber: baseMacro('fiber'),
+        micronutrients: {},
+        isIndicative: true,
+      };
 
       const instructions = steps.map((s) => s.trim()).filter(Boolean);
       const tags = suitableFor.map((d) => DIET_TO_TAG[d]);
@@ -252,7 +234,6 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
         suitableFor: suitableFor.length ? suitableFor : undefined,
         dietSwaps,
         overigCategory: overigCat,
-        usage,
       };
       await saveDish(recipe, 'static');
       // A renamed dish is written under the new id; remove the stale old row.
@@ -272,15 +253,7 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
   return (
     <View style={styles.wrap}>
       <FormHeader
-        title={
-          isWeekmenu
-            ? isEdit
-              ? 'Weekmenu-gerecht bewerken'
-              : 'Nieuw weekmenu-gerecht'
-            : isEdit
-              ? 'Gerecht bewerken'
-              : 'Nieuw gerecht'
-        }
+        title={isEdit ? 'Recept bewerken' : 'Nieuw recept'}
         onCancel={onCancel}
       />
 
@@ -306,20 +279,12 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
                 <FilterChip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
               ))}
             </View>
-            {isWeekmenu ? (
-              <Text style={formKit.hint}>
-                Het weekmenu vult per dag een ontbijt, lunch, tussendoortje en diner.
-              </Text>
-            ) : (
-              <>
-                <Text style={formKit.hint}>Overig</Text>
-                <View style={formKit.chipRow}>
-                  {OTHER_CATEGORIES.map((c) => (
-                    <FilterChip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
-                  ))}
-                </View>
-              </>
-            )}
+            <Text style={formKit.hint}>Overig</Text>
+            <View style={formKit.chipRow}>
+              {OTHER_CATEGORIES.map((c) => (
+                <FilterChip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
+              ))}
+            </View>
           </View>
         </Field>
         <Field label="Seizoen">
@@ -352,7 +317,7 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
       </Section>
 
       <Section title="Ingrediënten">
-        <IngredientGroupsEditor groups={groups} setGroups={setGroups} nutritionRequired={isWeekmenu} />
+        <IngredientGroupsEditor groups={groups} setGroups={setGroups} />
       </Section>
 
       <Section title="Bereidingswijze">
@@ -381,54 +346,10 @@ export function DishForm({ dishId, usage, onSaved, onCancel }: DishFormProps) {
       </Section>
 
       <Section title="Voedingswaarden (per portie)">
-        {isWeekmenu ? (
-          <ComputedNutrition groups={groups} />
-        ) : (
-          <NutritionEditor macros={macros} setMacros={setMacros} />
-        )}
+        <NutritionEditor macros={macros} setMacros={setMacros} />
       </Section>
 
       <SaveButton saving={saving} onPress={save} />
-    </View>
-  );
-}
-
-/**
- * Read-only per-portion nutrition for a weekmenu dish: summed from the
- * ingredients' per-100 g values. In the app this base portion is then scaled to
- * the user's own daily target, so there's nothing to type here.
- */
-function ComputedNutrition({ groups }: { groups: GroupDraft[] }) {
-  const n = nutritionFromGroups(groups);
-  const missing = ingredientsMissingNutrition(groups);
-
-  return (
-    <View style={styles.computed}>
-      <Text style={formKit.hint}>
-        Automatisch berekend uit de ingrediënten. In de app wordt deze
-        basisportie verder afgestemd op de instellingen van de gebruiker.
-      </Text>
-      <View style={styles.computedRow}>
-        <ComputedValue label="kcal" value={n.calories} />
-        <ComputedValue label="eiwitten (g)" value={n.protein} />
-        <ComputedValue label="koolhydraten (g)" value={n.carbs} />
-        <ComputedValue label="vetten (g)" value={n.fat} />
-      </View>
-      {missing.length ? (
-        <Text style={formKit.error}>
-          Nog geen voedingswaarde voor: {missing.join(', ')}. Vul per ingrediënt
-          de hoeveelheid in gram en de voedingswaarde per 100 g in.
-        </Text>
-      ) : null}
-    </View>
-  );
-}
-
-function ComputedValue({ label, value }: { label: string; value: number }) {
-  return (
-    <View style={styles.computedValue}>
-      <Text style={styles.computedNumber}>{value}</Text>
-      <Text style={styles.computedLabel}>{label}</Text>
     </View>
   );
 }

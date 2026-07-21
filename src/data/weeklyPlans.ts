@@ -1,14 +1,14 @@
 import { dayOrder, dishCategory, getIsoWeekNumber, seasonFromDate } from '../constants/labels';
 import { weekIdFor } from '../utils/isoWeek';
-import { getStoredWeekMenu, getWeekmenuDishes } from './content';
+import { getAllRecipes, getStoredWeekMenu } from './content';
 import type { Recipe, Season, StoredWeekMenu, WeekDay, WeeklyPlan } from '../types';
 
 /**
- * The weekly menu is built on the fly from the dishes added under the admin's
- * "Weekmenu" tab. Each meal slot draws from its own category pool (Ontbijt /
- * Lunch / Diner / Tussendoortjes), cycling through the pool so the whole week
- * fills out even with only a handful of dishes. Dishes with an "Overig"
- * category never enter the meal slots.
+ * Fallback week menu, generated from the recipe library for weeks that were
+ * never assembled by hand in the admin. Each meal slot draws from its own
+ * category pool (Ontbijt / Lunch / Diner / Tussendoortjes), cycling through the
+ * pool so the whole week fills out even with only a handful of recipes.
+ * Recipes with an "Overig" category never enter the meal slots.
  */
 
 /** The dish id at `dayIndex`, cycling through the pool; '' when it's empty. */
@@ -17,7 +17,7 @@ function pick(pool: Recipe[], dayIndex: number): string {
 }
 
 export function getWeeklyPlan(season: Season): WeeklyPlan {
-  const dishes = getWeekmenuDishes();
+  const dishes = getAllRecipes();
 
   const poolFor = (category: string): Recipe[] => {
     const inCategory = dishes.filter((r) => dishCategory(r) === category);

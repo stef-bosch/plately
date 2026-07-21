@@ -28,11 +28,7 @@ export function DashboardScreen() {
   const dayPlan = plan.days.find((d) => d.day === todayName) ?? plan.days[0];
   const meals = dayPlan.meals;
 
-  // Weekmenu dishes are computed for the user's targets; recipes stay general.
-  const day = useMemo(
-    () => resolveDayMeals(meals, settings.nutritionProfile),
-    [meals, settings.nutritionProfile],
-  );
+  const day = useMemo(() => resolveDayMeals(meals), [meals]);
   const totals = useMemo(() => getDailyTotals(day), [day]);
   const { ontbijt, lunch, diner, snacks } = day;
 

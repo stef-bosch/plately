@@ -48,7 +48,7 @@ function withSlot(meals: DayMeals, slot: MealSlot, id: string): DayMeals {
 }
 
 interface Props {
-  /** Dishes available for the week menu (the Weekmenu collection). */
+  /** The recipe library to plan from. */
   dishRows: DishRow[];
   onNewDish: () => void;
   onEditDish: (row: DishRow) => void;
@@ -201,7 +201,7 @@ export function WeekmenuBuilder({ dishRows, onNewDish, onEditDish }: Props) {
         {!loading && !stored ? (
           <Text style={styles.hint}>
             Deze week is nog niet samengesteld — de app vult 'm automatisch aan
-            met je weekmenu-gerechten. Zodra je hier opslaat, wint deze week.
+            met je recepten. Zodra je hier opslaat, wint deze week.
           </Text>
         ) : null}
 
@@ -236,7 +236,7 @@ export function WeekmenuBuilder({ dishRows, onNewDish, onEditDish }: Props) {
                       return (
                         <View key={day} style={[styles.cell, styles.cellFilled]}>
                           <Text style={styles.cellTitle} numberOfLines={2}>
-                            {row?.title ?? 'Onbekend gerecht'}
+                            {row?.title ?? 'Onbekend recept'}
                           </Text>
                           <Text style={styles.cellMeta} numberOfLines={1}>
                             {row ? dishCategory(row.data as Recipe) : 'niet meer beschikbaar'}
@@ -265,7 +265,7 @@ export function WeekmenuBuilder({ dishRows, onNewDish, onEditDish }: Props) {
                       >
                         <Ionicons name="add" size={16} color={isSelected ? colors.primary : colors.textMuted} />
                         <Text style={[styles.cellAddText, isSelected && styles.cellAddTextActive]}>
-                          Gerecht toevoegen
+                          Recept toevoegen
                         </Text>
                       </Pressable>
                     );
@@ -279,16 +279,16 @@ export function WeekmenuBuilder({ dishRows, onNewDish, onEditDish }: Props) {
         <View style={styles.tipBar}>
           <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.tipText}>
-            Klik op een lege plek om die te kiezen en voeg rechts een gerecht toe.
-            Met × haal je een gerecht weer weg.
+            Klik op een lege plek om die te kiezen en voeg rechts een recept toe.
+            Met × haal je een recept weer weg.
           </Text>
         </View>
 
         <View style={styles.panel}>
           <Text style={styles.panelTitle}>Weekoverzicht</Text>
           <View style={styles.overviewRow}>
-            <Overview icon="restaurant-outline" value={filledIds.length} label="Gerechten" />
-            <Overview icon="sparkles-outline" value={uniqueCount} label="Unieke gerechten" />
+            <Overview icon="restaurant-outline" value={filledIds.length} label="Recepten" />
+            <Overview icon="sparkles-outline" value={uniqueCount} label="Unieke recepten" />
             <Overview icon="square-outline" value={emptyCount} label="Lege slots" />
             <Overview icon="checkmark-circle-outline" value={`${completeness}%`} label="Volledigheid" />
           </View>
@@ -299,7 +299,7 @@ export function WeekmenuBuilder({ dishRows, onNewDish, onEditDish }: Props) {
       <View style={styles.side}>
         <View style={styles.panel}>
           <View style={styles.sideHeader}>
-            <Text style={styles.panelTitle}>Beschikbare gerechten</Text>
+            <Text style={styles.panelTitle}>Beschikbare recepten</Text>
             <Pressable onPress={onNewDish} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
               <Ionicons name="add" size={16} color={colors.textOnPrimary} />
               <Text style={styles.newButtonText}>Nieuw</Text>
@@ -312,7 +312,7 @@ export function WeekmenuBuilder({ dishRows, onNewDish, onEditDish }: Props) {
               style={styles.searchInput}
               value={query}
               onChangeText={setQuery}
-              placeholder="Zoek gerechten…"
+              placeholder="Zoek recepten…"
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
             />
@@ -321,8 +321,8 @@ export function WeekmenuBuilder({ dishRows, onNewDish, onEditDish }: Props) {
           {available.length === 0 ? (
             <Text style={styles.hint}>
               {dishRows.length === 0
-                ? 'Nog geen weekmenu-gerechten. Voeg er een toe met "Nieuw".'
-                : 'Geen gerechten die hierbij passen.'}
+                ? 'Nog geen recepten. Voeg er een toe met "Nieuw".'
+                : 'Geen recepten die hierbij passen.'}
             </Text>
           ) : (
             available.map((row) => (
@@ -363,11 +363,11 @@ export function WeekmenuBuilder({ dishRows, onNewDish, onEditDish }: Props) {
                   <Text style={styles.clearText}>Wissen</Text>
                 </Pressable>
               </View>
-              <Text style={styles.hint}>Kies hierboven een gerecht om het toe te voegen.</Text>
+              <Text style={styles.hint}>Kies hierboven een recept om het toe te voegen.</Text>
             </>
           ) : (
             <Text style={styles.hint}>
-              Nog geen plek gekozen. Klik in het weekraster op "Gerecht toevoegen".
+              Nog geen plek gekozen. Klik in het weekraster op "Recept toevoegen".
             </Text>
           )}
         </View>

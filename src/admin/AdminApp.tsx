@@ -34,7 +34,7 @@ import { getWeeklyPlanForDate } from '../data/weeklyPlans';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/useAuth';
 import { colors, radius, shadow, spacing, typography } from '../theme';
-import type { DishUsage, Recipe } from '../types';
+import type { Recipe } from '../types';
 import { DishForm } from './DishForm';
 import { MenuForm } from './MenuForm';
 import { WeekmenuBuilder } from './WeekmenuBuilder';
@@ -46,7 +46,7 @@ async function confirmAsync(message: string): Promise<boolean> {
 
 type Tab = 'dashboard' | 'weekmenu' | 'dishes' | 'menus';
 type FormState =
-  | { kind: 'dish'; id?: string; usage: DishUsage }
+  | { kind: 'dish'; id?: string }
   | { kind: 'menu'; id?: string }
   | null;
 
@@ -56,14 +56,14 @@ const DESKTOP_MIN_WIDTH = 900;
 const NAV: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: 'home-outline' },
   { key: 'weekmenu', label: 'Weekmenu', icon: 'calendar-outline' },
-  { key: 'dishes', label: 'Gerechten', icon: 'restaurant-outline' },
+  { key: 'dishes', label: 'Recepten', icon: 'restaurant-outline' },
   { key: 'menus', label: "Menu's", icon: 'albums-outline' },
 ];
 
 const TAB_TITLE: Record<Tab, string> = {
   dashboard: 'Dashboard',
   weekmenu: 'Weekmenu',
-  dishes: 'Gerechten',
+  dishes: 'Recepten',
   menus: "Menu's",
 };
 
@@ -74,13 +74,9 @@ const WEEK_ROWS: { key: 'ontbijt' | 'lunch' | 'diner'; label: string }[] = [
   { key: 'diner', label: 'Diner' },
 ];
 
-// The category a dish is grouped under in the Gerechten list.
+// The category a recipe is grouped under in the Recepten list.
 const categoryOf = (row: DishRow): string =>
   dishCategory(row.data as Recipe);
-
-/** Which collection a stored dish belongs to (older rows have no usage yet). */
-const usageOf = (row: DishRow): DishUsage =>
-  (row.data as Recipe).usage === 'weekmenu' ? 'weekmenu' : 'recept';
 
 export function AdminApp() {
   const { session, ready } = useAuth();
@@ -158,7 +154,7 @@ function AdminShell({ email }: { email: string }) {
   const [busyMsg, setBusyMsg] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [flash, setFlash] = useState<string | null>(null);
-  // Which category groups in the Gerechten list are collapsed.
+  // Which category groups in the Recepten list are collapsed.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const signOut = () => supabase?.auth.signOut();
@@ -172,8 +168,8 @@ function AdminShell({ email }: { email: string }) {
     setLoading(true);
     try {
       const [d, m] = await Promise.all([listDishes(), listMenus()]);
-      // Keep the content store in sync so the dashboard's week grid (which is
-      // generated from the weekmenu dishes) reflects the current data.
+      // Keep the content store in sync so the dashboard's week grid reflects
+      // the current recipes and saved week menus.
       await reloadContent();
       setDishes(d);
       setMenus(m);
@@ -217,7 +213,7 @@ function AdminShell({ email }: { email: string }) {
           {(row.data as Recipe)?.nutrition?.calories ?? '—'} kcal
         </Text>
       </View>
-      <Pressable onPress={() => setForm({ kind: 'dish', id: row.id, usage: usageOf(row) })} style={styles.iconButton}>
+      <Pressable onPress={() => setForm({ kind: 'dish', id: row.id })} style={styles.iconButton}>
         <Ionicons name="create-outline" size={20} color={colors.primary} />
       </Pressable>
       <Pressable onPress={() => removeDish(row)} style={styles.iconButton}>
@@ -262,8 +258,7 @@ function AdminShell({ email }: { email: string }) {
 
   const q = query.trim().toLowerCase();
   const matches = (title: string) => !q || title.toLowerCase().includes(q);
-  // The two dish collections live in the same table, split by `usage`.
-  const filteredDishes = dishes.filter((r) => usageOf(r) === 'recept' && matches(r.title));
+  const filteredDishes = dishes.filter((r) => matches(r.title));
   const filteredMenus = menus.filter((r) => matches(r.title));
 
   const searchBox = (
@@ -292,8 +287,8 @@ function AdminShell({ email }: { email: string }) {
       {tab === 'dishes' ? (
         <>
           <View style={styles.listHeader}>
-            <Text style={styles.h2}>Gerechten ({filteredDishes.length})</Text>
-            <Pressable onPress={() => setForm({ kind: 'dish', usage: 'recept' })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
+            <Text style={styles.h2}>Recepten ({filteredDishes.length})</Text>
+            <Pressable onPress={() => setForm({ kind: 'dish' })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
               <Ionicons name="add" size={18} color={colors.textOnPrimary} />
               <Text style={styles.newButtonText}>Nieuw</Text>
             </Pressable>
@@ -301,7 +296,7 @@ function AdminShell({ email }: { email: string }) {
           {loading ? (
             <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
           ) : filteredDishes.length === 0 ? (
-            <Text style={styles.empty}>{query ? 'Geen gerechten gevonden.' : 'Nog geen gerechten. Voeg er een toe.'}</Text>
+            <Text style={styles.empty}>{query ? 'Geen recepten gevonden.' : 'Nog geen recepten. Voeg er een toe.'}</Text>
           ) : (
             <View style={styles.mealGroups}>{renderCategoryGroups(filteredDishes)}</View>
           )}
@@ -343,7 +338,7 @@ function AdminShell({ email }: { email: string }) {
   );
 
   // Real signals worth flagging in the notification bell — no invented data.
-  const weekmenuRows = dishes.filter((r) => usageOf(r) === 'weekmenu');
+  const weekmenuRows = dishes;
   const issues: string[] = [];
   if (busyMsg) issues.push(busyMsg);
   const withoutNutrition = weekmenuRows.filter(
@@ -363,19 +358,18 @@ function AdminShell({ email }: { email: string }) {
   const dashboardView = (
     <DashboardView
       loading={loading}
-      weekmenuRows={weekmenuRows}
-      recipeRows={dishes.filter((r) => usageOf(r) === 'recept')}
+      recipeRows={dishes}
       menus={menus}
       onGoTo={goTo}
-      onNewDish={(usage) => setForm({ kind: 'dish', usage })}
+      onNewDish={() => setForm({ kind: 'dish' })}
       onNewMenu={() => setForm({ kind: 'menu' })}
-      onEditDish={(row) => setForm({ kind: 'dish', id: row.id, usage: usageOf(row) })}
+      onEditDish={(row) => setForm({ kind: 'dish', id: row.id })}
     />
   );
 
   const body =
     form?.kind === 'dish' ? (
-      <DishForm dishId={form.id} usage={form.usage} onSaved={onFormDone} onCancel={() => setForm(null)} />
+      <DishForm dishId={form.id} onSaved={onFormDone} onCancel={() => setForm(null)} />
     ) : form?.kind === 'menu' ? (
       <MenuForm menuId={form.id} onSaved={onFormDone} onCancel={() => setForm(null)} />
     ) : tab === 'dashboard' ? (
@@ -383,8 +377,8 @@ function AdminShell({ email }: { email: string }) {
     ) : tab === 'weekmenu' ? (
       <WeekmenuBuilder
         dishRows={weekmenuRows}
-        onNewDish={() => setForm({ kind: 'dish', usage: 'weekmenu' })}
-        onEditDish={(row) => setForm({ kind: 'dish', id: row.id, usage: 'weekmenu' })}
+        onNewDish={() => setForm({ kind: 'dish' })}
+        onEditDish={(row) => setForm({ kind: 'dish', id: row.id })}
       />
     ) : (
       listView
@@ -449,7 +443,7 @@ function TopBar({
       <View style={styles.topBar}>
         <View style={{ flex: 1 }}>
           <Text style={styles.topBarTitle}>{title}</Text>
-          <Text style={styles.topBarSubtitle}>Beheer je weekmenu, gerechten en menu's.</Text>
+          <Text style={styles.topBarSubtitle}>Beheer je weekmenu, recepten en menu's.</Text>
         </View>
 
         <Pressable
@@ -497,7 +491,6 @@ function TopBar({
 /** Admin home: counts, this week's menu, recent dishes/menus and quick actions. */
 function DashboardView({
   loading,
-  weekmenuRows,
   recipeRows,
   menus,
   onGoTo,
@@ -506,11 +499,10 @@ function DashboardView({
   onEditDish,
 }: {
   loading: boolean;
-  weekmenuRows: DishRow[];
   recipeRows: DishRow[];
   menus: MenuRow[];
   onGoTo: (t: Tab) => void;
-  onNewDish: (usage: DishUsage) => void;
+  onNewDish: () => void;
   onNewMenu: () => void;
   onEditDish: (row: DishRow) => void;
 }) {
@@ -535,8 +527,7 @@ function DashboardView({
     <View style={styles.dash}>
       {/* Counts */}
       <View style={styles.statRow}>
-        <StatCard icon="calendar-outline" label="Weekmenu-gerechten" value={weekmenuRows.length} />
-        <StatCard icon="restaurant-outline" label="Gerechten" value={recipeRows.length} />
+        <StatCard icon="restaurant-outline" label="Recepten" value={recipeRows.length} />
         <StatCard icon="albums-outline" label="Menu's" value={menus.length} />
         <StatCard icon="checkmark-done-outline" label="Geplande items deze week" value={plannedItems} />
       </View>
@@ -593,9 +584,9 @@ function DashboardView({
       {/* Dishes + menus side by side */}
       <View style={styles.twoCol}>
         <View style={[styles.panel, styles.colPanel]}>
-          <Text style={styles.panelTitle}>Gerechten</Text>
+          <Text style={styles.panelTitle}>Recepten</Text>
           {recentDishes.length === 0 ? (
-            <Text style={styles.empty}>Nog geen gerechten.</Text>
+            <Text style={styles.empty}>Nog geen recepten.</Text>
           ) : (
             recentDishes.map((row) => (
               <Pressable
@@ -609,7 +600,7 @@ function DashboardView({
             ))
           )}
           <Pressable onPress={() => onGoTo('dishes')} style={styles.linkRow}>
-            <Text style={styles.linkText}>Bekijk alle gerechten</Text>
+            <Text style={styles.linkText}>Bekijk alle recepten</Text>
             <Ionicons name="chevron-forward" size={16} color={colors.primary} />
           </Pressable>
         </View>
@@ -637,8 +628,7 @@ function DashboardView({
       <View style={styles.panel}>
         <Text style={styles.panelTitle}>Snelle acties</Text>
         <View style={styles.quickRow}>
-          <QuickAction icon="calendar-outline" label="Weekmenu-gerecht toevoegen" onPress={() => onNewDish('weekmenu')} />
-          <QuickAction icon="restaurant-outline" label="Gerecht toevoegen" onPress={() => onNewDish('recept')} />
+          <QuickAction icon="restaurant-outline" label="Recept toevoegen" onPress={() => onNewDish()} />
           <QuickAction icon="albums-outline" label="Menu toevoegen" onPress={onNewMenu} />
         </View>
       </View>
