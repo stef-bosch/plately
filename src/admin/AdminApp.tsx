@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -41,6 +42,15 @@ type FormState =
   | { kind: 'menu'; id?: string }
   | null;
 
+/** Below this viewport width the admin shows a "use a desktop" notice. */
+const DESKTOP_MIN_WIDTH = 900;
+
+const NAV: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'weekmenu', label: 'Weekmenu', icon: 'calendar-outline' },
+  { key: 'dishes', label: 'Gerechten', icon: 'restaurant-outline' },
+  { key: 'menus', label: "Menu's", icon: 'albums-outline' },
+];
+
 // The category a dish is grouped under in the Gerechten list.
 const categoryOf = (row: DishRow): string =>
   dishCategory(row.data as Recipe);
@@ -51,23 +61,26 @@ const usageOf = (row: DishRow): DishUsage =>
 
 export function AdminApp() {
   const { session, ready } = useAuth();
-  const insets = useSafeAreaInsets();
 
-  return (
-    <View style={styles.root}>
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + spacing.lg }]}>
-        <View style={styles.container}>
-          {!ready ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xxl }} />
-          ) : session ? (
-            <Dashboard email={session.user.email ?? ''} />
-          ) : (
-            <LoginForm />
-          )}
-        </View>
-      </ScrollView>
-    </View>
-  );
+  if (!ready) {
+    return (
+      <View style={[styles.root, styles.centerFill]}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!session) {
+    return (
+      <View style={styles.root}>
+        <ScrollView contentContainerStyle={styles.loginScroll}>
+          <LoginForm />
+        </ScrollView>
+      </View>
+    );
+  }
+
+  return <AdminShell email={session.user.email ?? ''} />;
 }
 
 function LoginForm() {
@@ -107,8 +120,14 @@ function LoginForm() {
   );
 }
 
-function Dashboard({ email }: { email: string }) {
-  const [tab, setTab] = useState<Tab>('dishes');
+function AdminShell({ email }: { email: string }) {
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const isDesktop = width >= DESKTOP_MIN_WIDTH;
+  // Lets the user proceed on a small screen after the desktop notice.
+  const [bypass, setBypass] = useState(false);
+
+  const [tab, setTab] = useState<Tab>('weekmenu');
   const [form, setForm] = useState<FormState>(null);
   const [dishes, setDishes] = useState<DishRow[]>([]);
   const [menus, setMenus] = useState<MenuRow[]>([]);
@@ -118,6 +137,13 @@ function Dashboard({ email }: { email: string }) {
   const [flash, setFlash] = useState<string | null>(null);
   // Which category groups in the Gerechten list are collapsed.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  const signOut = () => supabase?.auth.signOut();
+  // Switching section always leaves any open form.
+  const goTo = (t: Tab) => {
+    setForm(null);
+    setTab(t);
+  };
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -156,15 +182,6 @@ function Dashboard({ email }: { email: string }) {
     setTimeout(() => setFlash(null), 2500);
     refresh();
   };
-
-  if (form?.kind === 'dish') {
-    return (
-      <DishForm dishId={form.id} usage={form.usage} onSaved={onFormDone} onCancel={() => setForm(null)} />
-    );
-  }
-  if (form?.kind === 'menu') {
-    return <MenuForm menuId={form.id} onSaved={onFormDone} onCancel={() => setForm(null)} />;
-  }
 
   const renderDishCard = (row: DishRow) => (
     <View key={row.id} style={styles.itemCard}>
@@ -224,41 +241,28 @@ function Dashboard({ email }: { email: string }) {
   const filteredWeekmenu = dishes.filter((r) => usageOf(r) === 'weekmenu' && matches(r.title));
   const filteredMenus = menus.filter((r) => matches(r.title));
 
-  return (
-    <View style={styles.dashboard}>
-      <View style={styles.topbar}>
-        <View style={styles.brandBlock}>
-          <PlatelyLogo width={120} color={colors.primary} />
-          <Text style={styles.subtitle}>Beheer · {email}</Text>
-        </View>
-        <Pressable onPress={() => supabase?.auth.signOut()} style={({ pressed }) => [styles.ghost, pressed && styles.pressed]}>
-          <Text style={styles.ghostText}>Uitloggen</Text>
-        </Pressable>
-      </View>
+  const searchBox = (
+    <View style={styles.searchBox}>
+      <Ionicons name="search" size={18} color={colors.textMuted} />
+      <TextInput
+        style={styles.searchInput}
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Zoeken op naam…"
+        placeholderTextColor={colors.textMuted}
+        autoCapitalize="none"
+      />
+      {query ? (
+        <Ionicons name="close-circle" size={18} color={colors.textMuted} onPress={() => setQuery('')} />
+      ) : null}
+    </View>
+  );
 
-      <View style={styles.tabs}>
-        <TabButton label="Weekmenu" active={tab === 'weekmenu'} onPress={() => setTab('weekmenu')} />
-        <TabButton label="Gerechten" active={tab === 'dishes'} onPress={() => setTab('dishes')} />
-        <TabButton label="Menu's" active={tab === 'menus'} onPress={() => setTab('menus')} />
-      </View>
-
+  const listView = (
+    <View style={styles.listView}>
+      {searchBox}
       {busyMsg ? <Text style={styles.message}>{busyMsg}</Text> : null}
       {flash ? <Text style={styles.flash}>{flash}</Text> : null}
-
-      <View style={styles.searchBox}>
-        <Ionicons name="search" size={18} color={colors.textMuted} />
-        <TextInput
-          style={styles.searchInput}
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Zoeken op naam…"
-          placeholderTextColor={colors.textMuted}
-          autoCapitalize="none"
-        />
-        {query ? (
-          <Ionicons name="close-circle" size={18} color={colors.textMuted} onPress={() => setQuery('')} />
-        ) : null}
-      </View>
 
       {tab === 'weekmenu' ? (
         <>
@@ -334,27 +338,185 @@ function Dashboard({ email }: { email: string }) {
       )}
     </View>
   );
+
+  const body =
+    form?.kind === 'dish' ? (
+      <DishForm dishId={form.id} usage={form.usage} onSaved={onFormDone} onCancel={() => setForm(null)} />
+    ) : form?.kind === 'menu' ? (
+      <MenuForm menuId={form.id} onSaved={onFormDone} onCancel={() => setForm(null)} />
+    ) : (
+      listView
+    );
+
+  // Desktop-only: on a small screen show a notice (with an escape hatch).
+  if (!isDesktop && !bypass) {
+    return (
+      <MobileNotice topInset={insets.top} onContinue={() => setBypass(true)} onSignOut={signOut} />
+    );
+  }
+
+  if (isDesktop) {
+    return (
+      <View style={styles.shell}>
+        <Sidebar tab={tab} onSelect={goTo} email={email} onSignOut={signOut} />
+        <ScrollView style={styles.contentScroll} contentContainerStyle={styles.contentInner}>
+          {body}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // Small screen, user chose to continue: stacked layout with top tabs.
+  return (
+    <ScrollView style={styles.root} contentContainerStyle={[styles.mobileScroll, { paddingTop: insets.top + spacing.lg }]}>
+      <View style={styles.mobileTopbar}>
+        <PlatelyLogo width={110} color={colors.primary} />
+        <Pressable onPress={signOut} style={({ pressed }) => [styles.ghost, pressed && styles.pressed]}>
+          <Text style={styles.ghostText}>Uitloggen</Text>
+        </Pressable>
+      </View>
+      <View style={styles.mobileTabs}>
+        {NAV.map((n) => (
+          <Pressable key={n.key} onPress={() => goTo(n.key)} style={[styles.tab, tab === n.key && !form && styles.tabActive]}>
+            <Text style={[styles.tabText, tab === n.key && !form && styles.tabTextActive]}>{n.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {body}
+    </ScrollView>
+  );
 }
 
-function TabButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function Sidebar({
+  tab,
+  onSelect,
+  email,
+  onSignOut,
+}: {
+  tab: Tab;
+  onSelect: (t: Tab) => void;
+  email: string;
+  onSignOut: () => void;
+}) {
   return (
-    <Pressable onPress={onPress} style={[styles.tab, active && styles.tabActive]}>
-      <Text style={[styles.tabText, active && styles.tabTextActive]}>{label}</Text>
-    </Pressable>
+    <View style={styles.sidebar}>
+      <View style={styles.sidebarBrand}>
+        <PlatelyLogo width={124} color={colors.primary} />
+      </View>
+      <View style={styles.navList}>
+        {NAV.map((n) => {
+          const active = tab === n.key;
+          return (
+            <Pressable
+              key={n.key}
+              onPress={() => onSelect(n.key)}
+              style={({ pressed }) => [styles.navItem, active && styles.navItemActive, pressed && styles.pressed]}
+            >
+              <Ionicons name={n.icon} size={20} color={active ? colors.primary : colors.textSecondary} />
+              <Text style={[styles.navLabel, active && styles.navLabelActive]}>{n.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={styles.sidebarFooter}>
+        <Text style={styles.sidebarEmail} numberOfLines={1}>{email}</Text>
+        <Pressable onPress={onSignOut} style={({ pressed }) => [styles.ghost, pressed && styles.pressed]}>
+          <Text style={styles.ghostText}>Uitloggen</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function MobileNotice({
+  topInset,
+  onContinue,
+  onSignOut,
+}: {
+  topInset: number;
+  onContinue: () => void;
+  onSignOut: () => void;
+}) {
+  return (
+    <View style={styles.root}>
+      <View style={[styles.noticeWrap, { paddingTop: topInset + spacing.xxl }]}>
+        <PlatelyLogo width={132} color={colors.primary} />
+        <View style={styles.noticeIcon}>
+          <Ionicons name="desktop-outline" size={40} color={colors.primary} />
+        </View>
+        <Text style={styles.noticeTitle}>Open het beheer op desktop</Text>
+        <Text style={styles.noticeBody}>
+          Het beheerpaneel is gemaakt voor grotere schermen. Op een computer heb
+          je meer overzicht en gaat het toevoegen en aanpassen van gerechten een
+          stuk makkelijker.
+        </Text>
+        <Pressable onPress={onContinue} style={({ pressed }) => [styles.noticeContinue, pressed && styles.pressed]}>
+          <Text style={styles.noticeContinueText}>Toch doorgaan op mobiel</Text>
+        </Pressable>
+        <Pressable onPress={onSignOut} style={styles.noticeSignOut}>
+          <Text style={styles.ghostText}>Uitloggen</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: spacing.xl, paddingBottom: spacing.xxxl, alignItems: 'center' },
-  container: { width: '100%', maxWidth: 880, gap: spacing.lg },
-  loginWrap: { gap: spacing.sm, maxWidth: 420, width: '100%', alignSelf: 'center', marginTop: spacing.xxl },
-  dashboard: { gap: spacing.lg },
-  topbar: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  brandBlock: { gap: spacing.xs, alignItems: 'flex-start' },
+  centerFill: { alignItems: 'center', justifyContent: 'center' },
+  loginScroll: { flexGrow: 1, padding: spacing.xl, justifyContent: 'center' },
+  loginWrap: { gap: spacing.sm, maxWidth: 420, width: '100%', alignSelf: 'center' },
   title: { ...typography.display, color: colors.textPrimary },
   subtitle: { ...typography.body, color: colors.textSecondary },
-  tabs: { flexDirection: 'row', gap: spacing.sm },
+
+  // Desktop shell: fixed sidebar + scrollable content.
+  shell: { flex: 1, flexDirection: 'row', backgroundColor: colors.background },
+  sidebar: {
+    width: 240,
+    backgroundColor: colors.surface,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
+  },
+  sidebarBrand: { paddingHorizontal: spacing.sm, marginBottom: spacing.xl },
+  navList: { gap: spacing.xs },
+  navItem: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    paddingVertical: spacing.md, paddingHorizontal: spacing.md, borderRadius: radius.md,
+  },
+  navItemActive: { backgroundColor: colors.primarySoft },
+  navLabel: { ...typography.bodyStrong, color: colors.textSecondary },
+  navLabelActive: { color: colors.primary },
+  sidebarFooter: { marginTop: 'auto', gap: spacing.sm, paddingHorizontal: spacing.sm },
+  sidebarEmail: { ...typography.caption, color: colors.textMuted },
+  contentScroll: { flex: 1 },
+  contentInner: { padding: spacing.xl, gap: spacing.lg, maxWidth: 920, width: '100%' },
+  listView: { gap: spacing.lg },
+
+  // Small-screen fallback (after the desktop notice).
+  mobileScroll: { padding: spacing.xl, paddingBottom: spacing.xxxl, gap: spacing.lg },
+  mobileTopbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  mobileTabs: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+
+  // Desktop-only notice.
+  noticeWrap: {
+    flex: 1, alignItems: 'center', gap: spacing.md,
+    paddingHorizontal: spacing.xl, maxWidth: 460, width: '100%', alignSelf: 'center',
+  },
+  noticeIcon: {
+    width: 72, height: 72, borderRadius: 36, backgroundColor: colors.primarySoft,
+    alignItems: 'center', justifyContent: 'center', marginTop: spacing.md,
+  },
+  noticeTitle: { ...typography.title, color: colors.textPrimary, textAlign: 'center' },
+  noticeBody: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
+  noticeContinue: {
+    marginTop: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border,
+    paddingVertical: spacing.sm, paddingHorizontal: spacing.lg,
+  },
+  noticeContinueText: { ...typography.label, color: colors.textPrimary },
+  noticeSignOut: { marginTop: spacing.sm, padding: spacing.sm },
+
   tab: { paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, borderRadius: radius.pill, backgroundColor: colors.surfaceMuted },
   tabActive: { backgroundColor: colors.primary },
   tabText: { ...typography.label, color: colors.textSecondary },
