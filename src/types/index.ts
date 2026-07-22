@@ -125,6 +125,13 @@ export interface Nutrition {
   isIndicative: boolean;
 }
 
+/**
+ * Publication state. `concept` keeps a recipe out of the app (browse list and
+ * the generated week menu) while you're still working on it; undefined counts
+ * as published so existing recipes stay visible.
+ */
+export type DishStatus = 'concept' | 'gepubliceerd';
+
 export interface Recipe {
   id: string;
   title: string;
@@ -158,6 +165,8 @@ export interface Recipe {
    * categories appear). Empty/undefined means a normal dish.
    */
   overigCategory?: string;
+  /** Publication state; undefined counts as published. */
+  status?: DishStatus;
 }
 
 /* ---------- Menus ---------- */

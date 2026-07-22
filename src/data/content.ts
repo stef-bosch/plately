@@ -187,11 +187,15 @@ export function getRecipeById(id: string): Recipe | undefined {
   return s.staticById[id];
 }
 
-/** The full recipe library (reactive dishes + static dishes). */
+/**
+ * The browseable recipe library. Concepts are left out so unfinished recipes
+ * don't surface in the app; `getRecipeById` still resolves them, so a recipe
+ * that is explicitly planned keeps rendering.
+ */
 export function getAllRecipes(): Recipe[] {
   const s = dishState();
   const resolvedReactive = s.reactiveDishes.map((recipe) => resolveRecipe(recipe));
-  return [...resolvedReactive, ...s.staticDishes];
+  return [...resolvedReactive, ...s.staticDishes].filter((r) => r.status !== 'concept');
 }
 
 /** All menus loaded from Supabase (empty until loadContent runs). */

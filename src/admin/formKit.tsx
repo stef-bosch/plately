@@ -105,6 +105,65 @@ export function SaveButton({
   );
 }
 
+/** A dropdown select: shows the current value and expands into an option list. */
+export function Select<T extends string>({
+  value,
+  options,
+  labels,
+  onSelect,
+  placeholder,
+}: {
+  value: T;
+  options: readonly T[];
+  labels?: Record<string, string>;
+  onSelect: (value: T) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const label = value ? labels?.[value] ?? value : placeholder ?? 'Kies…';
+
+  return (
+    <View>
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        accessibilityRole="button"
+        style={({ pressed }) => [formKit.input, formKit.selectField, pressed && formKit.pressed]}
+      >
+        <Text style={[formKit.selectValue, !value && formKit.selectPlaceholder]} numberOfLines={1}>
+          {label}
+        </Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSecondary} />
+      </Pressable>
+      {open ? (
+        <View style={formKit.selectMenu}>
+          {options.map((opt) => {
+            const active = opt === value;
+            return (
+              <Pressable
+                key={opt}
+                onPress={() => {
+                  onSelect(opt);
+                  setOpen(false);
+                }}
+                style={({ pressed }) => [
+                  formKit.selectItem,
+                  active && formKit.selectItemActive,
+                  pressed && formKit.pressed,
+                ]}
+              >
+                <Text style={[formKit.selectItemText, active && formKit.selectItemTextActive]}>
+                  {labels?.[opt] ?? opt}
+                </Text>
+                {active ? <Ionicons name="checkmark" size={15} color={colors.primary} /> : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 /** A compact up/down pair for reordering a list item. */
 export function MoveButtons({
   onUp,
@@ -164,6 +223,20 @@ export const formKit = StyleSheet.create({
   iconButton: { padding: spacing.xs },
   moveGroup: { flexDirection: 'row', alignItems: 'center' },
   moveButton: { paddingHorizontal: 2, paddingVertical: spacing.xs },
+  selectField: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  selectValue: { ...typography.body, color: colors.textPrimary, flex: 1 },
+  selectPlaceholder: { color: colors.textMuted },
+  selectMenu: {
+    marginTop: 4, backgroundColor: colors.surface, borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
+  },
+  selectItem: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: spacing.sm, paddingHorizontal: spacing.md,
+  },
+  selectItemActive: { backgroundColor: colors.primarySoft },
+  selectItemText: { ...typography.body, color: colors.textPrimary },
+  selectItemTextActive: { color: colors.primary },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: spacing.xs },
   addRowText: { ...typography.label, color: colors.primary },
   error: { ...typography.bodyStrong, color: colors.fat },

@@ -27,6 +27,7 @@ interface Props {
 
 const recipeOf = (row: DishRow) => row.data as Recipe;
 const kcalOf = (row: DishRow) => recipeOf(row)?.nutrition?.calories ?? 0;
+const isConcept = (row: DishRow) => recipeOf(row)?.status === 'concept';
 
 export function RecipesView({
   rows,
@@ -79,7 +80,8 @@ export function RecipesView({
       <View style={ov.main}>
         <View style={ov.statRow}>
           <StatCard icon="restaurant-outline" label="Totaal recepten" value={rows.length} />
-          <StatCard icon="grid-outline" label="Categorieën in gebruik" value={categoryCounts.length} />
+          <StatCard icon="grid-outline" label="Categorieën" value={categoryCounts.length} />
+          <StatCard icon="document-outline" label="Concepten" value={rows.filter(isConcept).length} />
           <StatCard icon="calendar-outline" label="Ingepland deze week" value={plannedIds.size} />
           <StatCard
             icon="alert-circle-outline"
@@ -134,6 +136,7 @@ export function RecipesView({
                 <Text style={[ov.headCell, styles.colMeal]}>Maaltijd</Text>
                 <Text style={[ov.headCell, styles.colDiet]}>Dieet</Text>
                 <Text style={[ov.headCell, styles.colKcal]}>kcal</Text>
+                <Text style={[ov.headCell, styles.colStatus]}>Status</Text>
                 <Text style={[ov.headCell, styles.colDate]}>Laatst gewijzigd</Text>
                 <Text style={[ov.headCell, styles.colActions]}>Acties</Text>
               </View>
@@ -166,6 +169,11 @@ export function RecipesView({
                         )}
                       </View>
                       <Text style={[ov.cell, styles.colKcal, !kcal && ov.cellWarn]}>{kcal || '0'}</Text>
+                      <View style={styles.colStatus}>
+                        <Text style={[styles.status, isConcept(row) ? styles.statusConcept : styles.statusLive]}>
+                          {isConcept(row) ? 'Concept' : 'Actief'}
+                        </Text>
+                      </View>
                       <Text style={[ov.cellMuted, styles.colDate]} numberOfLines={1}>
                         {formatDateLong(row.updated_at)}
                       </Text>
@@ -238,13 +246,20 @@ export function RecipesView({
 }
 
 const styles = StyleSheet.create({
-  table: { minWidth: 900 },
+  table: { minWidth: 1000 },
   colName: { width: 260 },
   colCat: { width: 150 },
   colMeal: { width: 110 },
   colDiet: { width: 160 },
   colKcal: { width: 60 },
+  colStatus: { width: 90 },
   colDate: { width: 130 },
   colActions: { width: 110 },
   plannedTag: { ...typography.caption, color: colors.accent, fontSize: 10 },
+  status: {
+    ...typography.caption, fontSize: 10, alignSelf: 'flex-start',
+    borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden',
+  },
+  statusLive: { color: colors.accent, backgroundColor: colors.accentSoft },
+  statusConcept: { color: colors.fat, backgroundColor: colors.surfaceMuted },
 });
