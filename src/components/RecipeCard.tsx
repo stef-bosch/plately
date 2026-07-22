@@ -43,14 +43,6 @@ export function RecipeCard({ recipe, onPress }: RecipeCardProps) {
 
         <Text style={styles.title}>{recipe.title}</Text>
 
-        <View style={styles.statsRow}>
-          <Stat value={`${recipe.nutrition.calories}`} label="kcal" />
-          <View style={styles.statDivider} />
-          <Stat value={`${recipe.nutrition.protein}g`} label="eiwitten" />
-          <View style={styles.statDivider} />
-          <Stat value={`${recipe.nutrition.carbs}g`} label="koolhydraten" />
-        </View>
-
         <View style={styles.tagRow}>
           {recipe.tags.slice(0, 3).map((tag) => (
             <Tag key={tag} label={tag} />
@@ -58,15 +50,6 @@ export function RecipeCard({ recipe, onPress }: RecipeCardProps) {
         </View>
       </View>
     </PressableScale>
-  );
-}
-
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
   );
 }
 
@@ -122,27 +105,6 @@ const styles = StyleSheet.create({
   title: {
     ...typography.heading,
     color: colors.textPrimary,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    ...typography.subheading,
-    color: colors.textPrimary,
-  },
-  statLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  statDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: colors.border,
   },
   tagRow: {
     flexDirection: 'row',
