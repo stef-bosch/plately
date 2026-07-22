@@ -3,71 +3,71 @@ import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { FilterChip } from '../components/FilterChip';
-import { DISH_CATEGORIES, dishCategory, mealTypeLabel } from '../constants/labels';
-import type { DishRow } from '../data/adminApi';
+import type { MenuRow } from '../data/adminApi';
 import { colors, spacing, typography } from '../theme';
-import type { Recipe } from '../types';
+import type { Menu } from '../types';
 import { formatDateLong } from '../utils/isoWeek';
 import { IconAction, QuickAction, StatCard, ov } from './overviewKit';
 
 const ALL = 'alle';
 
 interface Props {
-  rows: DishRow[];
+  rows: MenuRow[];
   loading: boolean;
-  /** Unique recipe ids planned in the current week (for the overview cards). */
-  plannedIds: Set<string>;
+  /** Recipe ids that exist, so menus pointing at removed dishes can be flagged. */
+  knownRecipeIds: Set<string>;
   onNew: () => void;
-  onNewMenu: () => void;
-  onGoToWeekmenu: () => void;
-  onEdit: (row: DishRow) => void;
-  onDuplicate: (row: DishRow) => void;
-  onDelete: (row: DishRow) => void;
+  onNewRecipe: () => void;
+  onGoToRecipes: () => void;
+  onEdit: (row: MenuRow) => void;
+  onDuplicate: (row: MenuRow) => void;
+  onDelete: (row: MenuRow) => void;
 }
 
-const recipeOf = (row: DishRow) => row.data as Recipe;
-const kcalOf = (row: DishRow) => recipeOf(row)?.nutrition?.calories ?? 0;
+const menuOf = (row: MenuRow) => row.data as Menu;
+const coursesOf = (row: MenuRow) => menuOf(row)?.courses ?? [];
+const recipeIdsOf = (row: MenuRow) => coursesOf(row).flatMap((c) => c.recipeIds ?? []);
 
-export function RecipesView({
+export function MenusView({
   rows,
   loading,
-  plannedIds,
+  knownRecipeIds,
   onNew,
-  onNewMenu,
-  onGoToWeekmenu,
+  onNewRecipe,
+  onGoToRecipes,
   onEdit,
   onDuplicate,
   onDelete,
 }: Props) {
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<string>(ALL);
+  const [tag, setTag] = useState<string>(ALL);
 
-  // Categories actually in use, in the app's display order (unknown ones last).
-  const categoryCounts = useMemo(() => {
+  /** Recipe ids a menu references that no longer exist. */
+  const missingOf = (row: MenuRow) =>
+    [...new Set(recipeIdsOf(row))].filter((id) => !knownRecipeIds.has(id));
+
+  const tagCounts = useMemo(() => {
     const counts = new Map<string, number>();
-    rows.forEach((r) => {
-      const c = dishCategory(recipeOf(r));
-      counts.set(c, (counts.get(c) ?? 0) + 1);
-    });
-    const known = DISH_CATEGORIES.filter((c) => counts.has(c));
-    const extra = [...counts.keys()].filter((c) => !DISH_CATEGORIES.includes(c)).sort();
-    return [...known, ...extra].map((c) => ({ category: c, count: counts.get(c) ?? 0 }));
+    rows.forEach((r) => (menuOf(r)?.tags ?? []).forEach((t) => counts.set(t, (counts.get(t) ?? 0) + 1)));
+    return [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([t, count]) => ({ tag: t, count }));
   }, [rows]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((r) => {
-      if (category !== ALL && dishCategory(recipeOf(r)) !== category) return false;
+      if (tag !== ALL && !(menuOf(r)?.tags ?? []).includes(tag as never)) return false;
       return !q || r.title.toLowerCase().includes(q);
     });
-  }, [rows, query, category]);
+  }, [rows, query, tag]);
 
   const recent = useMemo(
     () => [...rows].sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? '')).slice(0, 5),
     [rows],
   );
 
-  const withoutNutrition = rows.filter((r) => !kcalOf(r)).length;
+  const totalCourses = rows.reduce((n, r) => n + coursesOf(r).length, 0);
+  const uniqueRecipes = new Set(rows.flatMap(recipeIdsOf)).size;
+  const withMissing = rows.filter((r) => missingOf(r).length > 0).length;
 
   if (loading) {
     return <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />;
@@ -78,14 +78,14 @@ export function RecipesView({
       {/* ---------- main column ---------- */}
       <View style={ov.main}>
         <View style={ov.statRow}>
-          <StatCard icon="restaurant-outline" label="Totaal recepten" value={rows.length} />
-          <StatCard icon="grid-outline" label="Categorieën in gebruik" value={categoryCounts.length} />
-          <StatCard icon="calendar-outline" label="Ingepland deze week" value={plannedIds.size} />
+          <StatCard icon="albums-outline" label="Totaal menu's" value={rows.length} />
+          <StatCard icon="layers-outline" label="Gangen totaal" value={totalCourses} />
+          <StatCard icon="restaurant-outline" label="Recepten in menu's" value={uniqueRecipes} />
           <StatCard
             icon="alert-circle-outline"
-            label="Zonder voedingswaarden"
-            value={withoutNutrition}
-            tone={withoutNutrition > 0 ? 'warn' : undefined}
+            label="Met ontbrekende recepten"
+            value={withMissing}
+            tone={withMissing > 0 ? 'warn' : undefined}
           />
         </View>
 
@@ -96,7 +96,7 @@ export function RecipesView({
               style={ov.searchInput}
               value={query}
               onChangeText={setQuery}
-              placeholder="Zoek recept…"
+              placeholder="Zoek menu…"
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
             />
@@ -104,68 +104,72 @@ export function RecipesView({
               <Ionicons name="close-circle" size={18} color={colors.textMuted} onPress={() => setQuery('')} />
             ) : null}
           </View>
-          <View style={ov.chipRow}>
-            <FilterChip label="Alle categorieën" active={category === ALL} onPress={() => setCategory(ALL)} />
-            {categoryCounts.map((c) => (
-              <FilterChip
-                key={c.category}
-                label={`${c.category} (${c.count})`}
-                active={category === c.category}
-                onPress={() => setCategory(category === c.category ? ALL : c.category)}
-              />
-            ))}
-          </View>
+          {tagCounts.length > 0 ? (
+            <View style={ov.chipRow}>
+              <FilterChip label="Alle tags" active={tag === ALL} onPress={() => setTag(ALL)} />
+              {tagCounts.map((t) => (
+                <FilterChip
+                  key={t.tag}
+                  label={`${t.tag} (${t.count})`}
+                  active={tag === t.tag}
+                  onPress={() => setTag(tag === t.tag ? ALL : t.tag)}
+                />
+              ))}
+            </View>
+          ) : null}
         </View>
 
         <View style={ov.panel}>
           <View style={ov.tableHead}>
-            <Text style={ov.h2}>Alle recepten ({visible.length})</Text>
+            <Text style={ov.h2}>Alle menu's ({visible.length})</Text>
             <Pressable onPress={onNew} style={({ pressed }) => [ov.newButton, pressed && ov.pressed]}>
               <Ionicons name="add" size={18} color={colors.textOnPrimary} />
-              <Text style={ov.newButtonText}>Recept toevoegen</Text>
+              <Text style={ov.newButtonText}>Menu toevoegen</Text>
             </Pressable>
           </View>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.table}>
               <View style={[ov.row, ov.headRow]}>
-                <Text style={[ov.headCell, styles.colName]}>Recept</Text>
-                <Text style={[ov.headCell, styles.colCat]}>Categorie</Text>
-                <Text style={[ov.headCell, styles.colMeal]}>Maaltijd</Text>
-                <Text style={[ov.headCell, styles.colDiet]}>Dieet</Text>
-                <Text style={[ov.headCell, styles.colKcal]}>kcal</Text>
+                <Text style={[ov.headCell, styles.colName]}>Menu</Text>
+                <Text style={[ov.headCell, styles.colCourses]}>Gangen</Text>
+                <Text style={[ov.headCell, styles.colDishes]}>Recepten</Text>
+                <Text style={[ov.headCell, styles.colServings]}>Personen</Text>
+                <Text style={[ov.headCell, styles.colTags]}>Tags</Text>
                 <Text style={[ov.headCell, styles.colDate]}>Laatst gewijzigd</Text>
                 <Text style={[ov.headCell, styles.colActions]}>Acties</Text>
               </View>
 
               {visible.length === 0 ? (
                 <Text style={ov.empty}>
-                  {rows.length === 0 ? 'Nog geen recepten. Voeg er een toe.' : 'Geen recepten gevonden.'}
+                  {rows.length === 0 ? "Nog geen menu's. Voeg er een toe." : "Geen menu's gevonden."}
                 </Text>
               ) : (
                 visible.map((row) => {
-                  const r = recipeOf(row);
-                  const kcal = kcalOf(row);
+                  const m = menuOf(row);
+                  const missing = missingOf(row);
                   return (
                     <View key={row.id} style={ov.row}>
                       <View style={styles.colName}>
                         <Text style={ov.cellTitle} numberOfLines={1}>{row.title}</Text>
-                        {plannedIds.has(row.id) ? (
-                          <Text style={styles.plannedTag}>ingepland deze week</Text>
+                        {missing.length > 0 ? (
+                          <Text style={styles.warnTag}>
+                            {missing.length} ontbrekend recept{missing.length === 1 ? '' : 'en'}
+                          </Text>
+                        ) : m?.subtitle ? (
+                          <Text style={ov.cellMuted} numberOfLines={1}>{m.subtitle}</Text>
                         ) : null}
                       </View>
-                      <Text style={[ov.cell, styles.colCat]} numberOfLines={1}>{dishCategory(r)}</Text>
-                      <Text style={[ov.cell, styles.colMeal]} numberOfLines={1}>
-                        {mealTypeLabel[r.mealType] ?? '—'}
-                      </Text>
-                      <View style={[styles.colDiet, ov.tagWrap]}>
-                        {(r.suitableFor ?? []).length === 0 ? (
+                      <Text style={[ov.cell, styles.colCourses]}>{coursesOf(row).length}</Text>
+                      <Text style={[ov.cell, styles.colDishes]}>{recipeIdsOf(row).length}</Text>
+                      <Text style={[ov.cell, styles.colServings]}>{m?.baseServings ?? '—'}</Text>
+                      <View style={[styles.colTags, ov.tagWrap]}>
+                        {(m?.tags ?? []).length === 0 ? (
                           <Text style={ov.cellMuted}>—</Text>
                         ) : (
-                          (r.suitableFor ?? []).map((d) => <Text key={d} style={ov.tag}>{d}</Text>)
+                          (m?.tags ?? []).map((t) => <Text key={t} style={ov.tag}>{t}</Text>)
                         )}
                       </View>
-                      <Text style={[ov.cell, styles.colKcal, !kcal && ov.cellWarn]}>{kcal || '0'}</Text>
                       <Text style={[ov.cellMuted, styles.colDate]} numberOfLines={1}>
                         {formatDateLong(row.updated_at)}
                       </Text>
@@ -186,20 +190,20 @@ export function RecipesView({
       {/* ---------- side column ---------- */}
       <View style={ov.side}>
         <View style={ov.panel}>
-          <Text style={ov.h2}>Categorieën</Text>
-          {categoryCounts.length === 0 ? (
-            <Text style={ov.empty}>Nog geen categorieën.</Text>
+          <Text style={ov.h2}>Tags</Text>
+          {tagCounts.length === 0 ? (
+            <Text style={ov.empty}>Nog geen tags in gebruik.</Text>
           ) : (
-            categoryCounts.map((c) => (
+            tagCounts.map((t) => (
               <Pressable
-                key={c.category}
-                onPress={() => setCategory(category === c.category ? ALL : c.category)}
+                key={t.tag}
+                onPress={() => setTag(tag === t.tag ? ALL : t.tag)}
                 style={({ pressed }) => [ov.sideRow, pressed && ov.pressed]}
               >
-                <Text style={[ov.sideRowText, category === c.category && ov.sideRowActive]} numberOfLines={1}>
-                  {c.category}
+                <Text style={[ov.sideRowText, tag === t.tag && ov.sideRowActive]} numberOfLines={1}>
+                  {t.tag}
                 </Text>
-                <Text style={ov.sideCount}>{c.count}</Text>
+                <Text style={ov.sideCount}>{t.count}</Text>
               </Pressable>
             ))
           )}
@@ -207,9 +211,9 @@ export function RecipesView({
 
         <View style={ov.panel}>
           <Text style={ov.h2}>Snelle acties</Text>
-          <QuickAction icon="restaurant-outline" label="Recept toevoegen" onPress={onNew} />
-          <QuickAction icon="albums-outline" label="Menu toevoegen" onPress={onNewMenu} />
-          <QuickAction icon="calendar-outline" label="Naar weekmenu" onPress={onGoToWeekmenu} />
+          <QuickAction icon="albums-outline" label="Menu toevoegen" onPress={onNew} />
+          <QuickAction icon="restaurant-outline" label="Recept toevoegen" onPress={onNewRecipe} />
+          <QuickAction icon="list-outline" label="Naar recepten" onPress={onGoToRecipes} />
         </View>
 
         <View style={ov.panel}>
@@ -239,12 +243,12 @@ export function RecipesView({
 
 const styles = StyleSheet.create({
   table: { minWidth: 900 },
-  colName: { width: 260 },
-  colCat: { width: 150 },
-  colMeal: { width: 110 },
-  colDiet: { width: 160 },
-  colKcal: { width: 60 },
+  colName: { width: 280 },
+  colCourses: { width: 80 },
+  colDishes: { width: 90 },
+  colServings: { width: 90 },
+  colTags: { width: 180 },
   colDate: { width: 130 },
   colActions: { width: 110 },
-  plannedTag: { ...typography.caption, color: colors.accent, fontSize: 10 },
+  warnTag: { ...typography.caption, color: colors.fat, fontSize: 10 },
 });

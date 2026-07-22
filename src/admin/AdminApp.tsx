@@ -17,9 +17,11 @@ import {
   deleteDish,
   deleteMenu,
   getDishRow,
+  getMenuRow,
   listDishes,
   listMenus,
   saveDish,
+  saveMenu,
   type DishRow,
   type MenuRow,
 } from '../data/adminApi';
@@ -38,6 +40,7 @@ import { colors, radius, shadow, spacing, typography } from '../theme';
 import type { Recipe } from '../types';
 import { DishForm } from './DishForm';
 import { MenuForm } from './MenuForm';
+import { MenusView } from './MenusView';
 import { RecipesView } from './RecipesView';
 import { WeekmenuBuilder } from './WeekmenuBuilder';
 
@@ -154,7 +157,6 @@ function AdminShell({ email }: { email: string }) {
   const [menus, setMenus] = useState<MenuRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyMsg, setBusyMsg] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
   const [flash, setFlash] = useState<string | null>(null);
 
   const signOut = () => supabase?.auth.signOut();
@@ -215,6 +217,22 @@ function AdminShell({ email }: { email: string }) {
     refresh();
   };
 
+  /** Copies a menu under a free "-kopie" id so it can be edited separately. */
+  const duplicateMenu = async (row: MenuRow) => {
+    try {
+      let id = `${row.id}-kopie`;
+      let n = 2;
+      while (await getMenuRow(id)) id = `${row.id}-kopie-${n++}`;
+      await saveMenu({ ...row.data, id, title: `${row.title} (kopie)` });
+      await reloadContent();
+      setFlash(`"${row.title}" gekopieerd`);
+      setTimeout(() => setFlash(null), 2500);
+      refresh();
+    } catch (e) {
+      setBusyMsg(`Kopiëren mislukt: ${(e as Error).message}`);
+    }
+  };
+
   const onFormDone = () => {
     setForm(null);
     setFlash('Opgeslagen');
@@ -222,65 +240,24 @@ function AdminShell({ email }: { email: string }) {
     refresh();
   };
 
-  const q = query.trim().toLowerCase();
-  const matches = (title: string) => !q || title.toLowerCase().includes(q);
-  const filteredMenus = menus.filter((r) => matches(r.title));
+  // A transient banner shown under the top bar (save/copy confirmations, errors).
+  const banner =
+    busyMsg || flash ? (
+      <Text style={busyMsg ? styles.message : styles.flash}>{busyMsg ?? flash}</Text>
+    ) : null;
 
-  const searchBox = (
-    <View style={styles.searchBox}>
-      <Ionicons name="search" size={18} color={colors.textMuted} />
-      <TextInput
-        style={styles.searchInput}
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Zoeken op naam…"
-        placeholderTextColor={colors.textMuted}
-        autoCapitalize="none"
-      />
-      {query ? (
-        <Ionicons name="close-circle" size={18} color={colors.textMuted} onPress={() => setQuery('')} />
-      ) : null}
-    </View>
-  );
-
-  const listView = (
-    <View style={styles.listView}>
-      {searchBox}
-      {busyMsg ? <Text style={styles.message}>{busyMsg}</Text> : null}
-      {flash ? <Text style={styles.flash}>{flash}</Text> : null}
-
-      <>
-          <View style={styles.listHeader}>
-            <Text style={styles.h2}>Menu's ({filteredMenus.length})</Text>
-            <Pressable onPress={() => setForm({ kind: 'menu' })} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}>
-              <Ionicons name="add" size={18} color={colors.textOnPrimary} />
-              <Text style={styles.newButtonText}>Nieuw</Text>
-            </Pressable>
-          </View>
-          {loading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
-          ) : filteredMenus.length === 0 ? (
-            <Text style={styles.empty}>{query ? "Geen menu's gevonden." : "Nog geen menu's. Voeg er een toe."}</Text>
-          ) : (
-            <View style={styles.grid}>
-              {filteredMenus.map((row) => (
-                <View key={row.id} style={styles.itemCard}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.itemTitle} numberOfLines={1}>{row.title}</Text>
-                    <Text style={styles.itemMeta}>{row.data?.courses?.length ?? 0} gangen</Text>
-                  </View>
-                  <Pressable onPress={() => setForm({ kind: 'menu', id: row.id })} style={styles.iconButton}>
-                    <Ionicons name="create-outline" size={20} color={colors.primary} />
-                  </Pressable>
-                  <Pressable onPress={() => removeMenu(row)} style={styles.iconButton}>
-                    <Ionicons name="trash-outline" size={20} color={colors.fat} />
-                  </Pressable>
-                </View>
-              ))}
-            </View>
-          )}
-      </>
-    </View>
+  const menusView = (
+    <MenusView
+      rows={menus}
+      loading={loading}
+      knownRecipeIds={new Set(dishes.map((d) => d.id))}
+      onNew={() => setForm({ kind: 'menu' })}
+      onNewRecipe={() => setForm({ kind: 'dish' })}
+      onGoToRecipes={() => goTo('dishes')}
+      onEdit={(row) => setForm({ kind: 'menu', id: row.id })}
+      onDuplicate={duplicateMenu}
+      onDelete={removeMenu}
+    />
   );
 
   // Real signals worth flagging in the notification bell — no invented data.
@@ -350,7 +327,7 @@ function AdminShell({ email }: { email: string }) {
         onEditDish={(row) => setForm({ kind: 'dish', id: row.id })}
       />
     ) : (
-      listView
+      menusView
     );
 
   // Desktop-only: on a small screen show a notice (with an escape hatch).
@@ -366,6 +343,7 @@ function AdminShell({ email }: { email: string }) {
         <Sidebar tab={tab} onSelect={goTo} email={email} onSignOut={signOut} />
         <ScrollView style={styles.contentScroll} contentContainerStyle={styles.contentInner}>
           <TopBar title={TAB_TITLE[tab]} email={email} issues={issues} />
+          {banner}
           {body}
         </ScrollView>
       </View>
@@ -389,6 +367,7 @@ function AdminShell({ email }: { email: string }) {
         ))}
       </View>
       <TopBar title={TAB_TITLE[tab]} email={email} issues={issues} />
+          {banner}
       {body}
     </ScrollView>
   );
