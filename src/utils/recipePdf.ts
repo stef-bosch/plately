@@ -105,6 +105,7 @@ export function buildRecipeHtml(
     { label: 'Koolhydraten', value: recipe.nutrition.carbs, color: colors.carbs },
     { label: 'Eiwitten', value: recipe.nutrition.protein, color: colors.protein },
     { label: 'Vetten', value: recipe.nutrition.fat, color: colors.fat },
+    { label: 'Vezels', value: recipe.nutrition.fiber, color: colors.fiber },
   ]
     .map(
       (m) =>

@@ -4,17 +4,14 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { colors } from '../theme';
 import { Field, formKit } from './formKit';
 
-// Fiber ('fiber') is intentionally not offered here — it isn't shown anywhere
-// in the app anymore. It stays in the Nutrition data model (saved as 0 for new
-// dishes, preserved on edits) so nothing else has to change.
-export const MACROS = ['calories', 'protein', 'carbs', 'fat'] as const;
+export const MACROS = ['calories', 'protein', 'carbs', 'fat', 'fiber'] as const;
 export type MacroKey = (typeof MACROS)[number];
 
 const MACRO_LABEL: Record<MacroKey, string> = {
-  calories: 'Calorieën', protein: 'Eiwitten', carbs: 'Koolhydraten', fat: 'Vetten',
+  calories: 'Calorieën', protein: 'Eiwitten', carbs: 'Koolhydraten', fat: 'Vetten', fiber: 'Vezels',
 };
 const MACRO_UNIT: Record<MacroKey, string> = {
-  calories: 'kcal', protein: 'g', carbs: 'g', fat: 'g',
+  calories: 'kcal', protein: 'g', carbs: 'g', fat: 'g', fiber: 'g',
 };
 
 interface Props {

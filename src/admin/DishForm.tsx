@@ -522,6 +522,7 @@ function Preview({
       <PreviewRow label="Eiwitten" value={`${num('protein')} g`} />
       <PreviewRow label="Koolhydraten" value={`${num('carbs')} g`} />
       <PreviewRow label="Vetten" value={`${num('fat')} g`} />
+      <PreviewRow label="Vezels" value={`${num('fiber')} g`} />
     </View>
   );
 }

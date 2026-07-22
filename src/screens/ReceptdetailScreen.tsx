@@ -215,6 +215,7 @@ export function ReceptdetailScreen() {
               { label: 'Koolhydraten', value: recipe.nutrition.carbs, unit: 'g', color: colors.carbs },
               { label: 'Eiwitten', value: recipe.nutrition.protein, unit: 'g', color: colors.protein },
               { label: 'Vetten', value: recipe.nutrition.fat, unit: 'g', color: colors.fat },
+              { label: 'Vezels', value: recipe.nutrition.fiber, unit: 'g', color: colors.fiber },
             ]}
           />
           {recipe.nutrition.isIndicative ? (
