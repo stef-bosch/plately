@@ -32,7 +32,7 @@ const DEFAULT_SETTINGS: Settings = {
     // Neutral standard choices until adjusted.
     activityLevel: 'moderate',
     goal: 'maintain',
-    proteinProfile: 'active',
+    proteinProfile: 'standard',
     manualKcalTarget: null,
   },
 };
