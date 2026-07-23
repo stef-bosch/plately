@@ -83,9 +83,9 @@ export function InstellingenScreen() {
           </View>
         </Field>
         <View style={styles.numberRow}>
-          <NumberField label="Leeftijd" value={profile.ageYears} onChange={(v) => setProfile({ ageYears: v })} />
-          <NumberField label="Lengte (cm)" value={profile.heightCm} onChange={(v) => setProfile({ heightCm: v })} />
-          <NumberField label="Gewicht (kg)" value={profile.weightKg} onChange={(v) => setProfile({ weightKg: v })} />
+          <NumberField label="Leeftijd" placeholder="jaar" value={profile.ageYears} onChange={(v) => setProfile({ ageYears: v })} />
+          <NumberField label="Lengte (cm)" placeholder="cm" value={profile.heightCm} onChange={(v) => setProfile({ heightCm: v })} />
+          <NumberField label="Gewicht (kg)" placeholder="kg" value={profile.weightKg} onChange={(v) => setProfile({ weightKg: v })} />
         </View>
       </SettingCard>
 
@@ -129,18 +129,26 @@ export function InstellingenScreen() {
 
       {/* Computed daily target */}
       <SettingCard title="Jouw dagdoel">
-        <View style={styles.targetRow}>
-          <Text style={styles.targetValue}>{target.targetKcal}</Text>
-          <Text style={styles.targetUnit}>kcal / dag</Text>
-        </View>
-        <Text style={styles.targetMeta}>
-          {target.source === 'manual' ? 'Handmatig ingesteld' : `Berekend · BMR ${target.bmr} · TDEE ${target.tdee}`}
-        </Text>
-        <View style={styles.macroRow}>
-          <MacroChip label="Eiwitten" value={`${target.macro.proteinG} g`} color={colors.protein} />
-          <MacroChip label="Koolhydraten" value={`${target.macro.carbsG} g`} color={colors.carbs} />
-          <MacroChip label="Vetten" value={`${target.macro.fatG} g`} color={colors.fat} />
-        </View>
+        {target.complete ? (
+          <>
+            <View style={styles.targetRow}>
+              <Text style={styles.targetValue}>{target.targetKcal}</Text>
+              <Text style={styles.targetUnit}>kcal / dag</Text>
+            </View>
+            <Text style={styles.targetMeta}>
+              {target.source === 'manual' ? 'Handmatig ingesteld' : `Berekend · BMR ${target.bmr} · TDEE ${target.tdee}`}
+            </Text>
+            <View style={styles.macroRow}>
+              <MacroChip label="Eiwitten" value={`${target.macro.proteinG} g`} color={colors.protein} />
+              <MacroChip label="Koolhydraten" value={`${target.macro.carbsG} g`} color={colors.carbs} />
+              <MacroChip label="Vetten" value={`${target.macro.fatG} g`} color={colors.fat} />
+            </View>
+          </>
+        ) : (
+          <Text style={styles.targetPrompt}>
+            Vul je geslacht, leeftijd, lengte en gewicht in om je dagdoel te berekenen.
+          </Text>
+        )}
       </SettingCard>
 
       {/* Dietary preferences */}
@@ -235,10 +243,12 @@ function NumberField({
   label,
   value,
   onChange,
+  placeholder,
 }: {
   label: string;
-  value: number;
-  onChange: (v: number) => void;
+  value: number | null;
+  onChange: (v: number | null) => void;
+  placeholder?: string;
 }) {
   return (
     <View style={styles.numberField}>
@@ -247,10 +257,14 @@ function NumberField({
         <TextInput
           style={styles.numberInput}
           keyboardType="numeric"
-          value={String(value)}
+          value={value != null ? String(value) : ''}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textMuted}
           onChangeText={(t) => {
-            const n = Number(t.replace(',', '.'));
-            onChange(Number.isNaN(n) ? 0 : n);
+            const trimmed = t.trim();
+            if (trimmed === '') return onChange(null);
+            const n = Number(trimmed.replace(',', '.'));
+            onChange(Number.isNaN(n) ? null : n);
           }}
         />
       </View>
@@ -334,6 +348,7 @@ const styles = StyleSheet.create({
   targetValue: { ...typography.display, fontSize: 40, color: colors.textPrimary },
   targetUnit: { ...typography.subheading, color: colors.textSecondary, marginBottom: 6 },
   targetMeta: { ...typography.caption, color: colors.textMuted },
+  targetPrompt: { ...typography.body, color: colors.textSecondary },
   macroRow: { flexDirection: 'row', gap: spacing.sm },
   macroChip: {
     flex: 1,

@@ -15,17 +15,21 @@ import type { Settings } from '../types';
  * AsyncStorage later without changing the consumer API).
  */
 
-const STORAGE_KEY = 'plately.settings.v1';
+// v2: personal data now starts empty; bumping the key drops the old
+// pre-filled profile (male/30/180/80) so everyone starts from a clean slate.
+const STORAGE_KEY = 'plately.settings.v2';
 
 const DEFAULT_SETTINGS: Settings = {
   defaultServings: 1,
   preferredSeason: 'lente-zomer',
   dietaryPreferences: [],
   nutritionProfile: {
-    sex: 'male',
-    ageYears: 30,
-    heightCm: 180,
-    weightKg: 80,
+    // Personal data starts empty so each user enters their own.
+    sex: null,
+    ageYears: null,
+    heightCm: null,
+    weightKg: null,
+    // Neutral standard choices until adjusted.
     activityLevel: 'moderate',
     goal: 'maintain',
     proteinProfile: 'active',

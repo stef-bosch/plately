@@ -262,10 +262,11 @@ export type CalcGoal = 'maintain' | 'lose' | 'gain' | 'muscle_gain';
 export type ProteinProfile = 'standard' | 'active' | 'muscle';
 
 export interface NutritionProfile {
-  sex: BodySex;
-  ageYears: number;
-  heightCm: number;
-  weightKg: number;
+  /** Personal data — null until the user fills it in (no default identity). */
+  sex: BodySex | null;
+  ageYears: number | null;
+  heightCm: number | null;
+  weightKg: number | null;
   activityLevel: CalcActivityLevel;
   goal: CalcGoal;
   proteinProfile: ProteinProfile;
