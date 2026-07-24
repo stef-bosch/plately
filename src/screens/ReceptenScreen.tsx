@@ -5,6 +5,7 @@ import {
   FlatList,
   PanResponder,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -58,6 +59,9 @@ export function ReceptenScreen() {
   const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>('alle');
   const [searchOpen, setSearchOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  // Available height for the filter sheet, measured from its full-screen wrap so
+  // the sheet can be capped and its groups scroll on small screens.
+  const [sheetAreaHeight, setSheetAreaHeight] = useState(0);
 
   // The recipe library (weekmenu dishes live in their own collection).
   const allRecipes = useMemo(() => getAllRecipes(), []);
@@ -294,7 +298,10 @@ export function ReceptenScreen() {
     />
 
     {filtersOpen ? (
-      <View style={styles.sheetWrap}>
+      <View
+        style={styles.sheetWrap}
+        onLayout={(e) => setSheetAreaHeight(e.nativeEvent.layout.height)}
+      >
         <Animated.View style={[styles.sheetBackdrop, { opacity: sheetAnim }]}>
           <Pressable
             style={StyleSheet.absoluteFill}
@@ -306,6 +313,7 @@ export function ReceptenScreen() {
         <Animated.View
           style={[
             styles.sheet,
+            sheetAreaHeight > 0 ? { maxHeight: sheetAreaHeight } : null,
             { transform: [{ translateY: Animated.add(sheetTranslateY, dragY) }] },
           ]}
         >
@@ -326,46 +334,52 @@ export function ReceptenScreen() {
             ) : null}
           </View>
 
-          {category === 'gerechten' ? (
-            <View style={styles.sheetGroup}>
-              <Text style={styles.filterLabel}>Maaltijd</Text>
-              <View style={styles.chipRow}>
-                {['alle', ...MEAL_CATEGORIES].map((c) => (
-                  <FilterChip
-                    key={c}
-                    label={c === 'alle' ? 'Alle' : c}
-                    active={categoryFilter === c}
-                    onPress={() => setCategoryFilter(c)}
-                  />
-                ))}
+          <ScrollView
+            style={styles.sheetScroll}
+            contentContainerStyle={styles.sheetScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {category === 'gerechten' ? (
+              <View style={styles.sheetGroup}>
+                <Text style={styles.filterLabel}>Maaltijd</Text>
+                <View style={styles.chipRow}>
+                  {['alle', ...MEAL_CATEGORIES].map((c) => (
+                    <FilterChip
+                      key={c}
+                      label={c === 'alle' ? 'Alle' : c}
+                      active={categoryFilter === c}
+                      onPress={() => setCategoryFilter(c)}
+                    />
+                  ))}
+                </View>
+                <Text style={[styles.filterLabel, styles.filterSubLabel]}>Overig</Text>
+                <View style={styles.chipRow}>
+                  {OTHER_CATEGORIES.map((c) => (
+                    <FilterChip
+                      key={c}
+                      label={c}
+                      active={categoryFilter === c}
+                      onPress={() => setCategoryFilter(c)}
+                    />
+                  ))}
+                </View>
               </View>
-              <Text style={[styles.filterLabel, styles.filterSubLabel]}>Overig</Text>
-              <View style={styles.chipRow}>
-                {OTHER_CATEGORIES.map((c) => (
-                  <FilterChip
-                    key={c}
-                    label={c}
-                    active={categoryFilter === c}
-                    onPress={() => setCategoryFilter(c)}
-                  />
-                ))}
-              </View>
-            </View>
-          ) : null}
+            ) : null}
 
-          <View style={styles.sheetGroup}>
-            <Text style={styles.filterLabel}>Seizoen</Text>
-            <View style={styles.chipRow}>
-              {SEASON_FILTERS.map((s) => (
-                <FilterChip
-                  key={s}
-                  label={s === 'alle' ? 'Alle' : seasonLabel[s]}
-                  active={seasonFilter === s}
-                  onPress={() => setSeasonFilter(s)}
-                />
-              ))}
+            <View style={styles.sheetGroup}>
+              <Text style={styles.filterLabel}>Seizoen</Text>
+              <View style={styles.chipRow}>
+                {SEASON_FILTERS.map((s) => (
+                  <FilterChip
+                    key={s}
+                    label={s === 'alle' ? 'Alle' : seasonLabel[s]}
+                    active={seasonFilter === s}
+                    onPress={() => setSeasonFilter(s)}
+                  />
+                ))}
+              </View>
             </View>
-          </View>
+          </ScrollView>
 
           <Pressable
             style={({ pressed }) => [
@@ -507,8 +521,13 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
     gap: spacing.lg,
+    // Shrink to the full-screen wrap so the sheet never runs off-screen; the
+    // groups scroll inside (sheetScroll) when they don't fit.
+    flexShrink: 1,
     ...shadow.card,
   },
+  sheetScroll: { flexShrink: 1 },
+  sheetScrollContent: { gap: spacing.lg, paddingBottom: spacing.xs },
   sheetHandleArea: {
     alignSelf: 'stretch',
     alignItems: 'center',
