@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   },
   hero: {
     width: '100%',
-    height: 220,
+    aspectRatio: 1,
     borderRadius: radius.lg,
     backgroundColor: colors.surfaceMuted,
   },

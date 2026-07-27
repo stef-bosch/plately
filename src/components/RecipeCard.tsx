@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 170,
+    aspectRatio: 1,
     backgroundColor: colors.surfaceMuted,
   },
   timePill: {
