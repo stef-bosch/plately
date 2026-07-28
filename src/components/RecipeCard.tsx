@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
@@ -5,110 +6,90 @@ import { getRecipeImage } from '../constants/images';
 import { dishCategory } from '../constants/labels';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 import type { Recipe } from '../types';
-import { Icon } from './BrandIcons';
+import { MealIcon } from './BrandIcons';
 import { PressableScale } from './PressableScale';
-import { Tag } from './Tag';
 
 interface RecipeCardProps {
   recipe: Recipe;
   onPress: () => void;
 }
 
-/** Recipe card used in the overview list. */
+/** Compact, landscape card used in the recipe overview (matches MealCard). */
 export function RecipeCard({ recipe, onPress }: RecipeCardProps) {
   const totalTime = recipe.prepTime + recipe.cookTime;
 
   return (
-    <PressableScale
-      onPress={onPress}
-      accessibilityRole="button"
-      style={styles.card}
-    >
-      <View style={styles.imageWrap}>
+    <PressableScale onPress={onPress} accessibilityRole="button" style={styles.card}>
+      <View style={styles.thumbWrap}>
         <Image
           source={getRecipeImage(recipe)}
-          style={styles.image}
+          style={styles.thumb}
           resizeMode="cover"
         />
-        <View style={styles.timePill}>
-          <Icon name="Clock" size={iconSize.badge} color={colors.white} />
-          <Text style={styles.timePillText}>{totalTime} min</Text>
+        <View style={styles.thumbBadge}>
+          <MealIcon mealType={recipe.mealType} size={iconSize.badge} color={colors.white} />
         </View>
       </View>
-
       <View style={styles.body}>
-        <View style={styles.mealBadge}>
-          <Text style={styles.mealBadgeText}>{dishCategory(recipe)}</Text>
-        </View>
-
-        <Text style={styles.title}>{recipe.title}</Text>
-
-        <View style={styles.tagRow}>
-          {recipe.tags.slice(0, 3).map((tag) => (
-            <Tag key={tag} label={tag} />
-          ))}
-        </View>
+        <Text style={styles.category}>{dishCategory(recipe)}</Text>
+        <Text style={styles.title} numberOfLines={2}>
+          {recipe.title}
+        </Text>
+        <Text style={styles.meta}>{totalTime} min</Text>
       </View>
+      <Ionicons name="chevron-forward" size={iconSize.action} color={colors.textMuted} />
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    overflow: 'hidden',
-    ...shadow.card,
+    padding: spacing.lg,
+    ...shadow.soft,
   },
-  imageWrap: {
+  thumbWrap: {
     position: 'relative',
   },
-  image: {
-    width: '100%',
-    aspectRatio: 1,
+  thumb: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.md,
     backgroundColor: colors.surfaceMuted,
   },
-  timePill: {
+  thumbBadge: {
     position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    flexDirection: 'row',
+    bottom: -4,
+    right: -4,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.primary,
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(34, 34, 34, 0.62)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-  },
-  timePillText: {
-    ...typography.caption,
-    color: colors.white,
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.surface,
   },
   body: {
-    padding: spacing.lg,
-    gap: spacing.md,
+    flex: 1,
+    gap: 2,
   },
-  mealBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 4,
-    backgroundColor: colors.primarySoft,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-  },
-  mealBadgeText: {
+  category: {
     ...typography.caption,
-    color: colors.primary,
+    color: colors.accent,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   title: {
-    ...typography.heading,
+    ...typography.subheading,
     color: colors.textPrimary,
   },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
+  meta: {
+    ...typography.caption,
+    color: colors.textSecondary,
   },
 });
