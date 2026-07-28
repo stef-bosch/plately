@@ -35,7 +35,7 @@ export function RecipeCard({ recipe, onPress }: RecipeCardProps) {
         <Text style={styles.title} numberOfLines={2}>
           {recipe.title}
         </Text>
-        <Text style={styles.meta}>{totalTime} min</Text>
+        <Text style={styles.meta}>{recipe.nutrition.calories} kcal · {totalTime} min</Text>
       </View>
       <Ionicons name="chevron-forward" size={iconSize.action} color={colors.textMuted} />
     </PressableScale>

@@ -48,7 +48,7 @@ export function MealCard({
           {recipe.title}
         </Text>
         <Text style={styles.meta}>
-          {recipe.nutrition.calories} kcal · {recipe.nutrition.protein}g eiwitten
+          {recipe.nutrition.calories} kcal · {recipe.prepTime + recipe.cookTime} min
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={iconSize.action} color={colors.textMuted} />
