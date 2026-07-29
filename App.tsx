@@ -17,10 +17,14 @@ import { AdminApp } from './src/admin/AdminApp';
 import { SplashScreen } from './src/components/SplashScreen';
 import { SettingsProvider } from './src/context/SettingsContext';
 import { loadContent } from './src/data/content';
+import { setupPwa } from './src/lib/pwa';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { colors } from './src/theme';
 
 const isWeb = Platform.OS === 'web';
+
+// Register the PWA manifest + service worker (web only, no-op elsewhere).
+setupPwa();
 
 /** The hidden admin lives at /admin on web only (not linked from the app). */
 const isAdminRoute =
