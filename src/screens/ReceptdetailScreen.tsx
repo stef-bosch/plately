@@ -17,10 +17,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getRecipeImage } from '../constants/images';
 import { printRecipe } from '../utils/recipePdf';
-import { MacroSummary } from '../components/MacroSummary';
 import { Stepper } from '../components/Stepper';
 import { Tag } from '../components/Tag';
-import { Icon, MealIcon, SeasonIcon, type BrandIconName } from '../components/BrandIcons';
+import { MealIcon, SeasonIcon } from '../components/BrandIcons';
 import {
   mealTypeLabel,
   seasonLabel,
@@ -120,13 +119,31 @@ export function ReceptdetailScreen() {
           <Text style={styles.subtitle}>{recipe.subtitle}</Text>
         ) : null}
 
-        <View style={styles.metaRow}>
-          <MetaItem icon="Clock" label={`${totalTime} min totaal`} />
-          <MetaItem
-            icon="Graph"
-            label={`${recipe.nutrition.calories} kcal p.p.`}
-          />
+        {/* Tags */}
+        {recipe.tags.length > 0 ? (
+          <View style={styles.tagRow}>
+            {recipe.tags.map((tag) => (
+              <Tag key={tag} label={tag} />
+            ))}
+          </View>
+        ) : null}
+
+        {/* kcal + total time */}
+        <View style={styles.statRow}>
+          <StatBlock icon="flame-outline" label="Calorieën" value={`${recipe.nutrition.calories}`} unit="kcal" tint="rgba(255, 122, 26, 0.12)" fg={colors.primary} />
+          <StatBlock icon="time-outline" label="Bereidingstijd" value={`${totalTime}`} unit="min" tint="rgba(31, 157, 87, 0.12)" fg={colors.accent} />
         </View>
+
+        {/* Nutrition per portion */}
+        <View style={styles.macroGrid}>
+          <MacroBlock label="Koolhydraten" value={recipe.nutrition.carbs} color={colors.carbs} tint="rgba(244, 183, 64, 0.16)" />
+          <MacroBlock label="Eiwitten" value={recipe.nutrition.protein} color={colors.protein} tint="rgba(255, 122, 26, 0.13)" />
+          <MacroBlock label="Vetten" value={recipe.nutrition.fat} color={colors.fat} tint="rgba(226, 89, 42, 0.13)" />
+          <MacroBlock label="Vezels" value={recipe.nutrition.fiber} color={colors.fiber} tint="rgba(31, 157, 87, 0.13)" />
+        </View>
+        {recipe.nutrition.isIndicative ? (
+          <Text style={styles.indicative}>Voedingswaarden zijn indicatief</Text>
+        ) : null}
       </View>
 
       {/* Servings stepper */}
@@ -203,29 +220,6 @@ export function ReceptdetailScreen() {
         </View>
       </Section>
 
-      {/* Macros per serving */}
-      <Section title="Voedingswaarden per portie">
-        <View style={styles.card}>
-          <View style={styles.calorieRow}>
-            <Text style={styles.calorieValue}>{recipe.nutrition.calories}</Text>
-            <Text style={styles.calorieUnit}>kcal</Text>
-          </View>
-          <MacroSummary
-            items={[
-              { label: 'Koolhydraten', value: recipe.nutrition.carbs, unit: 'g', color: colors.carbs },
-              { label: 'Eiwitten', value: recipe.nutrition.protein, unit: 'g', color: colors.protein },
-              { label: 'Vetten', value: recipe.nutrition.fat, unit: 'g', color: colors.fat },
-              { label: 'Vezels', value: recipe.nutrition.fiber, unit: 'g', color: colors.fiber },
-            ]}
-          />
-          {recipe.nutrition.isIndicative ? (
-            <Text style={styles.indicative}>
-              Voedingswaarden zijn indicatief
-            </Text>
-          ) : null}
-        </View>
-      </Section>
-
       {/* Print / save as PDF */}
       <Pressable
         onPress={handlePrint}
@@ -251,15 +245,6 @@ export function ReceptdetailScreen() {
           {printing ? 'Bezig…' : 'Afdrukken of opslaan als PDF'}
         </Text>
       </Pressable>
-
-      {/* Tags */}
-      <Section title="Tags">
-        <View style={styles.tagRow}>
-          {recipe.tags.map((tag) => (
-            <Tag key={tag} label={tag} />
-          ))}
-        </View>
-      </Section>
     </ScrollView>
   );
 }
@@ -279,17 +264,54 @@ function Section({
   );
 }
 
-function MetaItem({
+/** A tinted stat block (calories, prep time). */
+function StatBlock({
   icon,
   label,
+  value,
+  unit,
+  tint,
+  fg,
 }: {
-  icon: BrandIconName;
+  icon: keyof typeof Ionicons.glyphMap;
   label: string;
+  value: string;
+  unit: string;
+  tint: string;
+  fg: string;
 }) {
   return (
-    <View style={styles.metaItem}>
-      <Icon name={icon} size={iconSize.badge} color={colors.textSecondary} />
-      <Text style={styles.metaText}>{label}</Text>
+    <View style={[styles.statBlock, { backgroundColor: tint }]}>
+      <View style={styles.statHead}>
+        <Ionicons name={icon} size={16} color={fg} />
+        <Text style={styles.statLabel}>{label}</Text>
+      </View>
+      <Text style={styles.statValue}>
+        {value} <Text style={styles.statUnit}>{unit}</Text>
+      </Text>
+    </View>
+  );
+}
+
+/** A tinted nutrition block (one macro). */
+function MacroBlock({
+  label,
+  value,
+  color,
+  tint,
+}: {
+  label: string;
+  value: number;
+  color: string;
+  tint: string;
+}) {
+  return (
+    <View style={[styles.macroBlock, { backgroundColor: tint }]}>
+      <View style={styles.macroHead}>
+        <View style={[styles.macroDot, { backgroundColor: color }]} />
+        <Text style={styles.macroLabel}>{label}</Text>
+      </View>
+      <Text style={[styles.macroValue, { color }]}>{value} g</Text>
     </View>
   );
 }
@@ -356,18 +378,62 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
   },
-  metaRow: {
+  statRow: {
     flexDirection: 'row',
-    gap: spacing.xl,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
-  metaItem: {
+  statBlock: {
+    flex: 1,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  statHead: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
   },
-  metaText: {
+  statLabel: {
     ...typography.caption,
     color: colors.textSecondary,
+  },
+  statValue: {
+    ...typography.subheading,
+    color: colors.textPrimary,
+  },
+  statUnit: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  macroGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  macroBlock: {
+    flexGrow: 1,
+    flexBasis: '47%',
+    borderRadius: radius.md,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  macroHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  macroDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  macroLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  macroValue: {
+    ...typography.subheading,
   },
   printButton: {
     flexDirection: 'row',
@@ -485,31 +551,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     lineHeight: 23,
     paddingTop: 3,
-  },
-  calorieRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  personalizeHint: { ...typography.caption, color: colors.textSecondary },
-  personalizeResult: { marginTop: spacing.md },
-  changeList: { gap: spacing.xs, marginTop: spacing.sm },
-  changeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  changeName: { ...typography.body, color: colors.textPrimary, flex: 1 },
-  changeAmount: { ...typography.caption, color: colors.textSecondary },
-  changeUp: { color: colors.protein },
-  changeDown: { color: colors.fat },
-  warning: { ...typography.caption, color: colors.fat, marginTop: 2 },
-  calorieValue: {
-    ...typography.display,
-    fontSize: 34,
-    color: colors.textPrimary,
-  },
-  calorieUnit: {
-    ...typography.subheading,
-    color: colors.textSecondary,
-    marginBottom: 5,
   },
   indicative: {
     ...typography.caption,
