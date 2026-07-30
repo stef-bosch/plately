@@ -79,12 +79,12 @@ function Tabs() {
           tabBarStyle: {
             backgroundColor: colors.surface,
             borderTopColor: colors.border,
-            height: 72 + bottomInset,
-            paddingTop: 10,
-            paddingBottom: bottomInset + 6,
+            height: 92 + bottomInset,
+            paddingTop: 14,
+            paddingBottom: bottomInset + 10,
           },
           tabBarIconStyle: {
-            marginBottom: 2,
+            marginBottom: 4,
           },
           tabBarLabel: ({ color }) => (
             <Text
@@ -94,7 +94,7 @@ function Tabs() {
             </Text>
           ),
           tabBarIcon: ({ color }) => (
-            <Icon name={TAB_ICON[route.name]} size={iconSize.tab} color={color} />
+            <Icon name={TAB_ICON[route.name]} size={iconSize.tab + 4} color={color} />
           ),
         })}
       >
