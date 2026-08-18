@@ -3,7 +3,7 @@ import {
   useRoute,
   type RouteProp,
 } from '@react-navigation/native';
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -25,6 +25,7 @@ import {
   seasonLabel,
 } from '../constants/labels';
 import { getRecipeById } from '../data/recipes';
+import { useDayMenu } from '../context/DayMenuContext';
 import { useSettings } from '../context/SettingsContext';
 import { useAppNavigation } from '../navigation/hooks';
 import type { RootStackParamList } from '../navigation/types';
@@ -36,6 +37,7 @@ export function ReceptdetailScreen() {
   const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<RootStackParamList, 'Receptdetail'>>();
   const { settings } = useSettings();
+  const { addToDayMenu } = useDayMenu();
 
   const recipe = getRecipeById(route.params.recipeId);
 
@@ -48,6 +50,14 @@ export function ReceptdetailScreen() {
       : Math.max(settings.defaultServings, 1),
   );
   const [printing, setPrinting] = useState(false);
+  // Brief "Toegevoegd" confirmation after adding to the day menu.
+  const [justAdded, setJustAdded] = useState(false);
+  const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (addedTimer.current) clearTimeout(addedTimer.current);
+    };
+  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: recipe ? 'Recept' : 'Niet gevonden' });
@@ -77,6 +87,13 @@ export function ReceptdetailScreen() {
     } finally {
       setPrinting(false);
     }
+  };
+
+  const handleAddToDayMenu = () => {
+    addToDayMenu(recipe.id);
+    setJustAdded(true);
+    if (addedTimer.current) clearTimeout(addedTimer.current);
+    addedTimer.current = setTimeout(() => setJustAdded(false), 2000);
   };
 
   return (
@@ -145,6 +162,27 @@ export function ReceptdetailScreen() {
           <Text style={styles.indicative}>Voedingswaarden zijn indicatief</Text>
         ) : null}
       </View>
+
+      {/* Add to today's day menu */}
+      <Pressable
+        onPress={handleAddToDayMenu}
+        accessibilityRole="button"
+        accessibilityLabel="Toevoegen aan dagmenu"
+        style={({ pressed }) => [
+          styles.addButton,
+          justAdded && styles.addButtonAdded,
+          pressed && styles.addButtonPressed,
+        ]}
+      >
+        <Ionicons
+          name={justAdded ? 'checkmark' : 'add'}
+          size={iconSize.action}
+          color={colors.textOnPrimary}
+        />
+        <Text style={styles.addButtonText}>
+          {justAdded ? 'Toegevoegd aan dagmenu' : 'Toevoegen aan dagmenu'}
+        </Text>
+      </Pressable>
 
       {/* Servings stepper */}
       <View style={styles.card}>
@@ -434,6 +472,25 @@ const styles = StyleSheet.create({
   },
   macroValue: {
     ...typography.subheading,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+  },
+  addButtonAdded: {
+    backgroundColor: colors.accent,
+  },
+  addButtonPressed: {
+    opacity: 0.9,
+  },
+  addButtonText: {
+    ...typography.bodyStrong,
+    color: colors.textOnPrimary,
   },
   printButton: {
     flexDirection: 'row',

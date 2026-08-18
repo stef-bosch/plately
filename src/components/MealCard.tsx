@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getRecipeImage } from '../constants/images';
 import { mealTypeLabel } from '../constants/labels';
@@ -15,14 +15,17 @@ interface MealCardProps {
   /** Overrides the meal-type label, e.g. for a second snack. */
   labelOverride?: string;
   onPress: () => void;
+  /** When set, shows a remove button instead of the chevron (day menu). */
+  onRemove?: () => void;
 }
 
-/** Compact row showing one planned meal. Used on dashboard and week screen. */
+/** Compact row showing one meal. Used on the dashboard's day menu. */
 export function MealCard({
   mealType,
   recipe,
   labelOverride,
   onPress,
+  onRemove,
 }: MealCardProps) {
   return (
     <PressableScale
@@ -51,7 +54,19 @@ export function MealCard({
           {recipe.nutrition.calories} kcal · {recipe.prepTime + recipe.cookTime} min
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={iconSize.action} color={colors.textMuted} />
+      {onRemove ? (
+        <Pressable
+          onPress={onRemove}
+          accessibilityRole="button"
+          accessibilityLabel={`${recipe.title} uit dagmenu verwijderen`}
+          hitSlop={8}
+          style={({ pressed }) => [styles.removeButton, pressed && styles.removePressed]}
+        >
+          <Ionicons name="close" size={iconSize.action} color={colors.textSecondary} />
+        </Pressable>
+      ) : (
+        <Ionicons name="chevron-forward" size={iconSize.action} color={colors.textMuted} />
+      )}
     </PressableScale>
   );
 }
@@ -105,5 +120,16 @@ const styles = StyleSheet.create({
   meta: {
     ...typography.caption,
     color: colors.textSecondary,
+  },
+  removeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removePressed: {
+    opacity: 0.7,
   },
 });

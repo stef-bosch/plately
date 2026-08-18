@@ -2,41 +2,71 @@ import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../components/Button';
+import { Icon } from '../components/BrandIcons';
 import { MacroSummary } from '../components/MacroSummary';
 import { MealCard } from '../components/MealCard';
 import { Screen } from '../components/Screen';
-import {
-  formatDutchDate,
-  weekDayFromDate,
-} from '../constants/labels';
-import { getWeeklyPlan } from '../data/weeklyPlans';
-import { useSettings } from '../context/SettingsContext';
+import { formatDutchDate, mealTypeLabel } from '../constants/labels';
+import { useDayMenu } from '../context/DayMenuContext';
+import { getRecipeById } from '../data/recipes';
 import { useAppNavigation, useOpenRecipe } from '../navigation/hooks';
-import { colors, radius, shadow, spacing, typography } from '../theme';
-import { getDailyTotals, resolveDayMeals } from '../utils/nutrition';
+import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
+import type { MealType, Recipe } from '../types';
+import { sumNutrition } from '../utils/nutrition';
+
+/** Meal groups in the order they read on a day's timeline. */
+const MEAL_ORDER: MealType[] = ['ontbijt', 'lunch', 'tussendoortje', 'diner'];
+
+interface DayMenuItem {
+  entryId: string;
+  recipe: Recipe;
+  label: string;
+}
 
 export function DashboardScreen() {
   const navigation = useAppNavigation();
   const openRecipe = useOpenRecipe();
-  const { settings } = useSettings();
+  const { entries, removeFromDayMenu } = useDayMenu();
 
   const today = useMemo(() => new Date(), []);
-  const todayName = weekDayFromDate(today);
-  const season = settings.preferredSeason;
 
-  const plan = getWeeklyPlan(season);
-  const dayPlan = plan.days.find((d) => d.day === todayName) ?? plan.days[0];
-  const meals = dayPlan.meals;
+  // Resolve each entry to its dish, dropping any that no longer exist.
+  const resolved = useMemo(
+    () =>
+      entries
+        .map((e) => ({ entryId: e.id, recipe: getRecipeById(e.recipeId) }))
+        .filter(
+          (x): x is { entryId: string; recipe: Recipe } => Boolean(x.recipe),
+        ),
+    [entries],
+  );
 
-  const day = useMemo(() => resolveDayMeals(meals), [meals]);
-  const totals = useMemo(() => getDailyTotals(day), [day]);
-  const { ontbijt, lunch, diner, snacks } = day;
+  // Group by meal type, keeping insertion order, and number duplicates.
+  const items = useMemo<DayMenuItem[]>(
+    () =>
+      MEAL_ORDER.flatMap((mealType) => {
+        const inGroup = resolved.filter((r) => r.recipe.mealType === mealType);
+        return inGroup.map((item, index) => ({
+          entryId: item.entryId,
+          recipe: item.recipe,
+          label:
+            inGroup.length > 1
+              ? `${mealTypeLabel[mealType]} ${index + 1}`
+              : mealTypeLabel[mealType],
+        }));
+      }),
+    [resolved],
+  );
+
+  const totals = useMemo(
+    () => sumNutrition(resolved.map((r) => r.recipe)),
+    [resolved],
+  );
+
+  const isEmpty = items.length === 0;
 
   return (
-    <Screen
-      title="Vandaag"
-      subtitle={formatDutchDate(today)}
-    >
+    <Screen title="Vandaag" subtitle={formatDutchDate(today)}>
       {/* Daily nutrition summary */}
       <View style={styles.summaryCard}>
         <View style={styles.calorieRow}>
@@ -60,60 +90,57 @@ export function DashboardScreen() {
         <Text style={styles.indicative}>Voedingswaarden zijn indicatief</Text>
       </View>
 
-      {/* Today's meals */}
+      {/* Today's day menu */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Maaltijden van vandaag</Text>
-        <View style={styles.mealList}>
-          {ontbijt ? (
-            <MealCard
-              mealType="ontbijt"
-              recipe={ontbijt}
-              onPress={() => openRecipe(ontbijt.id)}
+        <Text style={styles.sectionTitle}>Mijn dagmenu</Text>
+        {isEmpty ? (
+          <View style={styles.emptyCard}>
+            <Icon name="ChefHat" size={iconSize.hero} color={colors.textMuted} />
+            <Text style={styles.emptyTitle}>Je dagmenu is nog leeg</Text>
+            <Text style={styles.emptyText}>
+              Open een recept en tik op “Toevoegen aan dagmenu”. De
+              voedingswaarden worden hier automatisch bij elkaar opgeteld.
+            </Text>
+            <Button
+              label="Naar recepten"
+              brandIcon="ChefHat"
+              variant="primary"
+              onPress={() => navigation.navigate('Recepten')}
             />
-          ) : null}
-          {lunch ? (
-            <MealCard
-              mealType="lunch"
-              recipe={lunch}
-              onPress={() => openRecipe(lunch.id)}
-            />
-          ) : null}
-          {snacks.map((snack, index) => (
-            <MealCard
-              key={snack.id}
-              mealType="tussendoortje"
-              recipe={snack}
-              labelOverride={
-                snacks.length > 1 ? `Tussendoortje ${index + 1}` : undefined
-              }
-              onPress={() => openRecipe(snack.id)}
-            />
-          ))}
-          {diner ? (
-            <MealCard
-              mealType="diner"
-              recipe={diner}
-              onPress={() => openRecipe(diner.id)}
-            />
-          ) : null}
-        </View>
+          </View>
+        ) : (
+          <View style={styles.mealList}>
+            {items.map((item) => (
+              <MealCard
+                key={item.entryId}
+                mealType={item.recipe.mealType}
+                recipe={item.recipe}
+                labelOverride={item.label}
+                onPress={() => openRecipe(item.recipe.id)}
+                onRemove={() => removeFromDayMenu(item.entryId)}
+              />
+            ))}
+          </View>
+        )}
       </View>
 
       {/* Navigation buttons */}
-      <View style={styles.buttonRow}>
-        <Button
-          label="Recepten"
-          brandIcon="ChefHat"
-          variant="primary"
-          onPress={() => navigation.navigate('Recepten')}
-        />
-        <Button
-          label="Menu's"
-          brandIcon="Menu"
-          variant="secondary"
-          onPress={() => navigation.navigate('Menus')}
-        />
-      </View>
+      {!isEmpty ? (
+        <View style={styles.buttonRow}>
+          <Button
+            label="Recepten"
+            brandIcon="ChefHat"
+            variant="primary"
+            onPress={() => navigation.navigate('Recepten')}
+          />
+          <Button
+            label="Menu's"
+            brandIcon="Menu"
+            variant="secondary"
+            onPress={() => navigation.navigate('Menus')}
+          />
+        </View>
+      ) : null}
     </Screen>
   );
 }
@@ -164,6 +191,24 @@ const styles = StyleSheet.create({
   },
   mealList: {
     gap: spacing.md,
+  },
+  emptyCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    gap: spacing.md,
+    alignItems: 'center',
+    ...shadow.card,
+  },
+  emptyTitle: {
+    ...typography.subheading,
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
+  emptyText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   buttonRow: {
     flexDirection: 'row',

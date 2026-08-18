@@ -15,6 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AdminApp } from './src/admin/AdminApp';
 import { SplashScreen } from './src/components/SplashScreen';
+import { DayMenuProvider } from './src/context/DayMenuContext';
 import { SettingsProvider } from './src/context/SettingsContext';
 import { loadContent } from './src/data/content';
 import { setupPwa } from './src/lib/pwa';
@@ -87,8 +88,10 @@ export default function App() {
       <View style={styles.frame}>
         <SafeAreaProvider>
           <SettingsProvider>
-            <StatusBar style="dark" />
-            <RootNavigator />
+            <DayMenuProvider>
+              <StatusBar style="dark" />
+              <RootNavigator />
+            </DayMenuProvider>
           </SettingsProvider>
         </SafeAreaProvider>
       </View>

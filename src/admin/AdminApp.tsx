@@ -28,12 +28,9 @@ import {
 import { PlatelyLogo } from '../components/BrandIcons';
 import {
   MEAL_CATEGORIES,
-  dayLabel,
   dishCategory,
-  getIsoWeekNumber,
 } from '../constants/labels';
-import { getRecipeById, reloadContent } from '../data/content';
-import { getWeeklyPlanForDate } from '../data/weeklyPlans';
+import { reloadContent } from '../data/content';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/useAuth';
 import { colors, radius, shadow, spacing, typography } from '../theme';
@@ -42,14 +39,13 @@ import { DishForm } from './DishForm';
 import { MenuForm } from './MenuForm';
 import { MenusView } from './MenusView';
 import { RecipesView } from './RecipesView';
-import { WeekmenuBuilder } from './WeekmenuBuilder';
 
 async function confirmAsync(message: string): Promise<boolean> {
   if (Platform.OS === 'web' && typeof window !== 'undefined') return window.confirm(message);
   return true;
 }
 
-type Tab = 'dashboard' | 'weekmenu' | 'dishes' | 'menus';
+type Tab = 'dashboard' | 'dishes' | 'menus';
 type FormState =
   | { kind: 'dish'; id?: string }
   | { kind: 'menu'; id?: string }
@@ -60,24 +56,15 @@ const DESKTOP_MIN_WIDTH = 900;
 
 const NAV: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: 'home-outline' },
-  { key: 'weekmenu', label: 'Weekmenu', icon: 'calendar-outline' },
   { key: 'dishes', label: 'Recepten', icon: 'restaurant-outline' },
   { key: 'menus', label: "Menu's", icon: 'albums-outline' },
 ];
 
 const TAB_TITLE: Record<Tab, string> = {
   dashboard: 'Dashboard',
-  weekmenu: 'Weekmenu',
   dishes: 'Recepten',
   menus: "Menu's",
 };
-
-/** The meal rows shown in the dashboard's week grid. */
-const WEEK_ROWS: { key: 'ontbijt' | 'lunch' | 'diner'; label: string }[] = [
-  { key: 'ontbijt', label: 'Ontbijt' },
-  { key: 'lunch', label: 'Lunch' },
-  { key: 'diner', label: 'Diner' },
-];
 
 // The category a recipe is grouped under in the Recepten list.
 const categoryOf = (row: DishRow): string =>
@@ -170,8 +157,7 @@ function AdminShell({ email }: { email: string }) {
     setLoading(true);
     try {
       const [d, m] = await Promise.all([listDishes(), listMenus()]);
-      // Keep the content store in sync so the dashboard's week grid reflects
-      // the current recipes and saved week menus.
+      // Keep the content store in sync so the overview reflects current recipes.
       await reloadContent();
       setDishes(d);
       setMenus(m);
@@ -261,38 +247,28 @@ function AdminShell({ email }: { email: string }) {
   );
 
   // Real signals worth flagging in the notification bell — no invented data.
-  const weekmenuRows = dishes;
   const issues: string[] = [];
   if (busyMsg) issues.push(busyMsg);
-  const withoutNutrition = weekmenuRows.filter(
+  const withoutNutrition = dishes.filter(
     (r) => !(r.data as Recipe)?.nutrition?.calories,
   ).length;
   if (withoutNutrition > 0) {
     issues.push(
-      `${withoutNutrition} weekmenu-gerecht${withoutNutrition === 1 ? '' : 'en'} zonder berekende voedingswaarden.`,
+      `${withoutNutrition} recept${withoutNutrition === 1 ? '' : 'en'} zonder berekende voedingswaarden.`,
     );
   }
   for (const c of MEAL_CATEGORIES) {
-    if (!weekmenuRows.some((r) => categoryOf(r) === c)) {
-      issues.push(`Nog geen "${c}" in het weekmenu — die dagen blijven leeg.`);
+    if (!dishes.some((r) => categoryOf(r) === c)) {
+      issues.push(`Nog geen "${c}"-recept toegevoegd.`);
     }
   }
-
-  // Unique recipes planned in the current week (real, from the saved/generated plan).
-  const plannedIds = new Set(
-    getWeeklyPlanForDate(new Date()).days.flatMap((d) =>
-      [d.meals.ontbijt, d.meals.lunch, d.meals.diner, ...d.meals.tussendoortje].filter(Boolean),
-    ),
-  );
 
   const recipesView = (
     <RecipesView
       rows={dishes}
       loading={loading}
-      plannedIds={plannedIds}
       onNew={() => setForm({ kind: 'dish' })}
       onNewMenu={() => setForm({ kind: 'menu' })}
-      onGoToWeekmenu={() => goTo('weekmenu')}
       onEdit={(row) => setForm({ kind: 'dish', id: row.id })}
       onDuplicate={duplicateDish}
       onDelete={removeDish}
@@ -320,12 +296,6 @@ function AdminShell({ email }: { email: string }) {
       dashboardView
     ) : tab === 'dishes' ? (
       recipesView
-    ) : tab === 'weekmenu' ? (
-      <WeekmenuBuilder
-        dishRows={weekmenuRows}
-        onNewDish={() => setForm({ kind: 'dish' })}
-        onEditDish={(row) => setForm({ kind: 'dish', id: row.id })}
-      />
     ) : (
       menusView
     );
@@ -454,15 +424,6 @@ function DashboardView({
   onNewMenu: () => void;
   onEditDish: (row: DishRow) => void;
 }) {
-  const plan = getWeeklyPlanForDate(new Date());
-  const titleFor = (id: string) => (id ? getRecipeById(id)?.title ?? null : null);
-
-  // How many meal slots this week actually resolve to a dish.
-  const plannedItems = plan.days.reduce((total, d) => {
-    const ids = [d.meals.ontbijt, d.meals.lunch, d.meals.diner, ...d.meals.tussendoortje];
-    return total + ids.filter((id) => titleFor(id)).length;
-  }, 0);
-
   const recentDishes = [...recipeRows]
     .sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))
     .slice(0, 5);
@@ -477,56 +438,6 @@ function DashboardView({
       <View style={styles.statRow}>
         <StatCard icon="restaurant-outline" label="Recepten" value={recipeRows.length} />
         <StatCard icon="albums-outline" label="Menu's" value={menus.length} />
-        <StatCard icon="checkmark-done-outline" label="Geplande items deze week" value={plannedItems} />
-      </View>
-
-      {/* This week's menu */}
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>Weekmenu week {getIsoWeekNumber(new Date())}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View>
-            <View style={styles.weekRow}>
-              <View style={styles.weekLabelCell} />
-              {plan.days.map((d) => (
-                <View key={d.day} style={styles.weekHeadCell}>
-                  <Text style={styles.weekHeadText}>{dayLabel[d.day]}</Text>
-                </View>
-              ))}
-            </View>
-            {WEEK_ROWS.map((row) => (
-              <View key={row.key} style={styles.weekRow}>
-                <View style={styles.weekLabelCell}>
-                  <Text style={styles.weekLabelText}>{row.label}</Text>
-                </View>
-                {plan.days.map((d) => {
-                  const title = titleFor(d.meals[row.key]);
-                  return (
-                    <View key={d.day} style={styles.weekCell}>
-                      <Text style={title ? styles.weekCellText : styles.weekCellEmpty} numberOfLines={3}>
-                        {title ?? '—'}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            ))}
-            <View style={styles.weekRow}>
-              <View style={styles.weekLabelCell}>
-                <Text style={styles.weekLabelText}>Snack</Text>
-              </View>
-              {plan.days.map((d) => {
-                const title = titleFor(d.meals.tussendoortje[0] ?? '');
-                return (
-                  <View key={d.day} style={styles.weekCell}>
-                    <Text style={title ? styles.weekCellText : styles.weekCellEmpty} numberOfLines={3}>
-                      {title ?? '—'}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        </ScrollView>
       </View>
 
       {/* Dishes + menus side by side */}
@@ -787,17 +698,6 @@ const styles = StyleSheet.create({
   panelTitle: { ...typography.heading, color: colors.textPrimary },
   twoCol: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg },
   colPanel: { flexGrow: 1, flexBasis: 380 },
-  weekRow: { flexDirection: 'row' },
-  weekLabelCell: { width: 90, paddingVertical: spacing.sm, justifyContent: 'center' },
-  weekLabelText: { ...typography.label, color: colors.textSecondary },
-  weekHeadCell: { width: 122, paddingVertical: spacing.sm, paddingHorizontal: spacing.xs },
-  weekHeadText: { ...typography.label, color: colors.textPrimary },
-  weekCell: {
-    width: 122, padding: spacing.sm, marginRight: spacing.xs, marginBottom: spacing.xs,
-    backgroundColor: colors.background, borderRadius: radius.sm, minHeight: 56, justifyContent: 'center',
-  },
-  weekCellText: { ...typography.caption, color: colors.textPrimary },
-  weekCellEmpty: { ...typography.caption, color: colors.textMuted },
   listRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm,
     paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border,

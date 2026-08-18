@@ -15,11 +15,8 @@ const ALL = 'alle';
 interface Props {
   rows: DishRow[];
   loading: boolean;
-  /** Unique recipe ids planned in the current week (for the overview cards). */
-  plannedIds: Set<string>;
   onNew: () => void;
   onNewMenu: () => void;
-  onGoToWeekmenu: () => void;
   onEdit: (row: DishRow) => void;
   onDuplicate: (row: DishRow) => void;
   onDelete: (row: DishRow) => void;
@@ -32,10 +29,8 @@ const isConcept = (row: DishRow) => recipeOf(row)?.status === 'concept';
 export function RecipesView({
   rows,
   loading,
-  plannedIds,
   onNew,
   onNewMenu,
-  onGoToWeekmenu,
   onEdit,
   onDuplicate,
   onDelete,
@@ -82,7 +77,6 @@ export function RecipesView({
           <StatCard icon="restaurant-outline" label="Totaal recepten" value={rows.length} />
           <StatCard icon="grid-outline" label="Categorieën" value={categoryCounts.length} />
           <StatCard icon="document-outline" label="Concepten" value={rows.filter(isConcept).length} />
-          <StatCard icon="calendar-outline" label="Ingepland deze week" value={plannedIds.size} />
           <StatCard
             icon="alert-circle-outline"
             label="Zonder voedingswaarden"
@@ -153,9 +147,6 @@ export function RecipesView({
                     <View key={row.id} style={ov.row}>
                       <View style={styles.colName}>
                         <Text style={ov.cellTitle} numberOfLines={1}>{row.title}</Text>
-                        {plannedIds.has(row.id) ? (
-                          <Text style={styles.plannedTag}>ingepland deze week</Text>
-                        ) : null}
                       </View>
                       <Text style={[ov.cell, styles.colCat]} numberOfLines={1}>{dishCategory(r)}</Text>
                       <Text style={[ov.cell, styles.colMeal]} numberOfLines={1}>
@@ -217,7 +208,6 @@ export function RecipesView({
           <Text style={ov.h2}>Snelle acties</Text>
           <QuickAction icon="restaurant-outline" label="Recept toevoegen" onPress={onNew} />
           <QuickAction icon="albums-outline" label="Menu toevoegen" onPress={onNewMenu} />
-          <QuickAction icon="calendar-outline" label="Naar weekmenu" onPress={onGoToWeekmenu} />
         </View>
 
         <View style={ov.panel}>
@@ -255,7 +245,6 @@ const styles = StyleSheet.create({
   colStatus: { width: 90 },
   colDate: { width: 130 },
   colActions: { width: 110 },
-  plannedTag: { ...typography.caption, color: colors.accent, fontSize: 10 },
   status: {
     ...typography.caption, fontSize: 10, alignSelf: 'flex-start',
     borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden',
