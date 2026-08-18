@@ -15,7 +15,6 @@ import {
 import { Icon } from '../components/BrandIcons';
 import { FadeInView } from '../components/FadeInView';
 import { FilterChip } from '../components/FilterChip';
-import { MenuCard } from '../components/MenuCard';
 import { RecipeCard } from '../components/RecipeCard';
 import {
   MEAL_CATEGORIES,
@@ -24,36 +23,23 @@ import {
   seasonLabel,
 } from '../constants/labels';
 import { useSettings } from '../context/SettingsContext';
-import { getCourseForRecipe, getMenus } from '../data/menus';
+import { getCourseForRecipe } from '../data/menus';
 import { getAllRecipes } from '../data/recipes';
-import { useOpenMenu, useOpenRecipe } from '../navigation/hooks';
+import { useOpenRecipe } from '../navigation/hooks';
 import { recipeMatchesDiets } from '../utils/resolveRecipe';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
-import type {
-  Menu,
-  Recipe,
-  Season,
-} from '../types';
+import type { Season } from '../types';
 
-/** Top-level browse mode. */
-type Category = 'gerechten' | 'menus';
 /** A dish category name, or 'alle' for no category filter. */
 type CategoryFilter = string;
 type SeasonFilter = Season | 'alle';
-
-const CATEGORIES: { key: Category; label: string }[] = [
-  { key: 'gerechten', label: 'Recepten' },
-  { key: 'menus', label: "Menu's" },
-];
 
 const SEASON_FILTERS: SeasonFilter[] = ['alle', 'lente-zomer', 'herfst-winter'];
 
 export function ReceptenScreen() {
   const openRecipe = useOpenRecipe();
-  const openMenu = useOpenMenu();
   const { settings } = useSettings();
 
-  const [category, setCategory] = useState<Category>('gerechten');
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('alle');
   const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>('alle');
@@ -82,21 +68,11 @@ export function ReceptenScreen() {
     });
   }, [allRecipes, query, categoryFilter, seasonFilter, settings.dietaryPreferences]);
 
-  const filteredMenus = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return getMenus().filter(
-      (menu) => q === '' || menu.title.toLowerCase().includes(q),
-    );
-  }, [query]);
+  const data = filteredRecipes;
 
-  const showingMenus = category === 'menus';
-  const data: (Recipe | Menu)[] = showingMenus
-    ? filteredMenus
-    : filteredRecipes;
-
-  const countLabel = showingMenus
-    ? `${filteredMenus.length} ${filteredMenus.length === 1 ? 'menu' : "menu's"} gevonden`
-    : `${filteredRecipes.length} ${filteredRecipes.length === 1 ? 'recept' : 'recepten'} gevonden`;
+  const countLabel = `${filteredRecipes.length} ${
+    filteredRecipes.length === 1 ? 'recept' : 'recepten'
+  } gevonden`;
 
   // How many filters are narrowing the current list (used for the badge).
   const activeFilterCount =
@@ -108,7 +84,7 @@ export function ReceptenScreen() {
   };
 
   const searchVisible = searchOpen || query.length > 0;
-  const searchPlaceholder = showingMenus ? 'Zoek een menu...' : 'Zoeken op naam...';
+  const searchPlaceholder = 'Zoeken op naam...';
 
   // Slide-in for the in-tree filter sheet (kept inside the app container rather
   // than a Modal, which on web would portal to full browser width).
@@ -179,14 +155,7 @@ export function ReceptenScreen() {
       showsVerticalScrollIndicator={false}
       renderItem={({ item, index }) => (
         <FadeInView delay={Math.min(index, 6) * 55}>
-          {showingMenus ? (
-            <MenuCard menu={item as Menu} onPress={() => openMenu(item.id)} />
-          ) : (
-            <RecipeCard
-              recipe={item as Recipe}
-              onPress={() => openRecipe(item.id)}
-            />
-          )}
+          <RecipeCard recipe={item} onPress={() => openRecipe(item.id)} />
         </FadeInView>
       )}
       ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
@@ -194,31 +163,6 @@ export function ReceptenScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Recepten</Text>
           <Text style={styles.subtitle}>{countLabel}</Text>
-
-          {/* Category switcher */}
-          <View style={styles.segment}>
-            {CATEGORIES.map((c) => {
-              const active = category === c.key;
-              return (
-                <Pressable
-                  key={c.key}
-                  onPress={() => setCategory(c.key)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  style={[styles.segmentItem, active && styles.segmentItemActive]}
-                >
-                  <Text
-                    style={[
-                      styles.segmentText,
-                      active && styles.segmentTextActive,
-                    ]}
-                  >
-                    {c.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
 
           {/* Compact toolbar: search toggle + filters sheet trigger */}
           <View style={styles.toolbar}>
@@ -236,29 +180,27 @@ export function ReceptenScreen() {
               <Text style={styles.toolbarButtonText}>Zoeken</Text>
             </Pressable>
 
-            {!showingMenus ? (
-              <Pressable
-                onPress={() => setFiltersOpen(true)}
-                accessibilityRole="button"
-                style={({ pressed }) => [
-                  styles.toolbarButton,
-                  activeFilterCount > 0 && styles.toolbarButtonActive,
-                  pressed && styles.toolbarButtonPressed,
-                ]}
-              >
-                <Ionicons
-                  name="options-outline"
-                  size={iconSize.action}
-                  color={colors.textSecondary}
-                />
-                <Text style={styles.toolbarButtonText}>Filters</Text>
-                {activeFilterCount > 0 ? (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{activeFilterCount}</Text>
-                  </View>
-                ) : null}
-              </Pressable>
-            ) : null}
+            <Pressable
+              onPress={() => setFiltersOpen(true)}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.toolbarButton,
+                activeFilterCount > 0 && styles.toolbarButtonActive,
+                pressed && styles.toolbarButtonPressed,
+              ]}
+            >
+              <Ionicons
+                name="options-outline"
+                size={iconSize.action}
+                color={colors.textSecondary}
+              />
+              <Text style={styles.toolbarButtonText}>Filters</Text>
+              {activeFilterCount > 0 ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{activeFilterCount}</Text>
+                </View>
+              ) : null}
+            </Pressable>
           </View>
 
           {searchVisible ? (
@@ -290,9 +232,7 @@ export function ReceptenScreen() {
       ListEmptyComponent={
         <View style={styles.empty}>
           <Ionicons name="sad-outline" size={iconSize.hero} color={colors.textMuted} />
-          <Text style={styles.emptyText}>
-            {showingMenus ? "Geen menu's gevonden" : 'Geen recepten gevonden'}
-          </Text>
+          <Text style={styles.emptyText}>Geen recepten gevonden</Text>
         </View>
       }
     />
@@ -339,32 +279,30 @@ export function ReceptenScreen() {
             contentContainerStyle={styles.sheetScrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {category === 'gerechten' ? (
-              <View style={styles.sheetGroup}>
-                <Text style={styles.filterLabel}>Maaltijd</Text>
-                <View style={styles.chipRow}>
-                  {['alle', ...MEAL_CATEGORIES].map((c) => (
-                    <FilterChip
-                      key={c}
-                      label={c === 'alle' ? 'Alle' : c}
-                      active={categoryFilter === c}
-                      onPress={() => setCategoryFilter(c)}
-                    />
-                  ))}
-                </View>
-                <Text style={[styles.filterLabel, styles.filterSubLabel]}>Overig</Text>
-                <View style={styles.chipRow}>
-                  {OTHER_CATEGORIES.map((c) => (
-                    <FilterChip
-                      key={c}
-                      label={c}
-                      active={categoryFilter === c}
-                      onPress={() => setCategoryFilter(c)}
-                    />
-                  ))}
-                </View>
+            <View style={styles.sheetGroup}>
+              <Text style={styles.filterLabel}>Maaltijd</Text>
+              <View style={styles.chipRow}>
+                {['alle', ...MEAL_CATEGORIES].map((c) => (
+                  <FilterChip
+                    key={c}
+                    label={c === 'alle' ? 'Alle' : c}
+                    active={categoryFilter === c}
+                    onPress={() => setCategoryFilter(c)}
+                  />
+                ))}
               </View>
-            ) : null}
+              <Text style={[styles.filterLabel, styles.filterSubLabel]}>Overig</Text>
+              <View style={styles.chipRow}>
+                {OTHER_CATEGORIES.map((c) => (
+                  <FilterChip
+                    key={c}
+                    label={c}
+                    active={categoryFilter === c}
+                    onPress={() => setCategoryFilter(c)}
+                  />
+                ))}
+              </View>
+            </View>
 
             <View style={styles.sheetGroup}>
               <Text style={styles.filterLabel}>Seizoen</Text>
@@ -390,11 +328,9 @@ export function ReceptenScreen() {
             accessibilityRole="button"
           >
             <Text style={styles.sheetApplyText}>
-              {showingMenus
-                ? 'Sluiten'
-                : `Toon ${filteredRecipes.length} ${
-                    filteredRecipes.length === 1 ? 'recept' : 'recepten'
-                  }`}
+              {`Toon ${filteredRecipes.length} ${
+                filteredRecipes.length === 1 ? 'recept' : 'recepten'
+              }`}
             </Text>
           </Pressable>
         </Animated.View>
@@ -430,29 +366,6 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
     marginTop: -spacing.sm,
-  },
-  segment: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.pill,
-    padding: 4,
-    gap: 4,
-  },
-  segmentItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-  },
-  segmentItemActive: {
-    backgroundColor: colors.primary,
-  },
-  segmentText: {
-    ...typography.label,
-    color: colors.textSecondary,
-  },
-  segmentTextActive: {
-    color: colors.textOnPrimary,
   },
   toolbar: {
     flexDirection: 'row',

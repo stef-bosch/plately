@@ -20,8 +20,8 @@ import { WelcomeModal } from '../components/WelcomeModal';
 import { colors, iconSize, typography } from '../theme';
 import { hasSeenWelcome, markWelcomeSeen } from '../utils/welcome';
 import { DashboardScreen } from '../screens/DashboardScreen';
-import { WeekmenuScreen } from '../screens/WeekmenuScreen';
 import { ReceptenScreen } from '../screens/ReceptenScreen';
+import { MenusScreen } from '../screens/MenusScreen';
 import { ReceptdetailScreen } from '../screens/ReceptdetailScreen';
 import { MenudetailScreen } from '../screens/MenudetailScreen';
 import { InstellingenScreen } from '../screens/InstellingenScreen';
@@ -44,9 +44,16 @@ const navTheme = {
 
 const TAB_ICON: Record<keyof TabParamList, BrandIconName> = {
   Dashboard: 'Home',
-  Weekmenu: 'Calendar',
   Recepten: 'ChefHat',
+  Menus: 'Menu',
   Instellingen: 'Settings',
+};
+
+const TAB_LABEL: Record<keyof TabParamList, string> = {
+  Dashboard: 'Dashboard',
+  Recepten: 'Recepten',
+  Menus: "Menu's",
+  Instellingen: 'Instellingen',
 };
 
 function Tabs() {
@@ -90,7 +97,7 @@ function Tabs() {
             <Text
               style={{ ...typography.caption, color, textAlign: 'center' }}
             >
-              {route.name}
+              {TAB_LABEL[route.name]}
             </Text>
           ),
           tabBarIcon: ({ color }) => (
@@ -99,8 +106,8 @@ function Tabs() {
         })}
       >
         <Tab.Screen name="Dashboard" component={DashboardScreen} />
-        <Tab.Screen name="Weekmenu" component={WeekmenuScreen} />
         <Tab.Screen name="Recepten" component={ReceptenScreen} />
+        <Tab.Screen name="Menus" component={MenusScreen} />
         <Tab.Screen name="Instellingen" component={InstellingenScreen} />
       </Tab.Navigator>
       {welcomeVisible ? (

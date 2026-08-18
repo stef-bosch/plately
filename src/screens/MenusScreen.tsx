@@ -1,0 +1,173 @@
+import React, { useMemo, useState } from 'react';
+import {
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+
+import { Icon } from '../components/BrandIcons';
+import { FadeInView } from '../components/FadeInView';
+import { MenuCard } from '../components/MenuCard';
+import { getMenus } from '../data/menus';
+import { useOpenMenu } from '../navigation/hooks';
+import { colors, iconSize, radius, spacing, typography } from '../theme';
+
+export function MenusScreen() {
+  const openMenu = useOpenMenu();
+
+  const [query, setQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const allMenus = useMemo(() => getMenus(), []);
+
+  const filteredMenus = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q === '') return allMenus;
+    return allMenus.filter((menu) => menu.title.toLowerCase().includes(q));
+  }, [allMenus, query]);
+
+  const countLabel = `${filteredMenus.length} ${
+    filteredMenus.length === 1 ? 'menu' : "menu's"
+  } gevonden`;
+
+  const searchVisible = searchOpen || query.length > 0;
+
+  return (
+    <View style={styles.screen}>
+      <FlatList
+        style={styles.list}
+        contentContainerStyle={styles.content}
+        data={filteredMenus}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item, index }) => (
+          <FadeInView delay={Math.min(index, 6) * 55}>
+            <MenuCard menu={item} onPress={() => openMenu(item.id)} />
+          </FadeInView>
+        )}
+        ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.title}>Menu's</Text>
+            <Text style={styles.subtitle}>{countLabel}</Text>
+
+            <View style={styles.toolbar}>
+              <Pressable
+                onPress={() => setSearchOpen((open) => !open)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: searchVisible }}
+                style={({ pressed }) => [
+                  styles.toolbarButton,
+                  searchVisible && styles.toolbarButtonActive,
+                  pressed && styles.toolbarButtonPressed,
+                ]}
+              >
+                <Icon name="Search" size={iconSize.action} color={colors.textSecondary} />
+                <Text style={styles.toolbarButtonText}>Zoeken</Text>
+              </Pressable>
+            </View>
+
+            {searchVisible ? (
+              <View style={styles.searchBox}>
+                <Icon name="Search" size={iconSize.action} color={colors.textMuted} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Zoek een menu..."
+                  placeholderTextColor={colors.textMuted}
+                  value={query}
+                  onChangeText={setQuery}
+                  autoFocus
+                  returnKeyType="search"
+                />
+              </View>
+            ) : null}
+          </View>
+        }
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>Geen menu's gevonden</Text>
+          </View>
+        }
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  list: {
+    flex: 1,
+  },
+  content: {
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl,
+  },
+  header: {
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  title: {
+    ...typography.display,
+    color: colors.textPrimary,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginTop: -spacing.sm,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  toolbarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceMuted,
+  },
+  toolbarButtonActive: {
+    backgroundColor: colors.primarySoft,
+  },
+  toolbarButtonPressed: {
+    opacity: 0.7,
+  },
+  toolbarButtonText: {
+    ...typography.label,
+    color: colors.textSecondary,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchInput: {
+    flex: 1,
+    ...typography.body,
+    color: colors.textPrimary,
+    paddingVertical: 2,
+  },
+  empty: {
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.xxl,
+  },
+  emptyText: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+});

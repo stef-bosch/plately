@@ -3,8 +3,8 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 /** Bottom tab routes. */
 export type TabParamList = {
   Dashboard: undefined;
-  Weekmenu: undefined;
   Recepten: { mealType?: string } | undefined;
+  Menus: undefined;
   Instellingen: undefined;
 };
 

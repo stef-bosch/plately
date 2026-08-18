@@ -102,16 +102,16 @@ export function DashboardScreen() {
       {/* Navigation buttons */}
       <View style={styles.buttonRow}>
         <Button
-          label="Weekmenu"
-          brandIcon="Calendar"
-          variant="primary"
-          onPress={() => navigation.navigate('Weekmenu')}
-        />
-        <Button
           label="Recepten"
           brandIcon="ChefHat"
-          variant="secondary"
+          variant="primary"
           onPress={() => navigation.navigate('Recepten')}
+        />
+        <Button
+          label="Menu's"
+          brandIcon="Menu"
+          variant="secondary"
+          onPress={() => navigation.navigate('Menus')}
         />
       </View>
     </Screen>

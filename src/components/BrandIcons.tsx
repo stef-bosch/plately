@@ -74,6 +74,7 @@ export const BrandIcon = {
   Line,
   Logo,
   Lunch: materialCommunityIcon('cup-outline'),
+  Menu: ionicon('albums-outline'),
   Measure,
   Meat,
   Notification,
