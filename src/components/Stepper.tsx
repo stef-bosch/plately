@@ -11,6 +11,13 @@ interface StepperProps {
   max?: number;
   /** Dutch suffix, e.g. "personen". */
   suffix?: string;
+  /**
+   * `default` shows [−] value [+]. `pill` is a single rounded bar with a
+   * centred label and filled +/− buttons (used above the ingredient list).
+   */
+  variant?: 'default' | 'pill';
+  /** Full centre label for the `pill` variant, e.g. "Voor 4 personen". */
+  label?: string;
 }
 
 /** Plus/minus control for choosing the number of servings. */
@@ -20,24 +27,35 @@ export function Stepper({
   min = 1,
   max = 12,
   suffix,
+  variant = 'default',
+  label,
 }: StepperProps) {
   const decrement = () => onChange(Math.max(min, value - 1));
   const increment = () => onChange(Math.min(max, value + 1));
+  const pill = variant === 'pill';
 
   return (
-    <View style={styles.container}>
+    <View style={pill ? styles.pill : styles.container}>
       <StepButton
         icon="remove"
+        pill={pill}
         onPress={decrement}
         disabled={value <= min}
         accessibilityLabel="Minder personen"
       />
-      <View style={styles.valueBox}>
-        <Text style={styles.value}>{value}</Text>
-        {suffix ? <Text style={styles.suffix}>{suffix}</Text> : null}
-      </View>
+      {pill ? (
+        <Text style={styles.pillLabel}>
+          {label ?? `${value}${suffix ? ` ${suffix}` : ''}`}
+        </Text>
+      ) : (
+        <View style={styles.valueBox}>
+          <Text style={styles.value}>{value}</Text>
+          {suffix ? <Text style={styles.suffix}>{suffix}</Text> : null}
+        </View>
+      )}
       <StepButton
         icon="add"
+        pill={pill}
         onPress={increment}
         disabled={value >= max}
         accessibilityLabel="Meer personen"
@@ -51,11 +69,13 @@ function StepButton({
   onPress,
   disabled,
   accessibilityLabel,
+  pill,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
   disabled: boolean;
   accessibilityLabel: string;
+  pill?: boolean;
 }) {
   return (
     <Pressable
@@ -65,14 +85,23 @@ function StepButton({
       accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [
         styles.button,
-        disabled && styles.buttonDisabled,
+        pill && styles.buttonPill,
+        disabled && (pill ? styles.buttonPillDisabled : styles.buttonDisabled),
         pressed && !disabled && styles.buttonPressed,
       ]}
     >
       <Ionicons
         name={icon}
         size={iconSize.action}
-        color={disabled ? colors.textMuted : colors.primary}
+        color={
+          pill
+            ? disabled
+              ? colors.textMuted
+              : colors.textOnPrimary
+            : disabled
+              ? colors.textMuted
+              : colors.primary
+        }
       />
     </Pressable>
   );
@@ -84,6 +113,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.pill,
+    padding: spacing.xs,
+  },
+  pillLabel: {
+    flex: 1,
+    textAlign: 'center',
+    ...typography.bodyStrong,
+    color: colors.textPrimary,
+  },
   button: {
     width: 40,
     height: 40,
@@ -91,6 +134,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  buttonPill: {
+    backgroundColor: colors.primary,
+  },
+  buttonPillDisabled: {
+    backgroundColor: colors.surface,
   },
   buttonDisabled: {
     backgroundColor: colors.surfaceMuted,

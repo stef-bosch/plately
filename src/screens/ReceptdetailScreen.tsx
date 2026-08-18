@@ -184,23 +184,17 @@ export function ReceptdetailScreen() {
         </Text>
       </Pressable>
 
-      {/* Servings stepper */}
-      <View style={styles.card}>
-        <View style={styles.servingsRow}>
-          <View style={styles.servingsText}>
-            <Text style={styles.cardLabel}>Aantal personen</Text>
-          </View>
-          <Stepper
-            value={servings}
-            onChange={setServings}
-            suffix={servings === 1 ? 'persoon' : 'personen'}
-          />
-        </View>
-      </View>
-
-      {/* Ingredients */}
+      {/* Ingredients — with the servings stepper built into the header */}
       <Section title="Ingrediënten">
         <View style={styles.card}>
+          <View style={styles.servingsPill}>
+            <Stepper
+              variant="pill"
+              value={servings}
+              onChange={setServings}
+              label={`Voor ${servings} ${servings === 1 ? 'persoon' : 'personen'}`}
+            />
+          </View>
           {recipe.ingredients.map((group, groupIndex) => (
             <View
               key={group.category}
@@ -519,19 +513,8 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     ...shadow.soft,
   },
-  cardLabel: {
-    ...typography.subheading,
-    color: colors.textPrimary,
-  },
-  servingsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  servingsText: {
-    flex: 1,
-    gap: 2,
+  servingsPill: {
+    marginBottom: spacing.lg,
   },
   section: {
     gap: spacing.md,
