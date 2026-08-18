@@ -218,36 +218,10 @@ export type DietaryPreference =
   | 'glutenvrij'
   | 'halal';
 
-/* Fields the nutrition calc-engine needs to personalise portions. */
-export type BodySex = 'male' | 'female' | 'other';
-export type CalcActivityLevel =
-  | 'sedentary'
-  | 'light'
-  | 'moderate'
-  | 'active'
-  | 'very_active';
-export type CalcGoal = 'maintain' | 'lose' | 'gain' | 'muscle_gain';
-export type ProteinProfile = 'standard' | 'active' | 'muscle';
-
-export interface NutritionProfile {
-  /** Personal data — null until the user fills it in (no default identity). */
-  sex: BodySex | null;
-  ageYears: number | null;
-  heightCm: number | null;
-  weightKg: number | null;
-  activityLevel: CalcActivityLevel;
-  goal: CalcGoal;
-  proteinProfile: ProteinProfile;
-  /** When set (>0) it overrides the calculated kcal target. */
-  manualKcalTarget: number | null;
-}
-
 export interface Settings {
   defaultServings: number;
   preferredSeason: Season;
   dietaryPreferences: DietaryPreference[];
-  /** Body/goal data used to compute the daily kcal + macro targets. */
-  nutritionProfile: NutritionProfile;
 }
 
 /* ---------- Reactive recipes ---------- */
