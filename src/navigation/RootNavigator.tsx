@@ -1,24 +1,20 @@
 import {
   NavigationContainer,
   DefaultTheme,
-  useNavigation,
 } from '@react-navigation/native';
 import {
   createNativeStackNavigator,
-  type NativeStackNavigationProp,
 } from '@react-navigation/native-stack';
 import {
   createBottomTabNavigator,
 } from '@react-navigation/bottom-tabs';
-import React, { useState } from 'react';
+import React from 'react';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrandHeader } from '../components/BrandHeader';
 import { Icon, type BrandIconName } from '../components/BrandIcons';
-import { WelcomeModal } from '../components/WelcomeModal';
 import { colors, iconSize, typography } from '../theme';
-import { hasSeenWelcome, markWelcomeSeen } from '../utils/welcome';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { ReceptenScreen } from '../screens/ReceptenScreen';
 import { MenusScreen } from '../screens/MenusScreen';
@@ -60,19 +56,6 @@ function Tabs() {
   const insets = useSafeAreaInsets();
   const bottomInset = Math.max(insets.bottom, 8);
 
-  // One-time welcome popup (shown on the first web-app load only).
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [welcomeVisible, setWelcomeVisible] = useState(() => !hasSeenWelcome());
-  const dismissWelcome = () => {
-    markWelcomeSeen();
-    setWelcomeVisible(false);
-  };
-  const goToSettings = () => {
-    dismissWelcome();
-    navigation.navigate('Tabs', { screen: 'Instellingen' });
-  };
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <BrandHeader />
@@ -110,12 +93,6 @@ function Tabs() {
         <Tab.Screen name="Menus" component={MenusScreen} />
         <Tab.Screen name="Instellingen" component={InstellingenScreen} />
       </Tab.Navigator>
-      {welcomeVisible ? (
-        <WelcomeModal
-          onGoToSettings={goToSettings}
-          onDismiss={dismissWelcome}
-        />
-      ) : null}
     </View>
   );
 }
