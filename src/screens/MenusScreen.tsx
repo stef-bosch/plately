@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
   FlatList,
@@ -79,8 +80,17 @@ export function MenusScreen() {
                   placeholderTextColor={colors.textMuted}
                   value={query}
                   onChangeText={setQuery}
-                  autoFocus
                   returnKeyType="search"
+                  autoFocus
+                />
+                <Ionicons
+                  name="close-circle"
+                  size={iconSize.action}
+                  color={colors.textMuted}
+                  onPress={() => {
+                    setQuery('');
+                    setSearchOpen(false);
+                  }}
                 />
               </View>
             ) : null}
@@ -103,10 +113,12 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxxl,
   },
   header: {
     gap: spacing.md,
@@ -126,19 +138,23 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   toolbarButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceMuted,
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   toolbarButtonActive: {
+    borderColor: colors.primary,
     backgroundColor: colors.primarySoft,
   },
   toolbarButtonPressed: {
-    opacity: 0.7,
+    opacity: 0.85,
   },
   toolbarButtonText: {
     ...typography.label,
@@ -148,10 +164,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.lg,
     backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -159,7 +175,7 @@ const styles = StyleSheet.create({
     flex: 1,
     ...typography.body,
     color: colors.textPrimary,
-    paddingVertical: 2,
+    padding: 0,
   },
   empty: {
     alignItems: 'center',
