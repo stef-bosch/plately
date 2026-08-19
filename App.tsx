@@ -19,8 +19,10 @@ import { DayMenuProvider } from './src/context/DayMenuContext';
 import { SettingsProvider } from './src/context/SettingsContext';
 import { loadContent } from './src/data/content';
 import { setupPwa } from './src/lib/pwa';
+import { LandingScreen } from './src/screens/LandingScreen';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { colors } from './src/theme';
+import { hasSeenLanding, markLandingSeen } from './src/utils/landing';
 
 const isWeb = Platform.OS === 'web';
 
@@ -50,6 +52,13 @@ export default function App() {
     const timer = setTimeout(() => setMinTimePassed(true), SPLASH_MIN_MS);
     return () => clearTimeout(timer);
   }, []);
+
+  // First-open landing page (shown once, then the app opens directly).
+  const [landingDone, setLandingDone] = useState(() => hasSeenLanding());
+  const enterApp = () => {
+    markLandingSeen();
+    setLandingDone(true);
+  };
 
   // Load dishes from the backend (if configured) before showing the app, with a
   // timeout so a slow/unavailable backend can't keep us on the splash forever.
@@ -90,7 +99,11 @@ export default function App() {
           <SettingsProvider>
             <DayMenuProvider>
               <StatusBar style="dark" />
-              <RootNavigator />
+              {landingDone ? (
+                <RootNavigator />
+              ) : (
+                <LandingScreen onEnter={enterApp} />
+              )}
             </DayMenuProvider>
           </SettingsProvider>
         </SafeAreaProvider>
