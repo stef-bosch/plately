@@ -103,7 +103,6 @@ export function DashboardScreen() {
             </Text>
             <Button
               label="Naar recepten"
-              brandIcon="ChefHat"
               variant="primary"
               onPress={() => navigation.navigate('Recepten')}
             />
