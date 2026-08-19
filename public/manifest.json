@@ -1,7 +1,7 @@
 {
   "name": "Plately",
   "short_name": "Plately",
-  "description": "Jouw weekmenu, recepten en voedingswaarden.",
+  "description": "Jouw dagmenu, recepten en voedingswaarden.",
   "lang": "nl",
   "start_url": "/",
   "scope": "/",

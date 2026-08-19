@@ -41,6 +41,9 @@ export function setupPwa(): void {
   ensureMeta('theme-color', '#FF7A1A');
   ensureMeta('application-name', 'Plately');
 
+  // Browser-tab favicon: the same chef-hat app icon.
+  ensureLink('icon', '/icons/icon-192.png', { type: 'image/png', sizes: '192x192' });
+
   // iOS "Add to Home Screen" support.
   ensureMeta('apple-mobile-web-app-capable', 'yes');
   ensureMeta('apple-mobile-web-app-status-bar-style', 'default');
