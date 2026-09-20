@@ -61,6 +61,7 @@ function materialCommunityIcon(name: MaterialCommunityName) {
 export const BrandIcon = {
   Breakfast: ionicon('cafe-outline'),
   Calendar,
+  Cart: ionicon('cart-outline'),
   ChefHat,
   Clock: ionicon('time-outline'),
   Dinner: ionicon('restaurant-outline'),
@@ -74,7 +75,6 @@ export const BrandIcon = {
   Line,
   Logo,
   Lunch: materialCommunityIcon('cup-outline'),
-  Menu: ionicon('albums-outline'),
   Measure,
   Meat,
   Notification,

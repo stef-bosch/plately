@@ -17,9 +17,8 @@ import { Icon, type BrandIconName } from '../components/BrandIcons';
 import { colors, iconSize, typography } from '../theme';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { ReceptenScreen } from '../screens/ReceptenScreen';
-import { MenusScreen } from '../screens/MenusScreen';
+import { BoodschappenlijstScreen } from '../screens/BoodschappenlijstScreen';
 import { ReceptdetailScreen } from '../screens/ReceptdetailScreen';
-import { MenudetailScreen } from '../screens/MenudetailScreen';
 import { InstellingenScreen } from '../screens/InstellingenScreen';
 import type { RootStackParamList, TabParamList } from './types';
 
@@ -41,14 +40,14 @@ const navTheme = {
 const TAB_ICON: Record<keyof TabParamList, BrandIconName> = {
   Dashboard: 'Home',
   Recepten: 'ChefHat',
-  Menus: 'Menu',
+  Boodschappen: 'Cart',
   Instellingen: 'Settings',
 };
 
 const TAB_LABEL: Record<keyof TabParamList, string> = {
   Dashboard: 'Dashboard',
   Recepten: 'Recepten',
-  Menus: "Menu's",
+  Boodschappen: 'Boodschappen',
   Instellingen: 'Instellingen',
 };
 
@@ -90,7 +89,7 @@ function Tabs() {
       >
         <Tab.Screen name="Dashboard" component={DashboardScreen} />
         <Tab.Screen name="Recepten" component={ReceptenScreen} />
-        <Tab.Screen name="Menus" component={MenusScreen} />
+        <Tab.Screen name="Boodschappen" component={BoodschappenlijstScreen} />
         <Tab.Screen name="Instellingen" component={InstellingenScreen} />
       </Tab.Navigator>
     </View>
@@ -119,15 +118,6 @@ export function RootNavigator() {
           component={ReceptdetailScreen}
           options={{
             title: 'Recept',
-            headerBackTitle: 'Terug',
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="Menudetail"
-          component={MenudetailScreen}
-          options={{
-            title: 'Menu',
             headerBackTitle: 'Terug',
             animation: 'slide_from_right',
           }}

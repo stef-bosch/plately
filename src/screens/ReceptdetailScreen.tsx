@@ -26,6 +26,7 @@ import {
 } from '../constants/labels';
 import { getRecipeById } from '../data/recipes';
 import { useDayMenu } from '../context/DayMenuContext';
+import { useShoppingList } from '../context/ShoppingListContext';
 import { useSettings } from '../context/SettingsContext';
 import { useAppNavigation } from '../navigation/hooks';
 import type { RootStackParamList } from '../navigation/types';
@@ -38,6 +39,7 @@ export function ReceptdetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'Receptdetail'>>();
   const { settings } = useSettings();
   const { addToDayMenu } = useDayMenu();
+  const { addToShoppingList } = useShoppingList();
 
   const recipe = getRecipeById(route.params.recipeId);
 
@@ -50,12 +52,15 @@ export function ReceptdetailScreen() {
       : Math.max(settings.defaultServings, 1),
   );
   const [printing, setPrinting] = useState(false);
-  // Brief "Toegevoegd" confirmation after adding to the day menu.
+  // Brief "Toegevoegd" confirmations after adding to a list.
   const [justAdded, setJustAdded] = useState(false);
+  const [justAddedShopping, setJustAddedShopping] = useState(false);
   const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     return () => {
       if (addedTimer.current) clearTimeout(addedTimer.current);
+      if (shopTimer.current) clearTimeout(shopTimer.current);
     };
   }, []);
 
@@ -94,6 +99,13 @@ export function ReceptdetailScreen() {
     setJustAdded(true);
     if (addedTimer.current) clearTimeout(addedTimer.current);
     addedTimer.current = setTimeout(() => setJustAdded(false), 2000);
+  };
+
+  const handleAddToShopping = () => {
+    addToShoppingList(recipe.id, servings);
+    setJustAddedShopping(true);
+    if (shopTimer.current) clearTimeout(shopTimer.current);
+    shopTimer.current = setTimeout(() => setJustAddedShopping(false), 2000);
   };
 
   return (
@@ -163,26 +175,49 @@ export function ReceptdetailScreen() {
         ) : null}
       </View>
 
-      {/* Add to today's day menu */}
-      <Pressable
-        onPress={handleAddToDayMenu}
-        accessibilityRole="button"
-        accessibilityLabel="Toevoegen aan dagmenu"
-        style={({ pressed }) => [
-          styles.addButton,
-          justAdded && styles.addButtonAdded,
-          pressed && styles.addButtonPressed,
-        ]}
-      >
-        <Ionicons
-          name={justAdded ? 'checkmark' : 'add'}
-          size={iconSize.action}
-          color={colors.textOnPrimary}
-        />
-        <Text style={styles.addButtonText}>
-          {justAdded ? 'Toegevoegd aan dagmenu' : 'Toevoegen aan dagmenu'}
-        </Text>
-      </Pressable>
+      {/* Add to the day menu / shopping list */}
+      <View style={styles.addActions}>
+        <Pressable
+          onPress={handleAddToDayMenu}
+          accessibilityRole="button"
+          accessibilityLabel="Toevoegen aan dagmenu"
+          style={({ pressed }) => [
+            styles.addButton,
+            justAdded && styles.addButtonAdded,
+            pressed && styles.addButtonPressed,
+          ]}
+        >
+          <Ionicons
+            name={justAdded ? 'checkmark' : 'add'}
+            size={iconSize.action}
+            color={colors.textOnPrimary}
+          />
+          <Text style={styles.addButtonText}>
+            {justAdded ? 'Toegevoegd aan dagmenu' : 'Toevoegen aan dagmenu'}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={handleAddToShopping}
+          accessibilityRole="button"
+          accessibilityLabel="Toevoegen aan boodschappenlijst"
+          style={({ pressed }) => [
+            styles.cartButton,
+            pressed && styles.addButtonPressed,
+          ]}
+        >
+          <Ionicons
+            name={justAddedShopping ? 'checkmark' : 'cart-outline'}
+            size={iconSize.action}
+            color={colors.primary}
+          />
+          <Text style={styles.cartButtonText}>
+            {justAddedShopping
+              ? `Toegevoegd (${servings} ${servings === 1 ? 'persoon' : 'personen'})`
+              : 'Toevoegen aan boodschappenlijst'}
+          </Text>
+        </Pressable>
+      </View>
 
       {/* Ingredients — with the servings stepper built into the header */}
       <Section title="Ingrediënten">
@@ -467,6 +502,9 @@ const styles = StyleSheet.create({
   macroValue: {
     ...typography.subheading,
   },
+  addActions: {
+    gap: spacing.sm,
+  },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -485,6 +523,21 @@ const styles = StyleSheet.create({
   addButtonText: {
     ...typography.bodyStrong,
     color: colors.textOnPrimary,
+  },
+  cartButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  cartButtonText: {
+    ...typography.bodyStrong,
+    color: colors.primary,
   },
   printButton: {
     flexDirection: 'row',

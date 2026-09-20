@@ -4,13 +4,12 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 export type TabParamList = {
   Dashboard: undefined;
   Recepten: { mealType?: string } | undefined;
-  Menus: undefined;
+  Boodschappen: undefined;
   Instellingen: undefined;
 };
 
-/** Root stack: the tabs plus the pushable recipe and menu detail screens. */
+/** Root stack: the tabs plus the pushable recipe detail screen. */
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList> | undefined;
   Receptdetail: { recipeId: string };
-  Menudetail: { menuId: string };
 };

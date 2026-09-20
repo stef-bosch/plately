@@ -133,10 +133,10 @@ export function DashboardScreen() {
             onPress={() => navigation.navigate('Recepten')}
           />
           <Button
-            label="Menu's"
-            brandIcon="Menu"
+            label="Boodschappen"
+            brandIcon="Cart"
             variant="secondary"
-            onPress={() => navigation.navigate('Menus')}
+            onPress={() => navigation.navigate('Boodschappen')}
           />
         </View>
       ) : null}

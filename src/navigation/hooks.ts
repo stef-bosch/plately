@@ -23,9 +23,3 @@ export function useOpenRecipe() {
   return (recipeId: string) =>
     navigation.navigate('Receptdetail', { recipeId });
 }
-
-/** Convenience: navigate to a menu detail from anywhere. */
-export function useOpenMenu() {
-  const navigation = useAppNavigation();
-  return (menuId: string) => navigation.navigate('Menudetail', { menuId });
-}

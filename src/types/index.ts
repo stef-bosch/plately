@@ -169,46 +169,6 @@ export interface Recipe {
   status?: DishStatus;
 }
 
-/* ---------- Menus ---------- */
-
-/**
- * A course within a multi-dish menu. `type` drives the icon/emoji and ordering;
- * `recipeIds` reference full dishes (stored in Supabase) so each keeps its own
- * detail screen, scaling and nutrition.
- */
-export type MenuCourseType =
-  | 'welkom'
-  | 'voorgerecht'
-  | 'hoofdgerecht'
-  | 'bijgerecht'
-  | 'nagerecht';
-
-export interface MenuCourse {
-  type: MenuCourseType;
-  /** Section heading, e.g. "Hoofdgerechten". */
-  title: string;
-  recipeIds: string[];
-}
-
-/**
- * A complete, multi-course menu shown as one entity. The individual dishes are
- * regular recipes (so they also surface in the recipe list and reuse the recipe
- * detail screen); the menu just groups them into courses.
- */
-export interface Menu {
-  id: string;
-  title: string;
-  /** Short tagline shown on the menu card and detail header. */
-  subtitle?: string;
-  /** Longer intro paragraph shown at the top of the menu detail screen. */
-  description?: string;
-  image?: import('react-native').ImageSourcePropType;
-  /** Servings the menu (and its dishes) are written for. */
-  baseServings: number;
-  tags: RecipeTag[];
-  courses: MenuCourse[];
-}
-
 /* ---------- Settings ---------- */
 
 export type DietaryPreference =

@@ -28,9 +28,9 @@ const FEATURES: { icon: BrandIconName; title: string; text: string }[] = [
     text: 'Blader door recepten en filter op categorie en seizoen.',
   },
   {
-    icon: 'Menu',
-    title: "Menu's",
-    text: 'Complete meergangenmenu’s voor bijzondere momenten.',
+    icon: 'Cart',
+    title: 'Boodschappenlijst',
+    text: 'Voeg gerechten toe en krijg een gesorteerde boodschappenlijst.',
   },
 ];
 
@@ -59,8 +59,8 @@ export function LandingScreen({ onEnter }: { onEnter: () => void }) {
           <Text style={styles.title}>Eet lekker, eet in balans</Text>
           <Text style={styles.intro}>
             Plately helpt je makkelijk gezond te eten: stel je eigen dagmenu
-            samen, ontdek recepten en menu’s, en houd je voedingswaarden in de
-            gaten — allemaal op één plek.
+            samen, ontdek recepten, maak je boodschappenlijst en houd je
+            voedingswaarden in de gaten — allemaal op één plek.
           </Text>
 
           <View style={styles.features}>

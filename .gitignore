@@ -7,3 +7,6 @@ web-build/
 .env
 .env*.local
 !.env.example
+
+# Local dish backups (delivered to the user; data lives in src/data/dishes.generated.ts)
+plately-gerechten-backup-*.txt

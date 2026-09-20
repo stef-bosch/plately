@@ -23,7 +23,6 @@ import {
   seasonLabel,
 } from '../constants/labels';
 import { useSettings } from '../context/SettingsContext';
-import { getCourseForRecipe } from '../data/menus';
 import { getAllRecipes } from '../data/recipes';
 import { useOpenRecipe } from '../navigation/hooks';
 import { recipeMatchesDiets } from '../utils/resolveRecipe';
@@ -55,8 +54,6 @@ export function ReceptenScreen() {
   const filteredRecipes = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allRecipes.filter((recipe) => {
-      // Dishes that are part of a menu only show under the "Menu's" tab.
-      if (getCourseForRecipe(recipe.id)) return false;
       // Only show dishes that meet every selected dietary preference.
       if (!recipeMatchesDiets(recipe, settings.dietaryPreferences)) return false;
       const matchesQuery = q === '' || recipe.title.toLowerCase().includes(q);

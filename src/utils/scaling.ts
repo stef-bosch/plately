@@ -25,7 +25,7 @@ function tidyNumber(value: number): number {
  * Formats a number as a neat string, preferring vulgar fractions for common
  * values and mixed numbers like "1½".
  */
-function formatQuantity(value: number): string {
+export function formatQuantity(value: number): string {
   const rounded = tidyNumber(value);
   const whole = Math.floor(rounded);
   const remainder = tidyNumber(rounded - whole);
@@ -117,4 +117,19 @@ export function scaleIngredient(
     : `${numberLabel}`.trim();
 
   return { amountLabel, name: displayName, note };
+}
+
+/**
+ * The numeric scaled quantity for an ingredient, or `null` when it can't be
+ * summed (non-scalable, or a string quantity like "naar smaak"). Used by the
+ * shopping list to merge identical items across dishes.
+ */
+export function scaledQuantity(
+  ingredient: Ingredient,
+  servings: number,
+  baseServings: number,
+): number | null {
+  const { quantity, scalable } = ingredient;
+  if (!scalable || typeof quantity !== 'number') return null;
+  return (quantity * servings) / baseServings;
 }
