@@ -39,7 +39,7 @@ export function setupPwa(): void {
   // Web app manifest (installability) + theme.
   ensureLink('manifest', '/manifest.json');
   ensureMeta('theme-color', '#FF7A1A');
-  ensureMeta('application-name', 'Plately');
+  ensureMeta('application-name', 'ChefStef');
 
   // Browser-tab favicon: the same chef-hat app icon.
   ensureLink('icon', '/icons/icon-192.png', { type: 'image/png', sizes: '192x192' });
@@ -47,7 +47,7 @@ export function setupPwa(): void {
   // iOS "Add to Home Screen" support.
   ensureMeta('apple-mobile-web-app-capable', 'yes');
   ensureMeta('apple-mobile-web-app-status-bar-style', 'default');
-  ensureMeta('apple-mobile-web-app-title', 'Plately');
+  ensureMeta('apple-mobile-web-app-title', 'ChefStef');
   ensureLink('apple-touch-icon', '/icons/apple-touch-icon.png');
 
   // Register the service worker once the page has loaded.

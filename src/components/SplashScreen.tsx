@@ -2,12 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 
 import { colors } from '../theme';
-import { PlatelyMark } from './BrandIcons';
+import { Icon } from './BrandIcons';
 
 /**
- * First-load splash: the Plately emblem on the brand orange. Shown while fonts
- * load (and for a short minimum so it doesn't merely flash). The mark fades and
- * scales in for a friendly entrance.
+ * First-load splash: the ChefStef chef-hat mark on the brand orange. Shown while
+ * fonts load (and for a short minimum so it doesn't merely flash). The mark
+ * fades and scales in for a friendly entrance.
  */
 export function SplashScreen() {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -32,7 +32,7 @@ export function SplashScreen() {
   return (
     <View style={styles.container}>
       <Animated.View style={{ opacity, transform: [{ scale }] }}>
-        <PlatelyMark size={132} color={colors.white} />
+        <Icon name="ChefHat" size={132} color={colors.white} />
       </Animated.View>
     </View>
   );

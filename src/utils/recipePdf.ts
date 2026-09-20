@@ -131,7 +131,7 @@ export function buildRecipeHtml(
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>${esc(recipe.title)} — Plately</title>
+<title>${esc(recipe.title)} — ChefStef</title>
 <style>
   * { box-sizing: border-box; }
   @page { margin: 18mm 16mm; }
@@ -221,7 +221,7 @@ export function buildRecipeHtml(
 </head>
 <body>
   <div class="brand">
-    <span class="logo">Plately</span>
+    <span class="logo">ChefStef</span>
     <span class="tagline">Recept</span>
   </div>
 
@@ -246,7 +246,7 @@ export function buildRecipeHtml(
     ${indicative}
   </section>
 
-  <footer>Geprint vanuit Plately · ${esc(recipe.title)}</footer>
+  <footer>Geprint vanuit ChefStef · ${esc(recipe.title)}</footer>
 </body>
 </html>`;
 }

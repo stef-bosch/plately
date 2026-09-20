@@ -3,10 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '../theme';
-import { PlatelyLogo } from './BrandIcons';
+import { BrandLogo } from './BrandIcons';
 
 /**
- * App-level top bar shown above the main tab screens. Holds the Plately
+ * App-level top bar shown above the main tab screens. Holds the ChefStef
  * wordmark and clears the device safe-area (notch / status bar).
  */
 export function BrandHeader() {
@@ -14,7 +14,7 @@ export function BrandHeader() {
 
   return (
     <View style={[styles.bar, { paddingTop: insets.top + spacing.sm }]}>
-      <PlatelyLogo width={124} color={colors.primary} />
+      <BrandLogo size={24} color={colors.primary} />
     </View>
   );
 }

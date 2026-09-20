@@ -3,7 +3,7 @@ import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '../components/Button';
-import { Icon, PlatelyLogo, type BrandIconName } from '../components/BrandIcons';
+import { BrandLogo, Icon, type BrandIconName } from '../components/BrandIcons';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 
 /**
@@ -51,14 +51,14 @@ export function LandingScreen({ onEnter }: { onEnter: () => void }) {
           <Image source={HERO_IMAGE} style={styles.hero} resizeMode="cover" />
           <View style={styles.heroOverlay} />
           <View style={styles.heroLogo}>
-            <PlatelyLogo width={150} color={colors.white} />
+            <BrandLogo size={32} color={colors.white} />
           </View>
         </View>
 
         <View style={styles.body}>
           <Text style={styles.title}>Eet lekker, eet in balans</Text>
           <Text style={styles.intro}>
-            Plately helpt je makkelijk gezond te eten: stel je eigen dagmenu
+            ChefStef helpt je makkelijk gezond te eten: stel je eigen dagmenu
             samen, ontdek recepten, maak je boodschappenlijst en houd je
             voedingswaarden in de gaten — allemaal op één plek.
           </Text>

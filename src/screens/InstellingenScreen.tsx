@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { PlatelyLogo } from '../components/BrandIcons';
+import { BrandLogo } from '../components/BrandIcons';
 import { FilterChip } from '../components/FilterChip';
 import { Screen } from '../components/Screen';
 import { Stepper } from '../components/Stepper';
@@ -25,7 +25,7 @@ export function InstellingenScreen() {
   };
 
   return (
-    <Screen title="Instellingen" subtitle="Stem Plately af op jouw voorkeuren">
+    <Screen title="Instellingen" subtitle="Stem ChefStef af op jouw voorkeuren">
       {/* Default servings */}
       <SettingCard title="Standaard aantal personen">
         <View style={styles.stepperWrap}>
@@ -43,7 +43,7 @@ export function InstellingenScreen() {
       </SettingCard>
 
       <View style={styles.footer}>
-        <PlatelyLogo width={130} color={colors.primary} />
+        <BrandLogo size={22} color={colors.primary} />
         <Text style={styles.footerText}>versie 1.0</Text>
       </View>
     </Screen>

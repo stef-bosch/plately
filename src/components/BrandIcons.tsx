@@ -1,7 +1,9 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
+import { Text, View } from 'react-native';
 import type { SvgProps } from 'react-native-svg';
 
+import { colors, fontFamily } from '../theme';
 import type { MealType, Season } from '../types';
 
 // Brand SVGs are imported as React components (react-native-svg-transformer).
@@ -168,4 +170,33 @@ export function PlatelyLogo({
 }) {
   const height = (width * 100) / 299.15;
   return <Logo width={width} height={height} color={color} />;
+}
+
+/**
+ * The ChefStef brand lockup: the chef-hat mark next to the name set in the
+ * brand heading font. `size` is the text size; the mark scales with it.
+ */
+export function BrandLogo({
+  size = 22,
+  color = colors.primary,
+}: {
+  size?: number;
+  color?: string;
+}) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: size * 0.3 }}>
+      <Icon name="ChefHat" size={size * 1.25} color={color} />
+      <Text
+        style={{
+          fontFamily: fontFamily.fredokaBold,
+          fontSize: size,
+          lineHeight: size * 1.16,
+          letterSpacing: -0.5,
+          color,
+        }}
+      >
+        ChefStef
+      </Text>
+    </View>
+  );
 }
