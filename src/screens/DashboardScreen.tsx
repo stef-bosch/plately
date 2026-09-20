@@ -67,7 +67,8 @@ export function DashboardScreen() {
 
   return (
     <Screen title="Vandaag" subtitle={formatDutchDate(today)}>
-      {/* Daily nutrition summary */}
+      {/* Daily nutrition summary — shown once the day menu has dishes to sum. */}
+      {!isEmpty ? (
       <View style={styles.summaryCard}>
         <View style={styles.calorieRow}>
           <View>
@@ -89,6 +90,7 @@ export function DashboardScreen() {
         />
         <Text style={styles.indicative}>Voedingswaarden zijn indicatief</Text>
       </View>
+      ) : null}
 
       {/* Today's day menu */}
       <View style={styles.section}>

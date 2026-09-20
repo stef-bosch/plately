@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { radius, spacing, typography } from '../theme';
+import { colors, radius, spacing, typography } from '../theme';
 
 export interface MacroItem {
   label: string;
@@ -36,7 +36,10 @@ function darken(hex: string, factor: number): string {
   return `rgb(${clamp(r * factor)}, ${clamp(g * factor)}, ${clamp(b * factor)})`;
 }
 
-/** Horizontal grid of macro chips (eiwitten, koolhydraten, vetten, vezels). */
+/**
+ * 2-column grid of macro blocks (koolhydraten, eiwitten, vetten, vezels).
+ * Mirrors the recipe-detail nutrition blocks so both screens read the same.
+ */
 export function MacroSummary({ items }: MacroSummaryProps) {
   return (
     <View style={styles.grid}>
@@ -45,21 +48,16 @@ export function MacroSummary({ items }: MacroSummaryProps) {
         return (
           <View
             key={item.label}
-            style={[
-              styles.cell,
-              { borderColor: item.color, backgroundColor: tint(item.color, 0.14) },
-            ]}
+            style={[styles.cell, { backgroundColor: tint(item.color, 0.14) }]}
           >
+            <View style={styles.head}>
+              <View style={[styles.dot, { backgroundColor: item.color }]} />
+              <Text style={styles.label} numberOfLines={1}>
+                {item.label}
+              </Text>
+            </View>
             <Text style={[styles.value, { color: textColor }]}>
-              {item.value}
-              {item.unit}
-            </Text>
-            <Text
-              style={[styles.label, { color: textColor }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {item.label}
+              {item.value} {item.unit}
             </Text>
           </View>
         );
@@ -76,21 +74,28 @@ const styles = StyleSheet.create({
   },
   cell: {
     flexGrow: 1,
-    flexBasis: '22%',
+    flexBasis: '47%',
     borderRadius: radius.md,
-    borderWidth: 1.5,
     paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xs,
-    alignItems: 'center',
-    gap: 2,
+    paddingHorizontal: spacing.md,
+    gap: spacing.xs,
   },
-  value: {
-    ...typography.subheading,
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   label: {
     ...typography.caption,
-    fontSize: 10,
-    letterSpacing: -0.2,
-    textAlign: 'center',
+    color: colors.textSecondary,
+    flexShrink: 1,
+  },
+  value: {
+    ...typography.subheading,
   },
 });

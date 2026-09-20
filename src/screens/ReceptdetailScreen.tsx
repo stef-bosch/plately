@@ -6,7 +6,6 @@ import {
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,8 +14,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getRecipeImage } from '../constants/images';
 import { printRecipe } from '../utils/recipePdf';
+import { DishThumb } from '../components/DishThumb';
 import { Stepper } from '../components/Stepper';
 import { Tag } from '../components/Tag';
 import { MealIcon, SeasonIcon } from '../components/BrandIcons';
@@ -118,11 +117,7 @@ export function ReceptdetailScreen() {
       showsVerticalScrollIndicator={false}
     >
       {/* Hero image */}
-      <Image
-        source={getRecipeImage(recipe)}
-        style={styles.hero}
-        resizeMode="cover"
-      />
+      <DishThumb recipe={recipe} style={styles.hero} iconSize={72} />
 
       {/* Title block */}
       <View style={styles.titleBlock}>

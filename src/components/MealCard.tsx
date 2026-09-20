@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { getRecipeImage } from '../constants/images';
 import { mealTypeLabel } from '../constants/labels';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 import type { MealType, Recipe } from '../types';
 import { MealIcon } from './BrandIcons';
+import { DishThumb } from './DishThumb';
 import { PressableScale } from './PressableScale';
 
 interface MealCardProps {
@@ -34,11 +34,7 @@ export function MealCard({
       style={styles.card}
     >
       <View style={styles.thumbWrap}>
-        <Image
-          source={getRecipeImage(recipe)}
-          style={styles.thumb}
-          resizeMode="cover"
-        />
+        <DishThumb recipe={recipe} style={styles.thumb} iconSize={24} />
         <View style={styles.thumbBadge}>
           <MealIcon mealType={mealType} size={iconSize.badge} color={colors.white} />
         </View>
