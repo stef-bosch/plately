@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 
 import { colors } from '../theme';
-import { Icon } from './BrandIcons';
+import { BrandLogoStacked } from './BrandIcons';
 
 /**
  * First-load splash: the ChefStef chef-hat mark on the brand orange. Shown while
@@ -32,7 +32,7 @@ export function SplashScreen() {
   return (
     <View style={styles.container}>
       <Animated.View style={{ opacity, transform: [{ scale }] }}>
-        <Icon name="ChefHat" size={132} color={colors.white} />
+        <BrandLogoStacked height={176} color={colors.white} />
       </Animated.View>
     </View>
   );

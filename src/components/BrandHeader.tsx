@@ -14,7 +14,7 @@ export function BrandHeader() {
 
   return (
     <View style={[styles.bar, { paddingTop: insets.top + spacing.sm }]}>
-      <BrandLogo size={24} color={colors.primary} />
+      <BrandLogo height={26} color={colors.primary} />
     </View>
   );
 }

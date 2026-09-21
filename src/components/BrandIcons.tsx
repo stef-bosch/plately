@@ -1,9 +1,8 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
-import { Text, View } from 'react-native';
 import type { SvgProps } from 'react-native-svg';
 
-import { colors, fontFamily } from '../theme';
+import { colors } from '../theme';
 import type { MealType, Season } from '../types';
 
 // Brand SVGs are imported as React components (react-native-svg-transformer).
@@ -28,6 +27,8 @@ import Settings from '../assets/brand/settings.svg';
 import Symbol from '../assets/brand/symbol.svg';
 import User from '../assets/brand/user.svg';
 import Vegetable from '../assets/brand/vegetable.svg';
+import VerticalLogo from '../assets/brand/vertical-logo.svg';
+import WordLogo from '../assets/brand/word-logo.svg';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -172,31 +173,36 @@ export function PlatelyLogo({
   return <Logo width={width} height={height} color={color} />;
 }
 
+// Content aspect ratios of the cropped logo SVGs (width / height).
+const WORD_LOGO_ASPECT = 888 / 300; // ~2.96
+const VERTICAL_LOGO_ASPECT = 588 / 600; // ~0.98
+
 /**
- * The ChefStef brand lockup: the chef-hat mark next to the name set in the
- * brand heading font. `size` is the text size; the mark scales with it.
+ * The horizontal ChefStef wordmark (the drawn "ChefStef" logotype). `height`
+ * is the rendered logo height in px; it recolors via `color`.
  */
 export function BrandLogo({
-  size = 22,
+  height = 26,
   color = colors.primary,
 }: {
-  size?: number;
+  height?: number;
+  color?: string;
+}) {
+  return <WordLogo height={height} width={height * WORD_LOGO_ASPECT} color={color} />;
+}
+
+/**
+ * The stacked ChefStef lockup (chef-hat mark above the wordmark), for prominent
+ * spots like the splash and the landing hero. `height` is the rendered height.
+ */
+export function BrandLogoStacked({
+  height = 120,
+  color = colors.primary,
+}: {
+  height?: number;
   color?: string;
 }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: size * 0.3 }}>
-      <Icon name="ChefHat" size={size * 1.25} color={color} />
-      <Text
-        style={{
-          fontFamily: fontFamily.fredokaBold,
-          fontSize: size,
-          lineHeight: size * 1.16,
-          letterSpacing: -0.5,
-          color,
-        }}
-      >
-        ChefStef
-      </Text>
-    </View>
+    <VerticalLogo height={height} width={height * VERTICAL_LOGO_ASPECT} color={color} />
   );
 }

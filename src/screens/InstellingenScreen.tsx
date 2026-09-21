@@ -43,7 +43,7 @@ export function InstellingenScreen() {
       </SettingCard>
 
       <View style={styles.footer}>
-        <BrandLogo size={22} color={colors.primary} />
+        <BrandLogo height={24} color={colors.primary} />
         <Text style={styles.footerText}>versie 1.0</Text>
       </View>
     </Screen>

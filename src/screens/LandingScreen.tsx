@@ -3,7 +3,7 @@ import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '../components/Button';
-import { BrandLogo, Icon, type BrandIconName } from '../components/BrandIcons';
+import { BrandLogoStacked, Icon, type BrandIconName } from '../components/BrandIcons';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 
 /**
@@ -51,7 +51,7 @@ export function LandingScreen({ onEnter }: { onEnter: () => void }) {
           <Image source={HERO_IMAGE} style={styles.hero} resizeMode="cover" />
           <View style={styles.heroOverlay} />
           <View style={styles.heroLogo}>
-            <BrandLogo size={32} color={colors.white} />
+            <BrandLogoStacked height={128} color={colors.white} />
           </View>
         </View>
 
