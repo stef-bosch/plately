@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { BrandLogo } from '../components/BrandIcons';
+import { BrandLogoStacked } from '../components/BrandIcons';
 import { FilterChip } from '../components/FilterChip';
 import { Screen } from '../components/Screen';
 import { Stepper } from '../components/Stepper';
@@ -43,7 +43,7 @@ export function InstellingenScreen() {
       </SettingCard>
 
       <View style={styles.footer}>
-        <BrandLogo height={24} color={colors.primary} />
+        <BrandLogoStacked height={72} color={colors.primary} />
         <Text style={styles.footerText}>versie 1.0</Text>
       </View>
     </Screen>
