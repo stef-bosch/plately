@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { printRecipe } from '../utils/recipePdf';
 import { DishThumb } from '../components/DishThumb';
+import { MacroSummary } from '../components/MacroSummary';
 import { Stepper } from '../components/Stepper';
 import { Tag } from '../components/Tag';
 import { MealIcon, SeasonIcon } from '../components/BrandIcons';
@@ -154,17 +155,19 @@ export function ReceptdetailScreen() {
 
         {/* kcal + total time */}
         <View style={styles.statRow}>
-          <StatBlock icon="flame-outline" label="Calorieën" value={`${recipe.nutrition.calories}`} unit="kcal" tint="rgba(255, 122, 26, 0.12)" fg={colors.primary} />
-          <StatBlock icon="time-outline" label="Bereidingstijd" value={`${totalTime}`} unit="min" tint="rgba(31, 157, 87, 0.12)" fg={colors.accent} />
+          <StatBlock icon="flame-outline" label="Calorieën" value={`${recipe.nutrition.calories}`} unit="kcal" tint={colors.surfaceMuted} fg={colors.primary} />
+          <StatBlock icon="time-outline" label="Bereidingstijd" value={`${totalTime}`} unit="min" tint={colors.accentSoft} fg={colors.accent} />
         </View>
 
         {/* Nutrition per portion */}
-        <View style={styles.macroGrid}>
-          <MacroBlock label="Koolhydraten" value={recipe.nutrition.carbs} color={colors.carbs} tint="rgba(244, 183, 64, 0.16)" />
-          <MacroBlock label="Eiwitten" value={recipe.nutrition.protein} color={colors.protein} tint="rgba(255, 122, 26, 0.13)" />
-          <MacroBlock label="Vetten" value={recipe.nutrition.fat} color={colors.fat} tint="rgba(226, 89, 42, 0.13)" />
-          <MacroBlock label="Vezels" value={recipe.nutrition.fiber} color={colors.fiber} tint="rgba(31, 157, 87, 0.13)" />
-        </View>
+        <MacroSummary
+          items={[
+            { label: 'Koolhydraten', value: recipe.nutrition.carbs, unit: 'g', color: colors.carbs },
+            { label: 'Eiwitten', value: recipe.nutrition.protein, unit: 'g', color: colors.protein },
+            { label: 'Vetten', value: recipe.nutrition.fat, unit: 'g', color: colors.fat },
+            { label: 'Vezels', value: recipe.nutrition.fiber, unit: 'g', color: colors.fiber },
+          ]}
+        />
         {recipe.nutrition.isIndicative ? (
           <Text style={styles.indicative}>Voedingswaarden zijn indicatief</Text>
         ) : null}
@@ -355,28 +358,6 @@ function StatBlock({
   );
 }
 
-/** A tinted nutrition block (one macro). */
-function MacroBlock({
-  label,
-  value,
-  color,
-  tint,
-}: {
-  label: string;
-  value: number;
-  color: string;
-  tint: string;
-}) {
-  return (
-    <View style={[styles.macroBlock, { backgroundColor: tint }]}>
-      <View style={styles.macroHead}>
-        <View style={[styles.macroDot, { backgroundColor: color }]} />
-        <Text style={styles.macroLabel}>{label}</Text>
-      </View>
-      <Text style={[styles.macroValue, { color }]}>{value} g</Text>
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   scroll: {
@@ -468,35 +449,6 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
   },
-  macroGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  macroBlock: {
-    flexGrow: 1,
-    flexBasis: '47%',
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.xs,
-  },
-  macroHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  macroDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  macroLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  macroValue: {
-    ...typography.subheading,
-  },
   addActions: {
     gap: spacing.sm,
   },
@@ -505,12 +457,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    backgroundColor: colors.primaryStrong,
+    borderRadius: radius.xl,
     paddingVertical: spacing.md,
   },
   addButtonAdded: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
   },
   addButtonPressed: {
     opacity: 0.9,
@@ -525,7 +477,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.xl,
     paddingVertical: spacing.md,
     borderWidth: 1,
     borderColor: colors.primary,
@@ -540,7 +492,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.xl,
     paddingVertical: spacing.md,
     borderWidth: 1,
     borderColor: colors.primary,

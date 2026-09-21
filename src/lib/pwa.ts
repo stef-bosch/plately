@@ -38,7 +38,7 @@ export function setupPwa(): void {
 
   // Web app manifest (installability) + theme.
   ensureLink('manifest', '/manifest.json');
-  ensureMeta('theme-color', '#FF7A1A');
+  ensureMeta('theme-color', '#6A7147');
   ensureMeta('application-name', 'ChefStef');
 
   // Browser-tab favicon: the same chef-hat app icon.

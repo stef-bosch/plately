@@ -137,7 +137,7 @@ export function buildRecipeHtml(
   @page { margin: 18mm 16mm; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    color: #2A1E12;
+    color: #40442A;
     line-height: 1.5;
     margin: 0;
     -webkit-print-color-adjust: exact;
@@ -147,19 +147,19 @@ export function buildRecipeHtml(
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    border-bottom: 2px solid #FF7A1A;
+    border-bottom: 2px solid #6A7147;
     padding-bottom: 8px;
     margin-bottom: 20px;
   }
-  .brand .logo { font-size: 22px; font-weight: 800; color: #FF7A1A; letter-spacing: -0.5px; }
-  .brand .tagline { font-size: 11px; color: #998A77; }
-  h1 { font-size: 26px; margin: 0 0 4px; color: #2A1E12; }
-  .subtitle { margin: 0 0 14px; color: #6B5D4D; font-size: 14px; }
+  .brand .logo { font-size: 22px; font-weight: 800; color: #6A7147; letter-spacing: -0.5px; }
+  .brand .tagline { font-size: 11px; color: #5B5B5B; }
+  h1 { font-size: 26px; margin: 0 0 4px; color: #40442A; }
+  .subtitle { margin: 0 0 14px; color: #5B5B5B; font-size: 14px; }
   .chips { margin: 0 0 22px; }
   .chip {
     display: inline-block;
-    background: #FDEAD0;
-    color: #B5560F;
+    background: #F6F9E8;
+    color: #40442A;
     font-size: 11px;
     font-weight: 600;
     padding: 4px 10px;
@@ -171,8 +171,8 @@ export function buildRecipeHtml(
     font-size: 15px;
     text-transform: uppercase;
     letter-spacing: 0.6px;
-    color: #FF7A1A;
-    border-bottom: 1px solid #F1E5CF;
+    color: #6A7147;
+    border-bottom: 1px solid #E6E8DC;
     padding-bottom: 5px;
     margin: 0 0 12px;
   }
@@ -181,21 +181,21 @@ export function buildRecipeHtml(
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #1F9D57;
+    color: #6A7147;
     margin: 0 0 6px;
   }
   ul.ingredients { margin: 0; padding-left: 18px; }
   ul.ingredients li { margin-bottom: 4px; font-size: 13.5px; }
   .amount { font-weight: 700; }
-  .note { color: #998A77; }
+  .note { color: #5B5B5B; }
   ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
   ol.steps li { display: flex; gap: 10px; margin-bottom: 10px; font-size: 13.5px; page-break-inside: avoid; }
   .step-num {
     flex: 0 0 22px;
     height: 22px;
     width: 22px;
-    background: #FDEAD0;
-    color: #B5560F;
+    background: #F6F9E8;
+    color: #40442A;
     font-size: 12px;
     font-weight: 700;
     border-radius: 50%;
@@ -203,20 +203,20 @@ export function buildRecipeHtml(
     line-height: 22px;
   }
   .step-text { flex: 1; padding-top: 1px; }
-  .kcal { font-size: 22px; color: #2A1E12; margin: 0 0 10px; }
+  .kcal { font-size: 22px; color: #40442A; margin: 0 0 10px; }
   .kcal strong { font-size: 28px; font-weight: 800; }
   .macros { display: flex; gap: 10px; }
   .macro {
     flex: 1;
     text-align: center;
-    border: 1.5px solid #F1E5CF;
+    border: 1.5px solid #E6E8DC;
     border-radius: 12px;
     padding: 10px 6px;
   }
   .macro-value { font-size: 16px; font-weight: 700; }
   .macro-label { font-size: 10.5px; margin-top: 2px; }
-  .indicative { font-size: 11px; color: #998A77; margin: 10px 0 0; }
-  footer { margin-top: 26px; padding-top: 10px; border-top: 1px solid #F1E5CF; font-size: 10.5px; color: #998A77; text-align: center; }
+  .indicative { font-size: 11px; color: #5B5B5B; margin: 10px 0 0; }
+  footer { margin-top: 26px; padding-top: 10px; border-top: 1px solid #E6E8DC; font-size: 10.5px; color: #5B5B5B; text-align: center; }
 </style>
 </head>
 <body>

@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   sheetBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(34, 23, 8, 0.45)',
+    backgroundColor: 'rgba(40, 44, 26, 0.4)',
   },
   sheet: {
     backgroundColor: colors.background,

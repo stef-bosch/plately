@@ -52,12 +52,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    borderRadius: radius.md,
+    borderRadius: radius.xl,
   },
   primary: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryStrong,
   },
   secondary: {
     backgroundColor: colors.surface,

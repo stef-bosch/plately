@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(34, 23, 8, 0.28)',
+    backgroundColor: 'rgba(40, 44, 26, 0.32)',
   },
   heroLogo: {
     alignItems: 'center',

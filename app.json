@@ -9,13 +9,13 @@
     "newArchEnabled": true,
     "splash": {
       "resizeMode": "contain",
-      "backgroundColor": "#FF7A1A"
+      "backgroundColor": "#6A7147"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "backgroundColor": "#FF7A1A"
+      "backgroundColor": "#6A7147"
     },
     "web": {
       "bundler": "metro"
