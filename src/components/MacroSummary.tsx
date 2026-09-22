@@ -1,7 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing, typography } from '../theme';
+import { Icon } from './BrandIcons';
 
 export interface MacroItem {
   label: string;
@@ -29,39 +31,46 @@ function tint(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-/** Darkened variant of `hex` so the label stays legible on the light tint. */
-function darken(hex: string, factor: number): string {
-  const { r, g, b } = hexToRgb(hex);
-  const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
-  return `rgb(${clamp(r * factor)}, ${clamp(g * factor)}, ${clamp(b * factor)})`;
+/** The little glyph shown for each macro, in its own colour. */
+function MacroGlyph({ label, color }: { label: string; color: string }) {
+  switch (label) {
+    case 'Koolhydraten':
+      return <Icon name="Grain" size={16} color={color} />;
+    case 'Eiwitten':
+      return <Ionicons name="barbell-outline" size={16} color={color} />;
+    case 'Vetten':
+      return <Ionicons name="water-outline" size={16} color={color} />;
+    case 'Vezels':
+      return <Ionicons name="leaf-outline" size={16} color={color} />;
+    default:
+      return <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />;
+  }
 }
 
 /**
- * 2-column grid of macro blocks (koolhydraten, eiwitten, vetten, vezels).
- * Mirrors the recipe-detail nutrition blocks so both screens read the same.
+ * Row of macro blocks (koolhydraten, eiwitten, vetten, vezels). Each is a soft
+ * tinted tile with the macro's icon in a white circle, its name, and a bold
+ * value. Used on the dashboard's nutrition card and the recipe detail.
  */
 export function MacroSummary({ items }: MacroSummaryProps) {
   return (
     <View style={styles.grid}>
-      {items.map((item) => {
-        const textColor = darken(item.color, 0.55);
-        return (
-          <View
-            key={item.label}
-            style={[styles.cell, { backgroundColor: tint(item.color, 0.14) }]}
-          >
-            <View style={styles.head}>
-              <View style={[styles.dot, { backgroundColor: item.color }]} />
-              <Text style={styles.label} numberOfLines={1}>
-                {item.label}
-              </Text>
-            </View>
-            <Text style={[styles.value, { color: textColor }]}>
-              {item.value} {item.unit}
-            </Text>
+      {items.map((item) => (
+        <View
+          key={item.label}
+          style={[styles.cell, { backgroundColor: tint(item.color, 0.16) }]}
+        >
+          <View style={styles.iconCircle}>
+            <MacroGlyph label={item.label} color={item.color} />
           </View>
-        );
-      })}
+          <Text style={styles.label} numberOfLines={2}>
+            {item.label}
+          </Text>
+          <Text style={styles.value}>
+            {item.value} {item.unit}
+          </Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -69,33 +78,32 @@ export function MacroSummary({ items }: MacroSummaryProps) {
 const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: spacing.sm,
   },
   cell: {
-    flexGrow: 1,
-    flexBasis: '47%',
+    flex: 1,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
     gap: spacing.xs,
   },
-  head: {
-    flexDirection: 'row',
+  iconCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.white,
     alignItems: 'center',
-    gap: spacing.xs,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    justifyContent: 'center',
   },
   label: {
     ...typography.caption,
+    fontSize: 10,
+    lineHeight: 13,
+    height: 26, // reserve two lines so long names wrap and values stay aligned
     color: colors.textSecondary,
-    flexShrink: 1,
   },
   value: {
     ...typography.subheading,
+    color: colors.textPrimary,
   },
 });

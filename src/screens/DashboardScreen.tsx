@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { MealIcon } from '../components/BrandIcons';
+import { DishThumb } from '../components/DishThumb';
 import { MacroSummary } from '../components/MacroSummary';
-import { MealCard } from '../components/MealCard';
 import { Screen } from '../components/Screen';
 import { formatDutchDate } from '../constants/labels';
 import { useDayMenu } from '../context/DayMenuContext';
@@ -34,8 +35,8 @@ export function DashboardScreen() {
 
   const today = useMemo(() => new Date(), []);
 
-  // Resolve each entry to its dish and effective slot (legacy entries fall back
-  // to the dish's own mealType); drop dishes that no longer exist.
+  // Resolve entries to dishes + their effective slot (legacy entries fall back
+  // to the dish's mealType); drop dishes that no longer exist.
   const planned = useMemo<PlannedDish[]>(
     () =>
       entries
@@ -49,10 +50,7 @@ export function DashboardScreen() {
     [entries],
   );
 
-  const totals = useMemo(
-    () => sumNutrition(planned.map((p) => p.recipe)),
-    [planned],
-  );
+  const totals = useMemo(() => sumNutrition(planned.map((p) => p.recipe)), [planned]);
   const hasAny = planned.length > 0;
 
   return (
@@ -60,13 +58,19 @@ export function DashboardScreen() {
       {/* Daily nutrition total — only once something is planned. */}
       {hasAny ? (
         <View style={styles.summaryCard}>
-          <View>
-            <Text style={styles.calorieLabel}>Totaal vandaag</Text>
-            <View style={styles.calorieValueRow}>
-              <Text style={styles.calorieValue}>{totals.calories}</Text>
-              <Text style={styles.calorieUnit}>kcal</Text>
+          <View style={styles.summaryHead}>
+            <View style={styles.leafCircle}>
+              <Ionicons name="leaf" size={iconSize.action} color={colors.primary} />
+            </View>
+            <View>
+              <Text style={styles.calorieLabel}>Totaal vandaag</Text>
+              <View style={styles.calorieValueRow}>
+                <Text style={styles.calorieValue}>{totals.calories}</Text>
+                <Text style={styles.calorieUnit}>kcal</Text>
+              </View>
             </View>
           </View>
+
           <MacroSummary
             items={[
               { label: 'Koolhydraten', value: totals.carbs, unit: 'g', color: colors.carbs },
@@ -75,59 +79,88 @@ export function DashboardScreen() {
               { label: 'Vezels', value: totals.fiber, unit: 'g', color: colors.fiber },
             ]}
           />
-          <Text style={styles.indicative}>Voedingswaarden zijn indicatief</Text>
+
+          <View style={styles.indicativeRow}>
+            <Ionicons name="information-circle-outline" size={iconSize.badge} color={colors.textMuted} />
+            <Text style={styles.indicative}>Voedingswaarden zijn indicatief</Text>
+          </View>
         </View>
       ) : null}
 
-      {/* Day planner: one row per meal moment. */}
+      {/* Day planner: one card per meal moment. */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Mijn dagmenu</Text>
         <View style={styles.planner}>
           {MOMENTS.map(({ slot, label }) => {
             const dishes = planned.filter((p) => p.slot === slot);
-            return (
-              <View key={slot} style={styles.moment}>
-                <Text style={styles.momentLabel}>{label}</Text>
-                {dishes.map((dish) => (
-                  <MealCard
-                    key={dish.entryId}
-                    mealType={slot}
-                    recipe={dish.recipe}
-                    hideLabel
-                    onPress={() => openRecipe(dish.recipe.id)}
-                    onRemove={() => removeFromDayMenu(dish.entryId)}
-                  />
-                ))}
-                {dishes.length === 0 ? (
+            if (dishes.length === 0) {
+              return (
+                <Pressable
+                  key={slot}
+                  onPress={() => navigation.navigate('KiesRecept', { slot })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${label}: gerecht plannen`}
+                  style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+                >
+                  <View style={styles.emptyThumb}>
+                    <MealIcon mealType={slot} size={22} color={colors.primary} />
+                  </View>
+                  <View style={styles.body}>
+                    <Text style={styles.momentLabel}>{label}</Text>
+                    <Text style={styles.title}>Nog niets gepland</Text>
+                    <Text style={styles.subtitle}>Voeg een recept toe</Text>
+                  </View>
+                  <View style={styles.action}>
+                    <Ionicons name="add" size={iconSize.action} color={colors.primary} />
+                  </View>
+                </Pressable>
+              );
+            }
+            return dishes.map((dish) => (
+              <Pressable
+                key={dish.entryId}
+                onPress={() => openRecipe(dish.recipe.id)}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+              >
+                <View style={styles.thumbWrap}>
+                  <DishThumb recipe={dish.recipe} style={styles.thumb} iconSize={22} />
                   <Pressable
-                    onPress={() => navigation.navigate('KiesRecept', { slot })}
+                    onPress={() => removeFromDayMenu(dish.entryId)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${label}: gerecht plannen`}
-                    style={({ pressed }) => [
-                      styles.placeholder,
-                      pressed && styles.pressed,
-                    ]}
+                    accessibilityLabel={`${dish.recipe.title} uit dagmenu verwijderen`}
+                    hitSlop={10}
+                    style={styles.removeBadge}
                   >
-                    <View style={styles.addIcon}>
-                      <Ionicons name="add" size={iconSize.action} color={colors.primary} />
-                    </View>
-                    <Text style={styles.placeholderText}>Nog niets gepland</Text>
+                    <Ionicons name="close" size={13} color={colors.textSecondary} />
                   </Pressable>
-                ) : (
-                  <Pressable
-                    onPress={() => navigation.navigate('KiesRecept', { slot })}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${label}: nog een gerecht toevoegen`}
-                    style={({ pressed }) => [styles.addMore, pressed && styles.pressed]}
-                  >
-                    <Ionicons name="add" size={iconSize.badge} color={colors.primary} />
-                    <Text style={styles.addMoreText}>Gerecht toevoegen</Text>
-                  </Pressable>
-                )}
-              </View>
-            );
+                </View>
+                <View style={styles.body}>
+                  <Text style={styles.momentLabel}>{label}</Text>
+                  <Text style={styles.title} numberOfLines={2}>
+                    {dish.recipe.title}
+                  </Text>
+                  <Text style={styles.subtitle}>
+                    {dish.recipe.nutrition.calories} kcal ·{' '}
+                    {dish.recipe.prepTime + dish.recipe.cookTime} min
+                  </Text>
+                </View>
+                <View style={styles.action}>
+                  <Ionicons name="chevron-forward" size={iconSize.action} color={colors.primary} />
+                </View>
+              </Pressable>
+            ));
           })}
         </View>
+
+        <Pressable
+          onPress={() => navigation.navigate('Recepten')}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.addCta, pressed && styles.ctaPressed]}
+        >
+          <Ionicons name="add" size={22} color={colors.textOnPrimary} />
+          <Text style={styles.addCtaText}>Recept toevoegen</Text>
+        </Pressable>
       </View>
     </Screen>
   );
@@ -137,9 +170,22 @@ const styles = StyleSheet.create({
   summaryCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
-    padding: spacing.xl,
+    padding: spacing.lg,
     gap: spacing.lg,
     ...shadow.card,
+  },
+  summaryHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  leafCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   calorieLabel: {
     ...typography.label,
@@ -160,10 +206,15 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 6,
   },
+  indicativeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
   indicative: {
     ...typography.caption,
     color: colors.textMuted,
-    textAlign: 'center',
   },
   section: {
     gap: spacing.md,
@@ -173,54 +224,91 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   planner: {
-    gap: spacing.lg,
+    gap: spacing.md,
   },
-  moment: {
-    gap: spacing.sm,
-  },
-  momentLabel: {
-    ...typography.label,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  placeholder: {
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
     backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    ...shadow.soft,
   },
-  addIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  thumbWrap: {
+    position: 'relative',
+  },
+  thumb: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
+  },
+  removeBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyThumb: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  body: {
+    flex: 1,
+    gap: 2,
+  },
+  momentLabel: {
+    ...typography.caption,
+    color: colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  title: {
+    ...typography.subheading,
+    color: colors.textPrimary,
+  },
+  subtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  action: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  placeholderText: {
-    ...typography.bodyStrong,
-    color: colors.textSecondary,
-  },
-  addMore: {
+  addCta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.xs,
-    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: radius.xl,
+    backgroundColor: colors.primaryStrong,
   },
-  addMoreText: {
-    ...typography.label,
-    color: colors.primary,
+  addCtaText: {
+    ...typography.bodyStrong,
+    color: colors.textOnPrimary,
   },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.85,
+  },
+  ctaPressed: {
+    opacity: 0.9,
   },
 });
