@@ -77,8 +77,6 @@ export function InstellingenScreen() {
               Voor hoeveel personen wil je standaard recepten zien?
             </Text>
           </View>
-        </View>
-        <View style={styles.stepperRow}>
           <View style={styles.stepperPill}>
             <Stepper
               value={settings.defaultServings}
@@ -215,11 +213,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  stepperRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: spacing.md,
-  },
   iconCircle: {
     width: 44,
     height: 44,
@@ -266,6 +259,7 @@ const styles = StyleSheet.create({
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: spacing.sm,
   },
   chip: {
