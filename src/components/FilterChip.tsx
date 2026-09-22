@@ -16,18 +16,33 @@ interface FilterChipProps {
   active: boolean;
   onPress: () => void;
   /** Optional leading icon shown when the chip is off (a checkmark replaces it
-   * when the chip is on). */
+   * when the chip is on). Ignored by the `plain` variant. */
   icon?: React.ReactNode;
+  /**
+   * `check` (default) shows a checkmark when active and the optional icon when
+   * off — used for dietary preferences. `plain` just recolours the pill (filled
+   * olive when active) with centred text and no glyph — used in the filter
+   * sheet where several chips read as a clean grid.
+   */
+  variant?: 'check' | 'plain';
   /** Extra container styling, e.g. to size the chip inside a grid. */
   style?: StyleProp<ViewStyle>;
 }
 
 /**
  * Selectable pill for filters and dietary preferences. Interactive by design:
- * a bordered outline when off, a filled olive chip with a checkmark when on —
- * so a selected state (and multi-select) reads at a glance.
+ * a bordered outline when off, a filled olive chip when on — so a selected
+ * state (and multi-select) reads at a glance.
  */
-export function FilterChip({ label, active, onPress, icon, style }: FilterChipProps) {
+export function FilterChip({
+  label,
+  active,
+  onPress,
+  icon,
+  variant = 'check',
+  style,
+}: FilterChipProps) {
+  const plain = variant === 'plain';
   return (
     <Pressable
       onPress={onPress}
@@ -41,7 +56,7 @@ export function FilterChip({ label, active, onPress, icon, style }: FilterChipPr
       ]}
     >
       <View style={styles.inner}>
-        {active ? (
+        {plain ? null : active ? (
           <Ionicons name="checkmark" size={15} color={colors.textOnPrimary} />
         ) : (
           icon ?? null

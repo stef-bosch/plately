@@ -12,16 +12,11 @@ import {
   View,
 } from 'react-native';
 
-import { Icon } from '../components/BrandIcons';
+import { Icon, type BrandIconName } from '../components/BrandIcons';
 import { FadeInView } from '../components/FadeInView';
 import { FilterChip } from '../components/FilterChip';
 import { RecipeCard } from '../components/RecipeCard';
-import {
-  MEAL_CATEGORIES,
-  OTHER_CATEGORIES,
-  dishCategory,
-  seasonLabel,
-} from '../constants/labels';
+import { dishCategory, seasonLabel } from '../constants/labels';
 import { useSettings } from '../context/SettingsContext';
 import { getAllRecipes } from '../data/recipes';
 import { useOpenRecipe } from '../navigation/hooks';
@@ -29,64 +24,129 @@ import { recipeMatchesDiets } from '../utils/resolveRecipe';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 import type { Season } from '../types';
 
-/** A dish category name, or 'alle' for no category filter. */
-type CategoryFilter = string;
-type SeasonFilter = Season | 'alle';
+/**
+ * A selectable category. `value` is the underlying `dishCategory()` a recipe
+ * carries; `label` is the shorter chip text from the mockup.
+ */
+interface CategoryOption {
+  value: string;
+  label: string;
+  icon: BrandIconName;
+}
 
-const SEASON_FILTERS: SeasonFilter[] = ['alle', 'lente-zomer', 'herfst-winter'];
+/** "Moment" = when you'd eat it (derived from a recipe's mealType). */
+const MOMENT_OPTIONS: CategoryOption[] = [
+  { value: 'Ontbijt', label: 'Ontbijt', icon: 'Breakfast' },
+  { value: 'Lunch', label: 'Lunch', icon: 'Lunch' },
+  { value: 'Diner', label: 'Diner', icon: 'Dinner' },
+  { value: 'Tussendoortjes', label: 'Tussendoor', icon: 'Snack' },
+];
+
+/** "Type gerecht" = the kind of dish (derived from a recipe's overigCategory). */
+const TYPE_OPTIONS: CategoryOption[] = [
+  { value: 'Voorgerechten', label: 'Voorgerecht', icon: 'ChefHat' },
+  { value: 'Hoofdgerechten', label: 'Hoofdgerecht', icon: 'ChefHat' },
+  { value: 'Bijgerechten', label: 'Bijgerecht', icon: 'ChefHat' },
+  { value: 'Sauzen', label: 'Saus', icon: 'ChefHat' },
+  { value: 'Desserts & gebak', label: 'Dessert', icon: 'ChefHat' },
+  { value: 'Borrelhapjes & snacks', label: 'Snack', icon: 'ChefHat' },
+  { value: 'Dranken & cocktails', label: 'Drank', icon: 'ChefHat' },
+];
+
+const SEASONS: Season[] = ['lente-zomer', 'herfst-winter'];
+
+/** Look up a category's chip label + icon by its stored value (both groups). */
+const CATEGORY_BY_VALUE: Record<string, CategoryOption> = Object.fromEntries(
+  [...MOMENT_OPTIONS, ...TYPE_OPTIONS].map((o) => [o.value, o]),
+);
+
+function recipeCountLabel(n: number): string {
+  return `${n} ${n === 1 ? 'recept' : 'recepten'}`;
+}
 
 export function ReceptenScreen() {
   const openRecipe = useOpenRecipe();
   const { settings } = useSettings();
 
   const [query, setQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('alle');
-  const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>('alle');
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   // Available height for the filter sheet, measured from its full-screen wrap so
   // the sheet can be capped and its groups scroll on small screens.
   const [sheetAreaHeight, setSheetAreaHeight] = useState(0);
 
-  // The recipe library (weekmenu dishes live in their own collection).
   const allRecipes = useMemo(() => getAllRecipes(), []);
+
+  // Only offer category chips that at least one recipe actually uses, so the
+  // sheet never shows a filter that can only ever return zero results.
+  const presentCategories = useMemo(
+    () => new Set(allRecipes.map((r) => dishCategory(r))),
+    [allRecipes],
+  );
+  const momentOptions = MOMENT_OPTIONS.filter((o) => presentCategories.has(o.value));
+  const typeOptions = TYPE_OPTIONS.filter((o) => presentCategories.has(o.value));
 
   const filteredRecipes = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allRecipes.filter((recipe) => {
-      // Only show dishes that meet every selected dietary preference.
       if (!recipeMatchesDiets(recipe, settings.dietaryPreferences)) return false;
       const matchesQuery = q === '' || recipe.title.toLowerCase().includes(q);
-      const matchesSeason =
-        seasonFilter === 'alle' || recipe.seasons.includes(seasonFilter);
       const matchesCategory =
-        categoryFilter === 'alle' || dishCategory(recipe) === categoryFilter;
-      return matchesQuery && matchesSeason && matchesCategory;
+        selectedCategories.length === 0 ||
+        selectedCategories.includes(dishCategory(recipe));
+      const matchesSeason =
+        selectedSeasons.length === 0 ||
+        recipe.seasons.some((s) => selectedSeasons.includes(s));
+      return matchesQuery && matchesCategory && matchesSeason;
     });
-  }, [allRecipes, query, categoryFilter, seasonFilter, settings.dietaryPreferences]);
+  }, [allRecipes, query, selectedCategories, selectedSeasons, settings.dietaryPreferences]);
 
   const data = filteredRecipes;
+  const countLabel = `${recipeCountLabel(filteredRecipes.length)} gevonden`;
+  const activeFilterCount = selectedCategories.length + selectedSeasons.length;
 
-  const countLabel = `${filteredRecipes.length} ${
-    filteredRecipes.length === 1 ? 'recept' : 'recepten'
-  } gevonden`;
-
-  // How many filters are narrowing the current list (used for the badge).
-  const activeFilterCount =
-    (categoryFilter !== 'alle' ? 1 : 0) + (seasonFilter !== 'alle' ? 1 : 0);
-
+  const toggleCategory = (value: string) =>
+    setSelectedCategories((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+    );
+  const toggleSeason = (season: Season) =>
+    setSelectedSeasons((prev) =>
+      prev.includes(season) ? prev.filter((s) => s !== season) : [...prev, season],
+    );
   const resetFilters = () => {
-    setCategoryFilter('alle');
-    setSeasonFilter('alle');
+    setSelectedCategories([]);
+    setSelectedSeasons([]);
   };
 
-  const searchVisible = searchOpen || query.length > 0;
-  const searchPlaceholder = 'Zoeken op naam...';
+  // The chips shown under the search bar, one per active filter.
+  const appliedFilters = [
+    ...selectedCategories.map((value) => {
+      const opt = CATEGORY_BY_VALUE[value];
+      return {
+        key: `cat:${value}`,
+        label: opt?.label ?? value,
+        icon: <Icon name={opt?.icon ?? 'ChefHat'} size={15} color={colors.primary} />,
+        onRemove: () => toggleCategory(value),
+      };
+    }),
+    ...selectedSeasons.map((season) => ({
+      key: `season:${season}`,
+      label: seasonLabel[season],
+      icon: (
+        <Icon
+          name={season === 'lente-zomer' ? 'Sun' : 'Snow'}
+          size={15}
+          color={colors.primary}
+        />
+      ),
+      onRemove: () => toggleSeason(season),
+    })),
+  ];
 
   // Slide-in for the in-tree filter sheet (kept inside the app container rather
   // than a Modal, which on web would portal to full browser width).
   const sheetAnim = useRef(new Animated.Value(0)).current;
-  // Extra downward offset driven by dragging the grab handle.
   const dragY = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!filtersOpen) return;
@@ -100,24 +160,20 @@ export function ReceptenScreen() {
   }, [filtersOpen, sheetAnim, dragY]);
   const sheetTranslateY = sheetAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [480, 0],
+    outputRange: [560, 0],
   });
 
-  // Let the user swipe the sheet down by its handle to dismiss it.
   const sheetPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_evt, gesture) => gesture.dy > 4,
       onPanResponderMove: (_evt, gesture) => {
-        if (gesture.dy > 0) {
-          dragY.setValue(gesture.dy);
-        }
+        if (gesture.dy > 0) dragY.setValue(gesture.dy);
       },
       onPanResponderRelease: (_evt, gesture) => {
-        // Far enough or a quick flick down → close; otherwise snap back.
         if (gesture.dy > 110 || gesture.vy > 0.8) {
           Animated.timing(dragY, {
-            toValue: 480,
+            toValue: 560,
             duration: 180,
             useNativeDriver: true,
           }).start(() => {
@@ -144,195 +200,249 @@ export function ReceptenScreen() {
 
   return (
     <View style={styles.screen}>
-    <FlatList
-      style={styles.list}
-      contentContainerStyle={styles.content}
-      data={data}
-      keyExtractor={(item) => item.id}
-      showsVerticalScrollIndicator={false}
-      renderItem={({ item, index }) => (
-        <FadeInView delay={Math.min(index, 6) * 55}>
-          <RecipeCard recipe={item} onPress={() => openRecipe(item.id)} />
-        </FadeInView>
-      )}
-      ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
-      ListHeaderComponent={
-        <View style={styles.header}>
-          <Text style={styles.title}>Recepten</Text>
-          <Text style={styles.subtitle}>{countLabel}</Text>
+      <FlatList
+        style={styles.list}
+        contentContainerStyle={styles.content}
+        data={data}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item, index }) => (
+          <FadeInView delay={Math.min(index, 6) * 55}>
+            <RecipeCard recipe={item} onPress={() => openRecipe(item.id)} />
+          </FadeInView>
+        )}
+        ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.title}>Recepten</Text>
+            <Text style={styles.subtitle}>{countLabel}</Text>
 
-          {/* Compact toolbar: search toggle + filters sheet trigger */}
-          <View style={styles.toolbar}>
-            <Pressable
-              onPress={() => setSearchOpen((open) => !open)}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: searchVisible }}
-              style={({ pressed }) => [
-                styles.toolbarButton,
-                searchVisible && styles.toolbarButtonActive,
-                pressed && styles.toolbarButtonPressed,
-              ]}
-            >
-              <Icon name="Search" size={iconSize.action} color={colors.textSecondary} />
-              <Text style={styles.toolbarButtonText}>Zoeken</Text>
-            </Pressable>
+            {/* Search field + filters trigger, always visible */}
+            <View style={styles.toolbar}>
+              <View style={styles.searchBox}>
+                <Icon name="Search" size={iconSize.action} color={colors.textMuted} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Zoek recepten"
+                  placeholderTextColor={colors.textMuted}
+                  value={query}
+                  onChangeText={setQuery}
+                  returnKeyType="search"
+                />
+                {query.length > 0 ? (
+                  <Ionicons
+                    name="close-circle"
+                    size={iconSize.action}
+                    color={colors.textMuted}
+                    onPress={() => setQuery('')}
+                  />
+                ) : null}
+              </View>
 
-            <Pressable
-              onPress={() => setFiltersOpen(true)}
-              accessibilityRole="button"
-              style={({ pressed }) => [
-                styles.toolbarButton,
-                activeFilterCount > 0 && styles.toolbarButtonActive,
-                pressed && styles.toolbarButtonPressed,
-              ]}
-            >
-              <Ionicons
-                name="options-outline"
-                size={iconSize.action}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.toolbarButtonText}>Filters</Text>
-              {activeFilterCount > 0 ? (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{activeFilterCount}</Text>
-                </View>
-              ) : null}
-            </Pressable>
-          </View>
-
-          {searchVisible ? (
-            <View style={styles.searchBox}>
-              <Icon name="Search" size={iconSize.action} color={colors.textMuted} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder={searchPlaceholder}
-                placeholderTextColor={colors.textMuted}
-                value={query}
-                onChangeText={setQuery}
-                returnKeyType="search"
-                autoFocus
-              />
-              <Ionicons
-                name="close-circle"
-                size={iconSize.action}
-                color={colors.textMuted}
-                onPress={() => {
-                  setQuery('');
-                  setSearchOpen(false);
-                }}
-              />
-            </View>
-          ) : null}
-
-        </View>
-      }
-      ListEmptyComponent={
-        <View style={styles.empty}>
-          <Ionicons name="sad-outline" size={iconSize.hero} color={colors.textMuted} />
-          <Text style={styles.emptyText}>Geen recepten gevonden</Text>
-        </View>
-      }
-    />
-
-    {filtersOpen ? (
-      <View
-        style={styles.sheetWrap}
-        onLayout={(e) => setSheetAreaHeight(e.nativeEvent.layout.height)}
-      >
-        <Animated.View style={[styles.sheetBackdrop, { opacity: sheetAnim }]}>
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={() => setFiltersOpen(false)}
-            accessibilityRole="button"
-            accessibilityLabel="Filters sluiten"
-          />
-        </Animated.View>
-        <Animated.View
-          style={[
-            styles.sheet,
-            sheetAreaHeight > 0 ? { maxHeight: sheetAreaHeight } : null,
-            { transform: [{ translateY: Animated.add(sheetTranslateY, dragY) }] },
-          ]}
-        >
-          <View
-            style={styles.sheetHandleArea}
-            {...sheetPanResponder.panHandlers}
-            accessibilityRole="button"
-            accessibilityLabel="Sleep omlaag om filters te sluiten"
-          >
-            <View style={styles.sheetHandle} />
-          </View>
-          <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Filters</Text>
-            {activeFilterCount > 0 ? (
-              <Pressable onPress={resetFilters} accessibilityRole="button">
-                <Text style={styles.sheetReset}>Wis filters</Text>
+              <Pressable
+                onPress={() => setFiltersOpen(true)}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.filtersButton,
+                  activeFilterCount > 0 && styles.filtersButtonActive,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Ionicons
+                  name="options-outline"
+                  size={iconSize.action}
+                  color={colors.textSecondary}
+                />
+                <Text style={styles.filtersButtonText}>Filters</Text>
+                {activeFilterCount > 0 ? (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{activeFilterCount}</Text>
+                  </View>
+                ) : null}
               </Pressable>
+            </View>
+
+            {/* Applied filters, so it's clear what's narrowing the list */}
+            {appliedFilters.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.appliedRow}
+              >
+                {appliedFilters.map((f) => (
+                  <Pressable
+                    key={f.key}
+                    onPress={f.onRemove}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${f.label} filter verwijderen`}
+                    style={({ pressed }) => [
+                      styles.appliedChip,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    {f.icon}
+                    <Text style={styles.appliedChipText}>{f.label}</Text>
+                    <Ionicons name="close" size={15} color={colors.primary} />
+                  </Pressable>
+                ))}
+              </ScrollView>
             ) : null}
           </View>
+        }
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Ionicons name="sad-outline" size={iconSize.hero} color={colors.textMuted} />
+            <Text style={styles.emptyText}>Geen recepten gevonden</Text>
+          </View>
+        }
+      />
 
-          <ScrollView
-            style={styles.sheetScroll}
-            contentContainerStyle={styles.sheetScrollContent}
-            showsVerticalScrollIndicator={false}
+      {filtersOpen ? (
+        <View
+          style={styles.sheetWrap}
+          onLayout={(e) => setSheetAreaHeight(e.nativeEvent.layout.height)}
+        >
+          <Animated.View style={[styles.sheetBackdrop, { opacity: sheetAnim }]}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setFiltersOpen(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Filters sluiten"
+            />
+          </Animated.View>
+          <Animated.View
+            style={[
+              styles.sheet,
+              sheetAreaHeight > 0 ? { maxHeight: sheetAreaHeight } : null,
+              { transform: [{ translateY: Animated.add(sheetTranslateY, dragY) }] },
+            ]}
           >
-            <View style={styles.sheetGroup}>
-              <Text style={styles.filterLabel}>Maaltijd</Text>
-              <View style={styles.chipRow}>
-                {['alle', ...MEAL_CATEGORIES].map((c) => (
-                  <FilterChip
-                    key={c}
-                    label={c === 'alle' ? 'Alle' : c}
-                    active={categoryFilter === c}
-                    onPress={() => setCategoryFilter(c)}
-                  />
-                ))}
-              </View>
-              <Text style={[styles.filterLabel, styles.filterSubLabel]}>Overig</Text>
-              <View style={styles.chipRow}>
-                {OTHER_CATEGORIES.map((c) => (
-                  <FilterChip
-                    key={c}
-                    label={c}
-                    active={categoryFilter === c}
-                    onPress={() => setCategoryFilter(c)}
-                  />
-                ))}
-              </View>
+            <View
+              style={styles.sheetHandleArea}
+              {...sheetPanResponder.panHandlers}
+              accessibilityRole="button"
+              accessibilityLabel="Sleep omlaag om filters te sluiten"
+            >
+              <View style={styles.sheetHandle} />
             </View>
 
-            <View style={styles.sheetGroup}>
-              <Text style={styles.filterLabel}>Seizoen</Text>
-              <View style={styles.chipRow}>
-                {SEASON_FILTERS.map((s) => (
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Filters</Text>
+              <Pressable
+                onPress={resetFilters}
+                accessibilityRole="button"
+                disabled={activeFilterCount === 0}
+              >
+                <Text
+                  style={[
+                    styles.sheetReset,
+                    activeFilterCount === 0 && styles.sheetResetDisabled,
+                  ]}
+                >
+                  Wis alles
+                </Text>
+              </Pressable>
+            </View>
+
+            <ScrollView
+              style={styles.sheetScroll}
+              contentContainerStyle={styles.sheetScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <FilterGroup
+                icon={<Icon name="Breakfast" size={22} color={colors.primary} />}
+                title="Moment"
+                subtitle="Wanneer wil je koken?"
+              >
+                {momentOptions.map((o) => (
+                  <FilterChip
+                    key={o.value}
+                    label={o.label}
+                    variant="plain"
+                    active={selectedCategories.includes(o.value)}
+                    onPress={() => toggleCategory(o.value)}
+                  />
+                ))}
+              </FilterGroup>
+
+              {typeOptions.length > 0 ? (
+                <>
+                  <View style={styles.divider} />
+                  <FilterGroup
+                    icon={<Icon name="ChefHat" size={22} color={colors.primary} />}
+                    title="Type gerecht"
+                    subtitle="Wat voor gerecht zoek je?"
+                  >
+                    {typeOptions.map((o) => (
+                      <FilterChip
+                        key={o.value}
+                        label={o.label}
+                        variant="plain"
+                        active={selectedCategories.includes(o.value)}
+                        onPress={() => toggleCategory(o.value)}
+                      />
+                    ))}
+                  </FilterGroup>
+                </>
+              ) : null}
+
+              <View style={styles.divider} />
+              <FilterGroup
+                icon={<Ionicons name="leaf-outline" size={22} color={colors.primary} />}
+                title="Seizoen"
+                subtitle="Welk seizoen past bij je stemming?"
+              >
+                {SEASONS.map((s) => (
                   <FilterChip
                     key={s}
-                    label={s === 'alle' ? 'Alle' : seasonLabel[s]}
-                    active={seasonFilter === s}
-                    onPress={() => setSeasonFilter(s)}
+                    label={seasonLabel[s]}
+                    variant="plain"
+                    active={selectedSeasons.includes(s)}
+                    onPress={() => toggleSeason(s)}
                   />
                 ))}
-              </View>
-            </View>
-          </ScrollView>
+              </FilterGroup>
+            </ScrollView>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.sheetApply,
-              pressed && styles.toolbarButtonPressed,
-            ]}
-            onPress={() => setFiltersOpen(false)}
-            accessibilityRole="button"
-          >
-            <Text style={styles.sheetApplyText}>
-              {`Toon ${filteredRecipes.length} ${
-                filteredRecipes.length === 1 ? 'recept' : 'recepten'
-              }`}
-            </Text>
-          </Pressable>
-        </Animated.View>
+            <Pressable
+              style={({ pressed }) => [styles.sheetApply, pressed && styles.pressed]}
+              onPress={() => setFiltersOpen(false)}
+              accessibilityRole="button"
+            >
+              <Text style={styles.sheetApplyText}>
+                {`Toon ${recipeCountLabel(filteredRecipes.length)}`}
+              </Text>
+              <Ionicons name="arrow-forward" size={20} color={colors.textOnPrimary} />
+            </Pressable>
+          </Animated.View>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** One labelled group of chips in the filter sheet. */
+function FilterGroup({
+  icon,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={styles.group}>
+      <View style={styles.groupHead}>
+        <View style={styles.groupIcon}>{icon}</View>
+        <View style={styles.groupHeadText}>
+          <Text style={styles.groupTitle}>{title}</Text>
+          <Text style={styles.groupSubtitle}>{subtitle}</Text>
+        </View>
       </View>
-    ) : null}
+      <View style={styles.chipRow}>{children}</View>
     </View>
   );
 }
@@ -367,29 +477,47 @@ const styles = StyleSheet.create({
   toolbar: {
     flexDirection: 'row',
     gap: spacing.sm,
+    alignItems: 'stretch',
   },
-  toolbarButton: {
+  searchBox: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchInput: {
+    flex: 1,
+    ...typography.body,
+    color: colors.textPrimary,
+    padding: 0,
+  },
+  filtersButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radius.md,
-    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  toolbarButtonActive: {
+  filtersButtonActive: {
     borderColor: colors.primary,
     backgroundColor: colors.primarySoft,
   },
-  toolbarButtonPressed: {
-    opacity: 0.85,
-  },
-  toolbarButtonText: {
+  filtersButtonText: {
     ...typography.label,
     color: colors.textSecondary,
+  },
+  pressed: {
+    opacity: 0.85,
   },
   badge: {
     minWidth: 20,
@@ -404,16 +532,24 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textOnPrimary,
   },
-  searchBox: {
+  appliedRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  appliedChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    gap: spacing.xs,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  appliedChipText: {
+    ...typography.label,
+    color: colors.primary,
   },
   sheetWrap: {
     ...StyleSheet.absoluteFillObject,
@@ -431,8 +567,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
     gap: spacing.lg,
-    // Shrink to the full-screen wrap so the sheet never runs off-screen; the
-    // groups scroll inside (sheetScroll) when they don't fit.
     flexShrink: 1,
     ...shadow.card,
   },
@@ -456,45 +590,68 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sheetTitle: {
-    ...typography.heading,
+    ...typography.display,
     color: colors.textPrimary,
   },
   sheetReset: {
-    ...typography.label,
+    ...typography.bodyStrong,
     color: colors.primary,
+    textDecorationLine: 'underline',
   },
-  sheetGroup: {
+  sheetResetDisabled: {
+    color: colors.textMuted,
+    textDecorationLine: 'none',
+  },
+  group: {
     gap: spacing.md,
   },
-  sheetApply: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
+  groupHead: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.xs,
+    gap: spacing.md,
   },
-  sheetApplyText: {
-    ...typography.bodyStrong,
-    color: colors.textOnPrimary,
+  groupIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  searchInput: {
+  groupHeadText: {
     flex: 1,
-    ...typography.body,
+    gap: 2,
+  },
+  groupTitle: {
+    ...typography.heading,
     color: colors.textPrimary,
-    padding: 0,
   },
-  filterLabel: {
-    ...typography.label,
+  groupSubtitle: {
+    ...typography.body,
     color: colors.textSecondary,
-    marginTop: spacing.xs,
   },
-  filterSubLabel: {
-    marginTop: spacing.sm,
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
+  },
+  sheetApply: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing.lg,
+    marginTop: spacing.xs,
+  },
+  sheetApplyText: {
+    ...typography.bodyStrong,
+    color: colors.textOnPrimary,
   },
   empty: {
     alignItems: 'center',
