@@ -92,7 +92,7 @@ export function InstellingenScreen() {
         subtitle="Selecteer alle dieetvoorkeuren die voor jou van toepassing zijn."
       >
         <View style={styles.card}>
-          <View style={styles.chips}>
+          <View style={[styles.chips, styles.chipsLeft]}>
             {DIETS.map((d) => (
               <FilterChip
                 key={d}
@@ -261,6 +261,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: spacing.sm,
+  },
+  chipsLeft: {
+    justifyContent: 'flex-start',
   },
   chip: {
     paddingVertical: spacing.md,
