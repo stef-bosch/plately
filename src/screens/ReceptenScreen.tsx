@@ -16,13 +16,13 @@ import { Icon, type BrandIconName } from '../components/BrandIcons';
 import { FadeInView } from '../components/FadeInView';
 import { FilterChip } from '../components/FilterChip';
 import { RecipeCard } from '../components/RecipeCard';
-import { dishCategory, seasonLabel } from '../constants/labels';
+import { dietaryLabel, dishCategory, seasonLabel } from '../constants/labels';
 import { useSettings } from '../context/SettingsContext';
 import { getAllRecipes } from '../data/recipes';
 import { useOpenRecipe } from '../navigation/hooks';
 import { recipeMatchesDiets } from '../utils/resolveRecipe';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
-import type { Season } from '../types';
+import type { DietaryPreference, Season } from '../types';
 
 /**
  * A selectable category. `value` is the underlying `dishCategory()` a recipe
@@ -55,23 +55,51 @@ const TYPE_OPTIONS: CategoryOption[] = [
 
 const SEASONS: Season[] = ['lente-zomer', 'herfst-winter'];
 
+const DIETS: DietaryPreference[] = [
+  'vegetarisch',
+  'vegan',
+  'lactosevrij',
+  'glutenvrij',
+  'halal',
+];
+
+/** Max total-time (prep + cook) options, in minutes. */
+const TIME_OPTIONS = [15, 30, 45, 60] as const;
+
 /** Look up a category's chip label + icon by its stored value (both groups). */
 const CATEGORY_BY_VALUE: Record<string, CategoryOption> = Object.fromEntries(
   [...MOMENT_OPTIONS, ...TYPE_OPTIONS].map((o) => [o.value, o]),
 );
 
+const DIET_ICON: Record<DietaryPreference, React.ComponentProps<typeof Ionicons>['name']> = {
+  vegetarisch: 'leaf-outline',
+  vegan: 'leaf-outline',
+  lactosevrij: 'water-outline',
+  glutenvrij: 'nutrition-outline',
+  halal: 'moon-outline',
+};
+
 function recipeCountLabel(n: number): string {
   return `${n} ${n === 1 ? 'recept' : 'recepten'}`;
 }
 
+function totalTime(recipe: { prepTime: number; cookTime: number }): number {
+  return recipe.prepTime + recipe.cookTime;
+}
+
 export function ReceptenScreen() {
   const openRecipe = useOpenRecipe();
-  const { settings } = useSettings();
+  const { settings, updateSettings } = useSettings();
 
   const [query, setQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([]);
+  const [maxTime, setMaxTime] = useState<number | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // The dietary preferences double as a recipe filter here; they live in the
+  // global settings so the choice stays in sync with the Instellingen screen.
+  const selectedDiets = settings.dietaryPreferences;
   // Available height for the filter sheet, measured from its full-screen wrap so
   // the sheet can be capped and its groups scroll on small screens.
   const [sheetAreaHeight, setSheetAreaHeight] = useState(0);
@@ -90,7 +118,7 @@ export function ReceptenScreen() {
   const filteredRecipes = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allRecipes.filter((recipe) => {
-      if (!recipeMatchesDiets(recipe, settings.dietaryPreferences)) return false;
+      if (!recipeMatchesDiets(recipe, selectedDiets)) return false;
       const matchesQuery = q === '' || recipe.title.toLowerCase().includes(q);
       const matchesCategory =
         selectedCategories.length === 0 ||
@@ -98,13 +126,18 @@ export function ReceptenScreen() {
       const matchesSeason =
         selectedSeasons.length === 0 ||
         recipe.seasons.some((s) => selectedSeasons.includes(s));
-      return matchesQuery && matchesCategory && matchesSeason;
+      const matchesTime = maxTime === null || totalTime(recipe) <= maxTime;
+      return matchesQuery && matchesCategory && matchesSeason && matchesTime;
     });
-  }, [allRecipes, query, selectedCategories, selectedSeasons, settings.dietaryPreferences]);
+  }, [allRecipes, query, selectedCategories, selectedSeasons, maxTime, selectedDiets]);
 
   const data = filteredRecipes;
   const countLabel = `${recipeCountLabel(filteredRecipes.length)} gevonden`;
-  const activeFilterCount = selectedCategories.length + selectedSeasons.length;
+  const activeFilterCount =
+    selectedCategories.length +
+    selectedSeasons.length +
+    selectedDiets.length +
+    (maxTime !== null ? 1 : 0);
 
   const toggleCategory = (value: string) =>
     setSelectedCategories((prev) =>
@@ -114,9 +147,17 @@ export function ReceptenScreen() {
     setSelectedSeasons((prev) =>
       prev.includes(season) ? prev.filter((s) => s !== season) : [...prev, season],
     );
+  const toggleDiet = (diet: DietaryPreference) =>
+    updateSettings({
+      dietaryPreferences: selectedDiets.includes(diet)
+        ? selectedDiets.filter((d) => d !== diet)
+        : [...selectedDiets, diet],
+    });
   const resetFilters = () => {
     setSelectedCategories([]);
     setSelectedSeasons([]);
+    setMaxTime(null);
+    updateSettings({ dietaryPreferences: [] });
   };
 
   // The chips shown under the search bar, one per active filter.
@@ -142,6 +183,22 @@ export function ReceptenScreen() {
       ),
       onRemove: () => toggleSeason(season),
     })),
+    ...selectedDiets.map((diet) => ({
+      key: `diet:${diet}`,
+      label: dietaryLabel[diet],
+      icon: <Ionicons name={DIET_ICON[diet]} size={15} color={colors.primary} />,
+      onRemove: () => toggleDiet(diet),
+    })),
+    ...(maxTime !== null
+      ? [
+          {
+            key: 'time',
+            label: `≤ ${maxTime} min`,
+            icon: <Icon name="Clock" size={15} color={colors.primary} />,
+            onRemove: () => setMaxTime(null),
+          },
+        ]
+      : []),
   ];
 
   // Slide-in for the in-tree filter sheet (kept inside the app container rather
@@ -399,6 +456,42 @@ export function ReceptenScreen() {
                     variant="plain"
                     active={selectedSeasons.includes(s)}
                     onPress={() => toggleSeason(s)}
+                  />
+                ))}
+              </FilterGroup>
+
+              <View style={styles.divider} />
+              <FilterGroup
+                icon={<Ionicons name="nutrition-outline" size={22} color={colors.primary} />}
+                title="Dieet"
+                subtitle="Houd rekening met je voorkeuren"
+              >
+                {DIETS.map((d) => (
+                  <FilterChip
+                    key={d}
+                    label={dietaryLabel[d]}
+                    variant="plain"
+                    active={selectedDiets.includes(d)}
+                    onPress={() => toggleDiet(d)}
+                  />
+                ))}
+              </FilterGroup>
+
+              <View style={styles.divider} />
+              <FilterGroup
+                icon={<Icon name="Clock" size={22} color={colors.primary} />}
+                title="Bereidingstijd"
+                subtitle="Hoeveel tijd heb je?"
+              >
+                {TIME_OPTIONS.map((minutes) => (
+                  <FilterChip
+                    key={minutes}
+                    label={`≤ ${minutes} min`}
+                    variant="plain"
+                    active={maxTime === minutes}
+                    onPress={() =>
+                      setMaxTime((prev) => (prev === minutes ? null : minutes))
+                    }
                   />
                 ))}
               </FilterGroup>
