@@ -18,10 +18,8 @@ import { DayMenuProvider } from './src/context/DayMenuContext';
 import { ShoppingListProvider } from './src/context/ShoppingListContext';
 import { SettingsProvider } from './src/context/SettingsContext';
 import { setupPwa } from './src/lib/pwa';
-import { LandingScreen } from './src/screens/LandingScreen';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { colors } from './src/theme';
-import { hasSeenLanding, markLandingSeen } from './src/utils/landing';
 
 const isWeb = Platform.OS === 'web';
 
@@ -46,13 +44,6 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // First-open landing page (shown once, then the app opens directly).
-  const [landingDone, setLandingDone] = useState(() => hasSeenLanding());
-  const enterApp = () => {
-    markLandingSeen();
-    setLandingDone(true);
-  };
-
   if (!fontsLoaded || !minTimePassed) {
     return <SplashScreen />;
   }
@@ -65,11 +56,7 @@ export default function App() {
             <DayMenuProvider>
               <ShoppingListProvider>
                 <StatusBar style="dark" />
-                {landingDone ? (
-                  <RootNavigator />
-                ) : (
-                  <LandingScreen onEnter={enterApp} />
-                )}
+                <RootNavigator />
               </ShoppingListProvider>
             </DayMenuProvider>
           </SettingsProvider>
