@@ -110,7 +110,7 @@ export function InstellingenScreen() {
       {/* Nutrition goal */}
       <Section title="Voedingsdoel" subtitle="Wat past het beste bij jouw doel?">
         <View style={styles.card}>
-          <View style={styles.chips}>
+          <View style={[styles.chips, styles.chipsLeft]}>
             {GOALS.map((g) => (
               <FilterChip
                 key={g.value}
@@ -147,7 +147,7 @@ export function InstellingenScreen() {
 
       <View style={styles.footer}>
         <BrandLogoStacked height={72} color={colors.primary} />
-        <Text style={styles.footerText}>versie 1.0</Text>
+        <Text style={styles.footerText}>versie 1.1</Text>
       </View>
     </Screen>
   );
