@@ -23,6 +23,7 @@ export interface ShoppingListEntry {
 
 const ENTRIES_KEY = 'plately.shoppingList.v1';
 const CHECKED_KEY = 'plately.shoppingList.checked.v1';
+const HIDDEN_KEY = 'plately.shoppingList.hidden.v1';
 
 const webStorage: Storage | null =
   Platform.OS === 'web' && typeof localStorage !== 'undefined' ? localStorage : null;
@@ -46,9 +47,9 @@ function loadEntries(): ShoppingListEntry[] {
   }
 }
 
-function loadChecked(): string[] {
+function loadStringArray(storageKey: string): string[] {
   try {
-    const raw = webStorage?.getItem(CHECKED_KEY);
+    const raw = webStorage?.getItem(storageKey);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     return Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string') : [];
@@ -74,6 +75,10 @@ interface ShoppingListContextValue {
   clear: () => void;
   /** Toggles an aggregated item's "got it" tick, keyed by its stable item key. */
   toggleChecked: (itemKey: string) => void;
+  /** Item keys the user removed from the list by hand (kept out of the view). */
+  hidden: Set<string>;
+  /** Hides one aggregated item from the list (e.g. "already have it"). */
+  hideItem: (itemKey: string) => void;
 }
 
 const ShoppingListContext = createContext<ShoppingListContextValue | undefined>(
@@ -82,7 +87,12 @@ const ShoppingListContext = createContext<ShoppingListContextValue | undefined>(
 
 export function ShoppingListProvider({ children }: { children: React.ReactNode }) {
   const [entries, setEntries] = useState<ShoppingListEntry[]>(loadEntries);
-  const [checkedArr, setCheckedArr] = useState<string[]>(loadChecked);
+  const [checkedArr, setCheckedArr] = useState<string[]>(() =>
+    loadStringArray(CHECKED_KEY),
+  );
+  const [hiddenArr, setHiddenArr] = useState<string[]>(() =>
+    loadStringArray(HIDDEN_KEY),
+  );
 
   useEffect(() => {
     try {
@@ -100,16 +110,26 @@ export function ShoppingListProvider({ children }: { children: React.ReactNode }
     }
   }, [checkedArr]);
 
+  useEffect(() => {
+    try {
+      webStorage?.setItem(HIDDEN_KEY, JSON.stringify(hiddenArr));
+    } catch {
+      // Ignore write failures.
+    }
+  }, [hiddenArr]);
+
   const value = useMemo<ShoppingListContextValue>(
     () => ({
       entries,
       checked: new Set(checkedArr),
+      hidden: new Set(hiddenArr),
       addToShoppingList: (recipeId, servings) =>
         setEntries((prev) => [...prev, { id: newId(), recipeId, servings }]),
       removeEntry: (id) => setEntries((prev) => prev.filter((e) => e.id !== id)),
       clear: () => {
         setEntries([]);
         setCheckedArr([]);
+        setHiddenArr([]);
       },
       toggleChecked: (itemKey) =>
         setCheckedArr((prev) =>
@@ -117,8 +137,12 @@ export function ShoppingListProvider({ children }: { children: React.ReactNode }
             ? prev.filter((k) => k !== itemKey)
             : [...prev, itemKey],
         ),
+      hideItem: (itemKey) =>
+        setHiddenArr((prev) =>
+          prev.includes(itemKey) ? prev : [...prev, itemKey],
+        ),
     }),
-    [entries, checkedArr],
+    [entries, checkedArr, hiddenArr],
   );
 
   return (
