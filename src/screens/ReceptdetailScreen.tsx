@@ -117,8 +117,10 @@ export function ReceptdetailScreen() {
       ]}
       showsVerticalScrollIndicator={false}
     >
-      {/* Hero image */}
-      <DishThumb recipe={recipe} style={styles.hero} iconSize={72} />
+      {/* Hero image — fixed 4:5 box, photo cover-cropped to fill it */}
+      <View style={styles.heroWrap}>
+        <DishThumb recipe={recipe} style={styles.hero} iconSize={72} />
+      </View>
 
       {/* Title block */}
       <View style={styles.titleBlock}>
@@ -369,10 +371,16 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     gap: spacing.xl,
   },
-  hero: {
+  heroWrap: {
     width: '100%',
     aspectRatio: 4 / 5,
     borderRadius: radius.lg,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceMuted,
+  },
+  hero: {
+    width: '100%',
+    height: '100%',
     backgroundColor: colors.surfaceMuted,
   },
   notFound: {
