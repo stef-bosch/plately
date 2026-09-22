@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -33,7 +32,6 @@ export function RecipeCard({ recipe, onPress }: RecipeCardProps) {
         </Text>
         <Text style={styles.meta}>{recipe.nutrition.calories} kcal · {totalTime} min</Text>
       </View>
-      <Ionicons name="chevron-forward" size={iconSize.action} color={colors.textMuted} />
     </PressableScale>
   );
 }
@@ -76,7 +74,7 @@ const styles = StyleSheet.create({
   },
   category: {
     ...typography.caption,
-    color: colors.accent,
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

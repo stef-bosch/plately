@@ -1,8 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
   Pressable,
   StyleSheet,
   Text,
+  View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -17,7 +19,11 @@ interface FilterChipProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/** Selectable pill for meal-type and season filters. */
+/**
+ * Selectable pill for filters and dietary preferences. Interactive by design:
+ * a bordered outline when off, a filled olive chip with a checkmark when on —
+ * so a selected state (and multi-select) reads at a glance.
+ */
 export function FilterChip({ label, active, onPress, style }: FilterChipProps) {
   return (
     <Pressable
@@ -31,7 +37,12 @@ export function FilterChip({ label, active, onPress, style }: FilterChipProps) {
         style,
       ]}
     >
-      <Text style={[styles.text, active && styles.textActive]}>{label}</Text>
+      <View style={styles.inner}>
+        {active ? (
+          <Ionicons name="checkmark" size={15} color={colors.textOnPrimary} />
+        ) : null}
+        <Text style={[styles.text, active && styles.textActive]}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -45,6 +56,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
+  },
+  inner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   chipActive: {
     backgroundColor: colors.primary,

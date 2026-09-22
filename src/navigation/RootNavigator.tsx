@@ -82,8 +82,17 @@ function Tabs() {
               {TAB_LABEL[route.name]}
             </Text>
           ),
-          tabBarIcon: ({ color }) => (
-            <Icon name={TAB_ICON[route.name]} size={iconSize.tab} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <View
+              style={{
+                paddingHorizontal: 18,
+                paddingVertical: 5,
+                borderRadius: 999,
+                backgroundColor: focused ? colors.primarySoft : 'transparent',
+              }}
+            >
+              <Icon name={TAB_ICON[route.name]} size={iconSize.tab} color={color} />
+            </View>
           ),
         })}
       >

@@ -125,23 +125,6 @@ export function DashboardScreen() {
         )}
       </View>
 
-      {/* Navigation buttons */}
-      {!isEmpty ? (
-        <View style={styles.buttonRow}>
-          <Button
-            label="Recepten"
-            brandIcon="ChefHat"
-            variant="primary"
-            onPress={() => navigation.navigate('Recepten')}
-          />
-          <Button
-            label="Boodschappen"
-            brandIcon="Cart"
-            variant="secondary"
-            onPress={() => navigation.navigate('Boodschappen')}
-          />
-        </View>
-      ) : null}
     </Screen>
   );
 }
@@ -210,9 +193,5 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
     textAlign: 'center',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
   },
 });

@@ -23,7 +23,7 @@ export const colors = {
   // Text
   textPrimary: '#40442A', // dark olive (no hard black)
   textSecondary: '#5B5B5B', // grey
-  textMuted: '#9A9C90', // muted olive-grey
+  textMuted: '#7C7E70', // muted olive-grey (kept legible for metadata/labels)
   textOnPrimary: '#FFFFFF',
 
   // Lines & shadows
