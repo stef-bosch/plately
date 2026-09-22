@@ -4964,5 +4964,428 @@ export const BUNDLED_DISHES: Recipe[] = [
       "Serveer. Schep de pompoenpolenta in een diep bord, snijd de kip schuin in plakken en leg erop of ernaast.",
       "Verdeel de boerenkoolchips en geroosterde pompoenpitten over het bord en eindig met wat extra zwarte peper en eventueel citroenrasp."
     ]
+  },
+  {
+    "id": "krokant-geroosterde-kruidige-kikkererwten-citroen",
+    "title": "Krokant geroosterde kruidige kikkererwten met citroen",
+    "status": "gepubliceerd",
+    "subtitle": "Krokante kikkererwten met warme kerrie, gerookte paprika en komijn, met een frisse finishing touch van citroenrasp.",
+    "mealType": "tussendoortje",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 25,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Vegan",
+      "Vegetarisch",
+      "Glutenvrij",
+      "Lactosevrij",
+      "Halal",
+      "Vezelrijk",
+      "Gezond"
+    ],
+    "suitableFor": [
+      "glutenvrij",
+      "halal",
+      "lactosevrij",
+      "vegan",
+      "vegetarisch"
+    ],
+    "nutrition": {
+      "calories": 200,
+      "protein": 8,
+      "carbs": 20,
+      "fat": 8,
+      "fiber": 8,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "kikkererwten", "unit": "g", "quantity": 120, "scalable": true, "note": "uit blik of pot, uitgelekt" },
+          { "name": "olijfolie", "unit": "tl", "quantity": 1, "scalable": true },
+          { "name": "mild kerriepoeder", "unit": "tl", "quantity": 0.5, "scalable": true },
+          { "name": "gerookt paprikapoeder", "unit": "tl", "quantity": 0.25, "scalable": true },
+          { "name": "gemalen komijn", "unit": "tl", "quantity": 0.25, "scalable": true },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "zout", "unit": "", "quantity": "snufje", "scalable": false },
+          { "name": "fijn geraspte citroenschil", "unit": "", "quantity": "klein beetje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Spoel de kikkererwten af, laat goed uitlekken en dep ze met keukenpapier zo droog mogelijk.",
+      "Verwarm de oven voor op 200°C of de airfryer op ongeveer 190°C.",
+      "Meng de droge kikkererwten met de olijfolie.",
+      "Rooster ongeveer 10–12 minuten en schud ze daarna goed om.",
+      "Meng kerrie, paprika, komijn en zwarte peper door de warme kikkererwten.",
+      "Bak nog ongeveer 8–12 minuten tot de kikkererwten droog en krokant zijn.",
+      "Voeg na het roosteren een klein snufje zout en verse citroenrasp toe.",
+      "Laat 5 minuten staan; tijdens het afkoelen worden de kikkererwten nog iets krokanter."
+    ]
+  },
+  {
+    "id": "pompoen-komijnhummus-snackkomkommer",
+    "title": "Pompoen-komijnhummus met krokante snackkomkommer",
+    "status": "gepubliceerd",
+    "subtitle": "Romige hummus met een herfstige twist van zachte pompoen, geroosterde komijn en citroen, met koude knapperige komkommer.",
+    "mealType": "tussendoortje",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 5,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Vegan",
+      "Vegetarisch",
+      "Glutenvrij",
+      "Lactosevrij",
+      "Halal",
+      "Snel klaar",
+      "Gezond"
+    ],
+    "suitableFor": [
+      "glutenvrij",
+      "halal",
+      "lactosevrij",
+      "vegan",
+      "vegetarisch"
+    ],
+    "nutrition": {
+      "calories": 160,
+      "protein": 6,
+      "carbs": 13,
+      "fat": 9,
+      "fiber": 6,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "hummus", "unit": "g", "quantity": 60, "scalable": true },
+          { "name": "gare pompoenpuree", "unit": "g", "quantity": 40, "scalable": true },
+          { "name": "snackkomkommer", "unit": "g", "quantity": 150, "scalable": true },
+          { "name": "gemalen komijn", "unit": "tl", "quantity": 0.25, "scalable": true },
+          { "name": "vers citroensap", "unit": "tl", "quantity": 1, "scalable": true },
+          { "name": "citroenrasp", "unit": "", "quantity": "klein beetje", "scalable": false },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "platte peterselie", "unit": "", "quantity": "enkele blaadjes", "scalable": false, "note": "optioneel" }
+        ]
+      }
+    ],
+    "instructions": [
+      "Meng hummus en pompoenpuree tot een gelijkmatige crème.",
+      "Roer de komijn en zwarte peper erdoor.",
+      "Voeg citroensap en een klein beetje citroenrasp toe.",
+      "Snijd de snackkomkommer in lange repen of schuine plakken.",
+      "Schep de hummus in een klein kommetje en maak met de achterkant van een lepel een golvend oppervlak.",
+      "Voeg eventueel wat peterselie en een laatste beetje zwarte peper toe."
+    ]
+  },
+  {
+    "id": "warme-kaneelappel-huttenkase",
+    "title": "Warme kaneelappel met frisse hüttenkäse",
+    "status": "gepubliceerd",
+    "subtitle": "Warme zachte appel met kaneel en kardemom tegenover koude, frisse hüttenkäse — een tussendoortje met het karakter van appelgebak.",
+    "mealType": "tussendoortje",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 5,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Vegetarisch",
+      "Glutenvrij",
+      "Halal",
+      "Eiwitrijk",
+      "Snel klaar"
+    ],
+    "suitableFor": [
+      "glutenvrij",
+      "halal",
+      "vegetarisch"
+    ],
+    "nutrition": {
+      "calories": 140,
+      "protein": 13,
+      "carbs": 15,
+      "fat": 3,
+      "fiber": 2.5,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "friszoete appel", "unit": "g", "quantity": 100, "scalable": true, "note": "bijv. Elstar" },
+          { "name": "hüttenkäse", "unit": "g", "quantity": 100, "scalable": true },
+          { "name": "Ceylonkaneel", "unit": "tl", "quantity": 0.5, "scalable": true },
+          { "name": "gemalen kardemom", "unit": "", "quantity": "mespuntje", "scalable": false },
+          { "name": "water", "unit": "tl", "quantity": 1, "scalable": true },
+          { "name": "fijn geraspte citroenschil", "unit": "", "quantity": "klein beetje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Snijd de appel met schil in dunne partjes of kleine blokjes.",
+      "Meng met kaneel, kardemom en 1 theelepel water.",
+      "Verwarm ongeveer 60–90 seconden in de magnetron tot de appel warm en iets zachter is.",
+      "Laat de appel niet volledig tot moes garen; enige beet maakt het gerecht interessanter.",
+      "Schep de koude hüttenkäse in een klein kommetje of diep bord.",
+      "Schep de warme appel ernaast of gedeeltelijk overheen.",
+      "Rasp een klein beetje citroenschil over de appel en voeg eventueel nog wat kaneel toe."
+    ]
+  },
+  {
+    "id": "roggeknackebrod-pindakaas-speculaaskruiden",
+    "title": "Volkoren roggeknäckebröd met 100% pindakaas & speculaaskruiden",
+    "status": "gepubliceerd",
+    "subtitle": "Krokant volkoren roggeknäckebröd met romige 100% pindakaas en warme speculaaskruiden — een razendsnelle, nootachtige wintersnack.",
+    "mealType": "tussendoortje",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 2,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Vegan",
+      "Vegetarisch",
+      "Lactosevrij",
+      "Halal",
+      "Snel klaar"
+    ],
+    "suitableFor": [
+      "halal",
+      "lactosevrij",
+      "vegan",
+      "vegetarisch"
+    ],
+    "nutrition": {
+      "calories": 140,
+      "protein": 5,
+      "carbs": 10,
+      "fat": 8,
+      "fiber": 3.5,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "volkoren roggeknäckebröd", "unit": "", "quantity": 1, "scalable": true, "note": "ongeveer 14 g" },
+          { "name": "100% pindakaas", "unit": "g", "quantity": 15, "scalable": true },
+          { "name": "speculaaskruiden", "unit": "", "quantity": "snufje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Gebruik een krokant volkoren roggeknäckebröd zonder onnodige toevoegingen.",
+      "Verdeel de pindakaas gelijkmatig tot aan de randen.",
+      "Bestrooi met een klein snufje speculaaskruiden.",
+      "Eet meteen zodat het contrast tussen krokant brood en romige pindakaas maximaal blijft."
+    ]
+  },
+  {
+    "id": "volkoren-toast-citroen-huttenkase-paddenstoelen-spinazie",
+    "title": "Volkoren toast met citroen-hüttenkäse, gebakken paddenstoelen, tijm & spinazie",
+    "status": "gepubliceerd",
+    "subtitle": "Krokante volkoren toast met zijdezachte citroen-hüttenkäse, diep gebakken kastanjechampignons, knoflook, tijm en frisse spinazie.",
+    "mealType": "lunch",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 15,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Vegetarisch",
+      "Halal",
+      "Eiwitrijk",
+      "Gezond"
+    ],
+    "suitableFor": [
+      "vegetarisch",
+      "halal"
+    ],
+    "nutrition": {
+      "calories": 425,
+      "protein": 26,
+      "carbs": 45,
+      "fat": 16,
+      "fiber": 8,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "volkoren zuurdesembrood", "unit": "sneetjes", "quantity": 2, "scalable": true, "note": "100%, samen ± 80 g" },
+          { "name": "kastanjechampignons", "unit": "g", "quantity": 150, "scalable": true },
+          { "name": "verse spinazie", "unit": "g", "quantity": 50, "scalable": true },
+          { "name": "hüttenkäse", "unit": "g", "quantity": 100, "scalable": true },
+          { "name": "knoflook", "unit": "teen", "quantity": 1, "scalable": true },
+          { "name": "verse tijm", "unit": "takjes", "quantity": 2, "scalable": true },
+          { "name": "olijfolie", "unit": "tl", "quantity": 2, "scalable": true },
+          { "name": "vers citroensap", "unit": "tl", "quantity": 1, "scalable": true },
+          { "name": "fijn geraspte citroenschil", "unit": "tl", "quantity": 0.5, "scalable": true },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "zout", "unit": "", "quantity": "snufje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Pureer de hüttenkäse met citroensap, citroenrasp, zwarte peper en een klein snufje zout volledig glad.",
+      "Rooster het volkoren zuurdesembrood krokant in een broodrooster, grillpan of droge koekenpan.",
+      "Snijd de kastanjechampignons in kwarten of grove plakken.",
+      "Verhit de olijfolie in een ruime koekenpan en verdeel de champignons over de bodem.",
+      "Laat de champignons regelmatig 1–2 minuten ongemoeid liggen zodat ze daadwerkelijk donker goudbruin worden.",
+      "Voeg fijngehakte knoflook en de tijmblaadjes toe en bak ongeveer 30 seconden mee.",
+      "Voeg de spinazie toe en schep slechts 30–60 seconden om tot hij net geslonken is.",
+      "Verdeel de citroen-hüttenkäse royaal over het warme brood.",
+      "Schep paddenstoelen en spinazie erop.",
+      "Eindig met royaal versgemalen zwarte peper en eventueel een klein beetje extra citroenrasp."
+    ]
+  },
+  {
+    "id": "geroosterde-pompoentoast-cottage-cheese-salie-pompoenpitten",
+    "title": "Geroosterde pompoentoast met whipped cottage cheese, krokante salie & pompoenpitten",
+    "status": "gepubliceerd",
+    "subtitle": "Zoete geroosterde pompoen en frisse cottage-cheesecrème met krokante salie, geroosterde pompoenpitten en knapperig volkoren zuurdesembrood.",
+    "mealType": "lunch",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 25,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Vegetarisch",
+      "Halal",
+      "Eiwitrijk",
+      "Gezond"
+    ],
+    "suitableFor": [
+      "vegetarisch",
+      "halal"
+    ],
+    "nutrition": {
+      "calories": 470,
+      "protein": 24,
+      "carbs": 51,
+      "fat": 18,
+      "fiber": 9,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "volkoren zuurdesembrood", "unit": "sneetjes", "quantity": 2, "scalable": true, "note": "100%, samen ± 80 g" },
+          { "name": "flespompoen", "unit": "g", "quantity": 150, "scalable": true },
+          { "name": "hüttenkäse", "unit": "g", "quantity": 100, "scalable": true },
+          { "name": "ongezouten pompoenpitten", "unit": "g", "quantity": 10, "scalable": true },
+          { "name": "verse salieblaadjes", "unit": "", "quantity": 5, "scalable": true },
+          { "name": "olijfolie", "unit": "tl", "quantity": 1.5, "scalable": true },
+          { "name": "vers citroensap", "unit": "tl", "quantity": 1, "scalable": true },
+          { "name": "fijn geraspte citroenschil", "unit": "", "quantity": "klein beetje", "scalable": false },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "zout", "unit": "", "quantity": "snufje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Verwarm de oven of airfryer voor op 200°C.",
+      "Snijd de flespompoen in dunne partjes of blokjes van gelijke grootte.",
+      "Meng met 1 tl olijfolie, zwarte peper en een klein snufje zout.",
+      "Rooster ongeveer 18–20 minuten tot de pompoen zacht is en duidelijke gekaramelliseerde randjes heeft.",
+      "Pureer de hüttenkäse met citroensap, een klein beetje citroenrasp en zwarte peper volledig glad.",
+      "Rooster de pompoenpitten kort in een droge koekenpan tot ze beginnen te geuren en zet apart.",
+      "Verhit de resterende ½ tl olijfolie en bak de salieblaadjes kort tot ze krokant zijn. Laat uitlekken.",
+      "Rooster het volkoren zuurdesembrood stevig krokant.",
+      "Verdeel de whipped cottage cheese over het brood en leg de warme geroosterde pompoen erop.",
+      "Verdeel de pompoenpitten en krokante salie erover en eindig met zwarte peper en eventueel wat citroenrasp."
+    ]
+  },
+  {
+    "id": "shakshuka-zacht-ei-geroosterde-paprika-zuurdesembrood",
+    "title": "Shakshuka met zacht ei, geroosterde paprika & volkoren zuurdesembrood",
+    "status": "gepubliceerd",
+    "subtitle": "Langzaam ingekookte tomaat en paprika met komijn, knoflook en chili als basis voor zachte eieren en krokant volkoren dipbrood.",
+    "mealType": "lunch",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 25,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Vegetarisch",
+      "Lactosevrij",
+      "Halal",
+      "Eiwitrijk",
+      "Vezelrijk"
+    ],
+    "suitableFor": [
+      "lactosevrij",
+      "vegetarisch",
+      "halal"
+    ],
+    "nutrition": {
+      "calories": 470,
+      "protein": 23,
+      "carbs": 54,
+      "fat": 18,
+      "fiber": 11,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "eieren", "unit": "", "quantity": 2, "scalable": true },
+          { "name": "gepelde tomaten", "unit": "g", "quantity": 200, "scalable": true, "note": "of tomatenblokjes uit blik, zonder toegevoegde suiker" },
+          { "name": "rode paprika", "unit": "", "quantity": 1, "scalable": true, "note": "± 150 g" },
+          { "name": "rode ui", "unit": "", "quantity": 0.5, "scalable": true, "note": "± 50 g" },
+          { "name": "knoflook", "unit": "teen", "quantity": 1, "scalable": true },
+          { "name": "volkoren zuurdesembrood", "unit": "sneetjes", "quantity": 2, "scalable": true, "note": "100%, samen ± 70 g" },
+          { "name": "olijfolie", "unit": "tl", "quantity": 1, "scalable": true },
+          { "name": "komijnzaad", "unit": "tl", "quantity": 0.5, "scalable": true },
+          { "name": "zoet paprikapoeder", "unit": "tl", "quantity": 0.5, "scalable": true },
+          { "name": "chilivlokken", "unit": "", "quantity": "mespunt", "scalable": false },
+          { "name": "rodewijnazijn", "unit": "tl", "quantity": 1, "scalable": true },
+          { "name": "verse platte peterselie", "unit": "", "quantity": "ruime hand", "scalable": false },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "zout", "unit": "", "quantity": "snufje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Snijd de paprika in dunne repen, de rode ui fijn en hak de knoflook.",
+      "Verhit de olijfolie in een kleine koeken- of gietijzeren pan en bak ui en paprika 5–7 minuten tot ze zacht worden en beginnen te kleuren.",
+      "Bak de knoflook ongeveer 30 seconden mee.",
+      "Voeg komijnzaad, paprikapoeder en chilivlokken toe en bak ongeveer 30 seconden tot ze sterk beginnen te geuren.",
+      "Schenk de tomaten in de pan en druk grotere stukken met een lepel wat fijner.",
+      "Laat ongeveer 8–10 minuten zonder deksel zacht pruttelen tot een dikke saus ontstaat.",
+      "Roer de rodewijnazijn door de saus en breng op smaak met zwarte peper en een klein beetje zout.",
+      "Maak twee kuiltjes in de saus en breek in ieder kuiltje een ei.",
+      "Doe een deksel op de pan en laat ongeveer 4–6 minuten garen tot het eiwit gestold is en de dooier nog zacht.",
+      "Rooster ondertussen het volkoren zuurdesembrood stevig krokant.",
+      "Haal de pan van het vuur en bestrooi royaal met fijngehakte peterselie en zwarte peper.",
+      "Serveer de shakshuka in de pan of een diep bord en geef het brood ernaast om in saus en eidooier te dippen."
+    ]
   }
 ];
