@@ -59,8 +59,30 @@ const DIETS: DietaryPreference[] = [
   'halal',
 ];
 
-/** Max total-time (prep + cook) options, in minutes. */
-const TIME_OPTIONS = [15, 30, 45, 60] as const;
+/** A total-time (prep + cook) filter: at most, or over, a number of minutes. */
+type TimeFilter =
+  | { kind: 'max'; minutes: number }
+  | { kind: 'over'; minutes: number };
+
+const TIME_OPTIONS: TimeFilter[] = [
+  { kind: 'max', minutes: 15 },
+  { kind: 'max', minutes: 30 },
+  { kind: 'max', minutes: 45 },
+  { kind: 'max', minutes: 60 },
+  { kind: 'over', minutes: 60 },
+];
+
+function timeLabel(t: TimeFilter): string {
+  return t.kind === 'max' ? `≤ ${t.minutes} min` : `> ${t.minutes} min`;
+}
+
+function timeMatches(t: TimeFilter, minutes: number): boolean {
+  return t.kind === 'max' ? minutes <= t.minutes : minutes > t.minutes;
+}
+
+function sameTime(a: TimeFilter | null, b: TimeFilter): boolean {
+  return a !== null && a.kind === b.kind && a.minutes === b.minutes;
+}
 
 /** Look up a category's chip label + icon by its stored value. */
 const CATEGORY_BY_VALUE: Record<string, CategoryOption> = Object.fromEntries(
@@ -90,7 +112,7 @@ export function ReceptenScreen() {
   const [query, setQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([]);
-  const [maxTime, setMaxTime] = useState<number | null>(null);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // The dietary preferences double as a recipe filter here; they live in the
@@ -123,10 +145,11 @@ export function ReceptenScreen() {
       const matchesSeason =
         selectedSeasons.length === 0 ||
         recipe.seasons.some((s) => selectedSeasons.includes(s));
-      const matchesTime = maxTime === null || totalTime(recipe) <= maxTime;
+      const matchesTime =
+        timeFilter === null || timeMatches(timeFilter, totalTime(recipe));
       return matchesQuery && matchesCategory && matchesSeason && matchesTime;
     });
-  }, [allRecipes, query, selectedCategories, selectedSeasons, maxTime, selectedDiets]);
+  }, [allRecipes, query, selectedCategories, selectedSeasons, timeFilter, selectedDiets]);
 
   const data = filteredRecipes;
   const countLabel = `${recipeCountLabel(filteredRecipes.length)} gevonden`;
@@ -134,7 +157,7 @@ export function ReceptenScreen() {
     selectedCategories.length +
     selectedSeasons.length +
     selectedDiets.length +
-    (maxTime !== null ? 1 : 0);
+    (timeFilter !== null ? 1 : 0);
 
   const toggleCategory = (value: string) =>
     setSelectedCategories((prev) =>
@@ -153,7 +176,7 @@ export function ReceptenScreen() {
   const resetFilters = () => {
     setSelectedCategories([]);
     setSelectedSeasons([]);
-    setMaxTime(null);
+    setTimeFilter(null);
     updateSettings({ dietaryPreferences: [] });
   };
 
@@ -186,13 +209,13 @@ export function ReceptenScreen() {
       icon: <Ionicons name={DIET_ICON[diet]} size={15} color={colors.primary} />,
       onRemove: () => toggleDiet(diet),
     })),
-    ...(maxTime !== null
+    ...(timeFilter !== null
       ? [
           {
             key: 'time',
-            label: `≤ ${maxTime} min`,
+            label: timeLabel(timeFilter),
             icon: <Icon name="Clock" size={15} color={colors.primary} />,
-            onRemove: () => setMaxTime(null),
+            onRemove: () => setTimeFilter(null),
           },
         ]
       : []),
@@ -405,8 +428,8 @@ export function ReceptenScreen() {
             >
               <FilterGroup
                 icon={<Icon name="ChefHat" size={22} color={colors.primary} />}
-                title="Moment & type"
-                subtitle="Wat wil je eten?"
+                title="Gerecht"
+                subtitle="Wat wil je maken?"
               >
                 {categoryOptions.map((o) => (
                   <FilterChip
@@ -423,7 +446,7 @@ export function ReceptenScreen() {
               <FilterGroup
                 icon={<Ionicons name="leaf-outline" size={22} color={colors.primary} />}
                 title="Seizoen"
-                subtitle="Welk seizoen past bij je stemming?"
+                subtitle="Voor welk seizoen wil je koken?"
               >
                 {SEASONS.map((s) => (
                   <FilterChip
@@ -459,14 +482,14 @@ export function ReceptenScreen() {
                 title="Bereidingstijd"
                 subtitle="Hoeveel tijd heb je?"
               >
-                {TIME_OPTIONS.map((minutes) => (
+                {TIME_OPTIONS.map((t) => (
                   <FilterChip
-                    key={minutes}
-                    label={`≤ ${minutes} min`}
+                    key={timeLabel(t)}
+                    label={timeLabel(t)}
                     variant="plain"
-                    active={maxTime === minutes}
+                    active={sameTime(timeFilter, t)}
                     onPress={() =>
-                      setMaxTime((prev) => (prev === minutes ? null : minutes))
+                      setTimeFilter((prev) => (sameTime(prev, t) ? null : t))
                     }
                   />
                 ))}
