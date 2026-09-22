@@ -15,6 +15,9 @@ interface FilterChipProps {
   label: string;
   active: boolean;
   onPress: () => void;
+  /** Optional leading icon shown when the chip is off (a checkmark replaces it
+   * when the chip is on). */
+  icon?: React.ReactNode;
   /** Extra container styling, e.g. to size the chip inside a grid. */
   style?: StyleProp<ViewStyle>;
 }
@@ -24,7 +27,7 @@ interface FilterChipProps {
  * a bordered outline when off, a filled olive chip with a checkmark when on —
  * so a selected state (and multi-select) reads at a glance.
  */
-export function FilterChip({ label, active, onPress, style }: FilterChipProps) {
+export function FilterChip({ label, active, onPress, icon, style }: FilterChipProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -40,7 +43,9 @@ export function FilterChip({ label, active, onPress, style }: FilterChipProps) {
       <View style={styles.inner}>
         {active ? (
           <Ionicons name="checkmark" size={15} color={colors.textOnPrimary} />
-        ) : null}
+        ) : (
+          icon ?? null
+        )}
         <Text style={[styles.text, active && styles.textActive]}>{label}</Text>
       </View>
     </Pressable>

@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS: Settings = {
   defaultServings: 1,
   preferredSeason: 'lente-zomer',
   dietaryPreferences: [],
+  nutritionGoal: 'balans',
 };
 
 const webStorage: Storage | null =

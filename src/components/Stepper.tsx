@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.xs,
   },
   pill: {
     flexDirection: 'row',
@@ -128,8 +128,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   button: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: radius.pill,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
@@ -148,11 +148,11 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   valueBox: {
-    minWidth: 56,
+    minWidth: 32,
     alignItems: 'center',
   },
   value: {
-    ...typography.heading,
+    ...typography.subheading,
     color: colors.textPrimary,
   },
   suffix: {

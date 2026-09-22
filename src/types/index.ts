@@ -178,10 +178,14 @@ export type DietaryPreference =
   | 'glutenvrij'
   | 'halal';
 
+/** A loose eating goal used (later) to tune which recipes are suggested. */
+export type NutritionGoal = 'eiwitrijk' | 'balans' | 'lichter';
+
 export interface Settings {
   defaultServings: number;
   preferredSeason: Season;
   dietaryPreferences: DietaryPreference[];
+  nutritionGoal: NutritionGoal;
 }
 
 /* ---------- Reactive recipes ---------- */
