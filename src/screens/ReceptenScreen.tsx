@@ -34,23 +34,19 @@ interface CategoryOption {
   icon: BrandIconName;
 }
 
-/** "Moment" = when you'd eat it (derived from a recipe's mealType). */
-const MOMENT_OPTIONS: CategoryOption[] = [
+/**
+ * The single category axis: eating moments and dish types combined. A recipe's
+ * `dishCategory()` resolves to exactly one of these values.
+ */
+const CATEGORY_OPTIONS: CategoryOption[] = [
   { value: 'Ontbijt', label: 'Ontbijt', icon: 'Breakfast' },
   { value: 'Lunch', label: 'Lunch', icon: 'Lunch' },
   { value: 'Diner', label: 'Diner', icon: 'Dinner' },
   { value: 'Tussendoortjes', label: 'Tussendoor', icon: 'Snack' },
-];
-
-/** "Type gerecht" = the kind of dish (derived from a recipe's overigCategory). */
-const TYPE_OPTIONS: CategoryOption[] = [
-  { value: 'Voorgerechten', label: 'Voorgerecht', icon: 'ChefHat' },
-  { value: 'Hoofdgerechten', label: 'Hoofdgerecht', icon: 'ChefHat' },
-  { value: 'Bijgerechten', label: 'Bijgerecht', icon: 'ChefHat' },
   { value: 'Sauzen', label: 'Saus', icon: 'ChefHat' },
   { value: 'Desserts & gebak', label: 'Dessert', icon: 'ChefHat' },
-  { value: 'Borrelhapjes & snacks', label: 'Snack', icon: 'ChefHat' },
-  { value: 'Dranken & cocktails', label: 'Drank', icon: 'ChefHat' },
+  { value: 'Borrelhapjes & snacks', label: 'Snack', icon: 'Snack' },
+  { value: 'Dranken & cocktails', label: 'Drank', icon: 'Lunch' },
 ];
 
 const SEASONS: Season[] = ['lente-zomer', 'herfst-winter'];
@@ -66,9 +62,9 @@ const DIETS: DietaryPreference[] = [
 /** Max total-time (prep + cook) options, in minutes. */
 const TIME_OPTIONS = [15, 30, 45, 60] as const;
 
-/** Look up a category's chip label + icon by its stored value (both groups). */
+/** Look up a category's chip label + icon by its stored value. */
 const CATEGORY_BY_VALUE: Record<string, CategoryOption> = Object.fromEntries(
-  [...MOMENT_OPTIONS, ...TYPE_OPTIONS].map((o) => [o.value, o]),
+  CATEGORY_OPTIONS.map((o) => [o.value, o]),
 );
 
 const DIET_ICON: Record<DietaryPreference, React.ComponentProps<typeof Ionicons>['name']> = {
@@ -112,8 +108,9 @@ export function ReceptenScreen() {
     () => new Set(allRecipes.map((r) => dishCategory(r))),
     [allRecipes],
   );
-  const momentOptions = MOMENT_OPTIONS.filter((o) => presentCategories.has(o.value));
-  const typeOptions = TYPE_OPTIONS.filter((o) => presentCategories.has(o.value));
+  const categoryOptions = CATEGORY_OPTIONS.filter((o) =>
+    presentCategories.has(o.value),
+  );
 
   const filteredRecipes = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -407,11 +404,11 @@ export function ReceptenScreen() {
               showsVerticalScrollIndicator={false}
             >
               <FilterGroup
-                icon={<Icon name="Breakfast" size={22} color={colors.primary} />}
-                title="Moment"
-                subtitle="Wanneer wil je koken?"
+                icon={<Icon name="ChefHat" size={22} color={colors.primary} />}
+                title="Moment & type"
+                subtitle="Wat wil je eten?"
               >
-                {momentOptions.map((o) => (
+                {categoryOptions.map((o) => (
                   <FilterChip
                     key={o.value}
                     label={o.label}
@@ -421,27 +418,6 @@ export function ReceptenScreen() {
                   />
                 ))}
               </FilterGroup>
-
-              {typeOptions.length > 0 ? (
-                <>
-                  <View style={styles.divider} />
-                  <FilterGroup
-                    icon={<Icon name="ChefHat" size={22} color={colors.primary} />}
-                    title="Type gerecht"
-                    subtitle="Wat voor gerecht zoek je?"
-                  >
-                    {typeOptions.map((o) => (
-                      <FilterChip
-                        key={o.value}
-                        label={o.label}
-                        variant="plain"
-                        active={selectedCategories.includes(o.value)}
-                        onPress={() => toggleCategory(o.value)}
-                      />
-                    ))}
-                  </FilterGroup>
-                </>
-              ) : null}
 
               <View style={styles.divider} />
               <FilterGroup
