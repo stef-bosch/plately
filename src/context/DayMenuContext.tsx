@@ -7,22 +7,29 @@ import React, {
 } from 'react';
 import { Platform } from 'react-native';
 
+import type { MealType } from '../types';
+
 /**
- * The day menu: a running list of dishes the user has added for "today". It is
- * a flat list of recipe ids (each add is a separate entry so the same dish can
- * appear twice, e.g. two snacks); the dashboard groups them by meal type and
- * sums their nutrition. Persisted on web via localStorage so it survives a
- * reload; on native it degrades to in-memory (swap in AsyncStorage later without
- * changing the consumer API).
+ * The day menu: the dishes the user has planned for "today", each pinned to a
+ * meal moment (slot). The dashboard shows one row per moment and sums the
+ * nutrition of everything planned. Persisted on web via localStorage so it
+ * survives a reload; on native it degrades to in-memory (swap in AsyncStorage
+ * later without changing the consumer API).
  */
 
 export interface DayMenuEntry {
   /** Unique per add, so duplicates of the same dish can be removed individually. */
   id: string;
   recipeId: string;
+  /**
+   * The meal moment this dish is planned for. Optional for legacy entries saved
+   * before slots existed — the dashboard then falls back to the dish's mealType.
+   */
+  slot?: MealType;
 }
 
 const STORAGE_KEY = 'plately.dayMenu.v1';
+const MEAL_TYPES: MealType[] = ['ontbijt', 'lunch', 'diner', 'tussendoortje'];
 
 const webStorage: Storage | null =
   Platform.OS === 'web' && typeof localStorage !== 'undefined' ? localStorage : null;
@@ -34,13 +41,21 @@ function loadInitialEntries(): DayMenuEntry[] {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
     // Keep only well-formed entries so a corrupt store can't crash the dashboard.
-    return parsed.filter(
-      (e): e is DayMenuEntry =>
-        typeof e === 'object' &&
-        e !== null &&
-        typeof (e as DayMenuEntry).id === 'string' &&
-        typeof (e as DayMenuEntry).recipeId === 'string',
-    );
+    return parsed
+      .filter(
+        (e): e is { id: string; recipeId: string; slot?: unknown } =>
+          typeof e === 'object' &&
+          e !== null &&
+          typeof (e as DayMenuEntry).id === 'string' &&
+          typeof (e as DayMenuEntry).recipeId === 'string',
+      )
+      .map((e) => ({
+        id: e.id,
+        recipeId: e.recipeId,
+        slot: MEAL_TYPES.includes(e.slot as MealType)
+          ? (e.slot as MealType)
+          : undefined,
+      }));
   } catch {
     return [];
   }
@@ -54,8 +69,8 @@ function newEntryId(): string {
 
 interface DayMenuContextValue {
   entries: DayMenuEntry[];
-  /** Adds a dish to the day menu (appends; duplicates are allowed). */
-  addToDayMenu: (recipeId: string) => void;
+  /** Plans a dish for a meal moment (appends; duplicates are allowed). */
+  addToDayMenu: (recipeId: string, slot: MealType) => void;
   /** Removes a single entry by its entry id. */
   removeFromDayMenu: (entryId: string) => void;
   /** Empties the whole day menu. */
@@ -78,8 +93,8 @@ export function DayMenuProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<DayMenuContextValue>(
     () => ({
       entries,
-      addToDayMenu: (recipeId) =>
-        setEntries((prev) => [...prev, { id: newEntryId(), recipeId }]),
+      addToDayMenu: (recipeId, slot) =>
+        setEntries((prev) => [...prev, { id: newEntryId(), recipeId, slot }]),
       removeFromDayMenu: (entryId) =>
         setEntries((prev) => prev.filter((e) => e.id !== entryId)),
       clearDayMenu: () => setEntries([]),

@@ -19,6 +19,7 @@ import { DashboardScreen } from '../screens/DashboardScreen';
 import { ReceptenScreen } from '../screens/ReceptenScreen';
 import { BoodschappenlijstScreen } from '../screens/BoodschappenlijstScreen';
 import { ReceptdetailScreen } from '../screens/ReceptdetailScreen';
+import { RecipePickerScreen } from '../screens/RecipePickerScreen';
 import { InstellingenScreen } from '../screens/InstellingenScreen';
 import type { RootStackParamList, TabParamList } from './types';
 
@@ -129,6 +130,15 @@ export function RootNavigator() {
             title: 'Recept',
             headerBackTitle: 'Terug',
             animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="KiesRecept"
+          component={RecipePickerScreen}
+          options={{
+            title: 'Kies een recept',
+            headerBackTitle: 'Terug',
+            animation: 'slide_from_bottom',
           }}
         />
       </Stack.Navigator>

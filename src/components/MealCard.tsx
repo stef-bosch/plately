@@ -14,6 +14,9 @@ interface MealCardProps {
   recipe: Recipe;
   /** Overrides the meal-type label, e.g. for a second snack. */
   labelOverride?: string;
+  /** Hides the small label row (e.g. on the dashboard, where the slot header
+   * already names the moment). */
+  hideLabel?: boolean;
   onPress: () => void;
   /** When set, shows a remove button instead of the chevron (day menu). */
   onRemove?: () => void;
@@ -24,6 +27,7 @@ export function MealCard({
   mealType,
   recipe,
   labelOverride,
+  hideLabel,
   onPress,
   onRemove,
 }: MealCardProps) {
@@ -40,9 +44,11 @@ export function MealCard({
         </View>
       </View>
       <View style={styles.body}>
-        <Text style={styles.mealLabel}>
-          {labelOverride ?? mealTypeLabel[mealType]}
-        </Text>
+        {hideLabel ? null : (
+          <Text style={styles.mealLabel}>
+            {labelOverride ?? mealTypeLabel[mealType]}
+          </Text>
+        )}
         <Text style={styles.title} numberOfLines={2}>
           {recipe.title}
         </Text>

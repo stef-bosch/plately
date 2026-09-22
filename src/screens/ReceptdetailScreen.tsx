@@ -95,7 +95,7 @@ export function ReceptdetailScreen() {
   };
 
   const handleAddToDayMenu = () => {
-    addToDayMenu(recipe.id);
+    addToDayMenu(recipe.id, recipe.mealType);
     setJustAdded(true);
     if (addedTimer.current) clearTimeout(addedTimer.current);
     addedTimer.current = setTimeout(() => setJustAdded(false), 2000);
