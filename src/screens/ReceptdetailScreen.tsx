@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   },
   heroWrap: {
     width: '100%',
-    aspectRatio: 4 / 5,
+    aspectRatio: 1,
     borderRadius: radius.lg,
     overflow: 'hidden',
     backgroundColor: colors.surfaceMuted,
