@@ -152,15 +152,6 @@ export function DashboardScreen() {
             ));
           })}
         </View>
-
-        <Pressable
-          onPress={() => navigation.navigate('Recepten')}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.addCta, pressed && styles.ctaPressed]}
-        >
-          <Ionicons name="add" size={22} color={colors.textOnPrimary} />
-          <Text style={styles.addCtaText}>Recept toevoegen</Text>
-        </Pressable>
       </View>
     </Screen>
   );
@@ -291,24 +282,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-    paddingVertical: spacing.md,
-    borderRadius: radius.xl,
-    backgroundColor: colors.primaryStrong,
-  },
-  addCtaText: {
-    ...typography.bodyStrong,
-    color: colors.textOnPrimary,
-  },
   pressed: {
     opacity: 0.85,
-  },
-  ctaPressed: {
-    opacity: 0.9,
   },
 });
