@@ -4492,5 +4492,477 @@ export const BUNDLED_DISHES: Recipe[] = [
       "Besmeer het brood royaal met hummus.",
       "Serveer met de appel."
     ]
+  },
+  {
+    "id": "kabeljauw-pastinaakcreme-spruitjes-hazelnoot-citroen-dille",
+    "title": "Kabeljauw met pastinaakcrème, geblakerde spruitjes, hazelnoot & citroen-dille",
+    "status": "gepubliceerd",
+    "subtitle": "Zachte pastinaakcrème, sappige kabeljauw en donker geroosterde spruitjes met citroen, dille, kappertjes en krokante hazelnoten.",
+    "mealType": "diner",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 25,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Glutenvrij",
+      "Halal",
+      "Eiwitrijk",
+      "Vezelrijk",
+      "Restaurantwaardig",
+      "Gezond"
+    ],
+    "suitableFor": [
+      "glutenvrij",
+      "halal"
+    ],
+    "nutrition": {
+      "calories": 625,
+      "protein": 46,
+      "carbs": 70,
+      "fat": 23,
+      "fiber": 22,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "kabeljauwfilet", "unit": "g", "quantity": 150, "scalable": true, "note": "vers of ontdooid" },
+          { "name": "pastinaak", "unit": "g", "quantity": 250, "scalable": true },
+          { "name": "spruitjes", "unit": "g", "quantity": 200, "scalable": true },
+          { "name": "hüttenkäse", "unit": "g", "quantity": 50, "scalable": true },
+          { "name": "ongezouten hazelnoten", "unit": "g", "quantity": 15, "scalable": true },
+          { "name": "olijfolie", "unit": "tl", "quantity": 2, "scalable": true },
+          { "name": "kappertjes", "unit": "tl", "quantity": 1, "scalable": true, "note": "fijngehakt" },
+          { "name": "Dijonmosterd", "unit": "tl", "quantity": 0.25, "scalable": true },
+          { "name": "citroen", "unit": "", "quantity": 0.5, "scalable": true },
+          { "name": "verse dille", "unit": "el", "quantity": 2, "scalable": true, "note": "fijngehakt" },
+          { "name": "witte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "zout", "unit": "", "quantity": "snufje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Kook de pastinaak. Schil de pastinaak, snijd in kleine blokjes en kook in 10–12 minuten volledig zacht. Bewaar enkele eetlepels kookvocht.",
+      "Rooster de spruitjes. Halveer de spruitjes, verhit 1 tl olijfolie in een ruime koekenpan en leg ze met de snijkant naar beneden in de pan.",
+      "Laat de spruitjes enkele minuten ongemoeid bakken tot de snijkanten donker goudbruin zijn. Draai om en bak verder tot ze beetgaar zijn.",
+      "Hak de hazelnoten grof en bak ze de laatste 2 minuten met de spruitjes mee. Voeg vlak voor het serveren de kappertjes toe.",
+      "Maak de pastinaakcrème. Pureer de uitgelekte pastinaak met hüttenkäse, Dijonmosterd, ongeveer ½ tl fijn geraspte citroenschil en witte peper.",
+      "Voeg beetje bij beetje kookvocht toe tot een gladde, fluweelzachte crème ontstaat. Proef en breng voorzichtig op smaak met zout.",
+      "Bak de kabeljauw. Dep de vis zeer goed droog, kruid met zwarte peper en een klein beetje zout en verhit de resterende 1 tl olijfolie.",
+      "Bak de kabeljauw afhankelijk van de dikte ongeveer 2–3 minuten per kant, tot hij net gaar is en gemakkelijk in lamellen uiteenvalt.",
+      "Haal de kabeljauw van het vuur en geef hem direct ongeveer 1 tl vers citroensap.",
+      "Serveer. Strijk de pastinaakcrème over het bord, leg de kabeljauw erop en verdeel de spruitjes ernaast. Werk af met verse dille en eventueel extra citroenrasp."
+    ]
+  },
+  {
+    "id": "franse-mosterd-dragonkip-winterwortel-zilvervliesrijst",
+    "title": "Franse mosterd-dragonkip met geroosterde winterwortel & zilvervliesrijst",
+    "status": "gepubliceerd",
+    "subtitle": "Sappige goudbruine kipdij met romige mosterd-dragonsaus, zoet geroosterde winterwortel en zilvervliesrijst.",
+    "mealType": "diner",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 25,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Glutenvrij",
+      "Halal",
+      "Eiwitrijk",
+      "Restaurantwaardig"
+    ],
+    "suitableFor": [
+      "glutenvrij",
+      "halal"
+    ],
+    "nutrition": {
+      "calories": 720,
+      "protein": 39,
+      "carbs": 71,
+      "fat": 30,
+      "fiber": 12,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "kipdijfilet", "unit": "g", "quantity": 150, "scalable": true, "note": "overtollig vet verwijderd" },
+          { "name": "winterpeen", "unit": "g", "quantity": 300, "scalable": true },
+          { "name": "snelkook-zilvervliesrijst", "unit": "g", "quantity": 60, "scalable": true, "note": "ongekookt" },
+          { "name": "magere kwark", "unit": "g", "quantity": 30, "scalable": true },
+          { "name": "kleine sjalot", "unit": "", "quantity": 0.5, "scalable": true },
+          { "name": "grove mosterd", "unit": "el", "quantity": 1, "scalable": true },
+          { "name": "Dijonmosterd", "unit": "tl", "quantity": 0.5, "scalable": true },
+          { "name": "olijfolie", "unit": "tl", "quantity": 2, "scalable": true },
+          { "name": "verse dragon", "unit": "el", "quantity": 1, "scalable": true, "note": "fijngehakt, of 1 tl gedroogde dragon" },
+          { "name": "gedroogde tijm", "unit": "tl", "quantity": 0.5, "scalable": true },
+          { "name": "vers citroensap", "unit": "tl", "quantity": 0.5, "scalable": true },
+          { "name": "water", "unit": "ml", "quantity": 60, "scalable": true },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "zout", "unit": "", "quantity": "snufje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Rooster de wortel. Verwarm oven of airfryer voor op 200°C en snijd de wortel schuin in dunne plakken.",
+      "Meng de wortel met 1 tl olijfolie, tijm, zwarte peper en een klein snufje zout. Rooster 18–20 minuten tot de randen donker kleuren.",
+      "Bereid ondertussen de zilvervliesrijst volgens de aanwijzingen op de verpakking.",
+      "Bak de kip. Dep de kipdij droog, kruid met zwarte peper en weinig zout, verhit de resterende 1 tl olijfolie en bak rondom diep goudbruin.",
+      "Zet het vuur iets lager en bak verder tot de kip volledig gaar maar nog sappig is. Haal uit de pan en laat rusten.",
+      "Snijd de sjalot zeer fijn en fruit 1–2 minuten in het achtergebleven braadvet.",
+      "Voeg 50–60 ml water toe en schraap alle gekaramelliseerde aanbaksels los. Laat ongeveer voor de helft inkoken.",
+      "Voeg grove mosterd, Dijon en dragon toe. Gebruik je gedroogde dragon, laat deze ongeveer 30 seconden meekoken.",
+      "Haal de pan van het vuur en roer de magere kwark erdoor. Voeg het citroensap en royaal zwarte peper toe.",
+      "Serveer. Schep de zilvervliesrijst op het bord met de geroosterde wortel en kip en lepel de warme mosterd-dragonsaus over de kip."
+    ]
+  },
+  {
+    "id": "biefstukwok-oesterzwammen-paksoi-gember-rijstazijn",
+    "title": "Biefstukwok met gekaramelliseerde oesterzwammen, paksoi, gember & rijstazijn",
+    "status": "gepubliceerd",
+    "subtitle": "Malse biefstuk, diep gekaramelliseerde oesterzwammen en knapperige paksoi met frisheid van rijstazijn en aroma van gember, soja en sesam.",
+    "mealType": "diner",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 20,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Lactosevrij",
+      "Halal",
+      "Eiwitrijk",
+      "Restaurantwaardig"
+    ],
+    "suitableFor": [
+      "lactosevrij",
+      "halal"
+    ],
+    "nutrition": {
+      "calories": 675,
+      "protein": 47,
+      "carbs": 63,
+      "fat": 28,
+      "fiber": 9,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "biefstukreepjes", "unit": "g", "quantity": 150, "scalable": true, "note": "onbewerkt" },
+          { "name": "snelkook-zilvervliesrijst", "unit": "g", "quantity": 60, "scalable": true, "note": "ongekookt" },
+          { "name": "oesterzwammen", "unit": "g", "quantity": 150, "scalable": true },
+          { "name": "paksoi", "unit": "g", "quantity": 200, "scalable": true },
+          { "name": "verse gember", "unit": "cm", "quantity": 2, "scalable": true },
+          { "name": "knoflook", "unit": "teen", "quantity": 1, "scalable": true },
+          { "name": "natriumarme sojasaus", "unit": "el", "quantity": 1, "scalable": true },
+          { "name": "rijstazijn", "unit": "tl", "quantity": 1.5, "scalable": true },
+          { "name": "sesamolie", "unit": "tl", "quantity": 1.5, "scalable": true },
+          { "name": "sesamzaad", "unit": "g", "quantity": 5, "scalable": true },
+          { "name": "lente-ui", "unit": "", "quantity": 1, "scalable": true },
+          { "name": "water", "unit": "el", "quantity": 1, "scalable": true },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Bereid de zilvervliesrijst volgens de aanwijzingen op de verpakking.",
+      "Maak de woksaus. Meng de sojasaus met rijstazijn en 1 eetlepel water en zet apart.",
+      "Rooster het sesamzaad kort in een droge wok of koekenpan tot het geurt en schep uit de pan.",
+      "Bereid de groenten voor. Scheur de oesterzwammen grof, scheid de witte paksoistelen van het groene blad en snijd beide grof.",
+      "Verhit de wok zeer heet, voeg ongeveer de helft van de sesamolie toe en bak de biefstuk 45–60 seconden op hoog vuur.",
+      "Schep de biefstuk direct uit de wok zodra de buitenkant mooi bruin is; het vlees gaart later nog heel kort mee.",
+      "Voeg de resterende sesamolie toe, leg de oesterzwammen in de pan en laat ze eerst ongemoeid zodat ze diep goudbruin worden.",
+      "Rasp gember en knoflook fijn en voeg toe zodra de paddenstoelen goed gekleurd zijn. Bak ongeveer 30 seconden mee.",
+      "Voeg eerst de witte paksoistelen toe en wok 1–2 minuten, voeg daarna het groene blad toe en bak nog ongeveer 30 seconden.",
+      "Doe de biefstuk terug in de wok, voeg de saus toe en hussel alles 30–60 seconden op hoog vuur.",
+      "Serveer. Schep de rijst op het bord, verdeel de wok erover en werk af met dun gesneden lente-ui en geroosterd sesamzaad."
+    ]
+  },
+  {
+    "id": "ras-el-hanoutbloemkool-krokante-kikkererwten-tahin",
+    "title": "Ras-el-hanoutbloemkool met krokante kikkererwten & citroen-knoflooktahin",
+    "status": "gepubliceerd",
+    "subtitle": "Diep geroosterde bloemkool en krokante kikkererwten met warmte van ras el hanout, romige citroen-knoflooktahin en frisse peterselie.",
+    "mealType": "diner",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 20,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Vegan",
+      "Vegetarisch",
+      "Glutenvrij",
+      "Lactosevrij",
+      "Halal",
+      "Vezelrijk",
+      "Gezond"
+    ],
+    "suitableFor": [
+      "vegan",
+      "vegetarisch",
+      "lactosevrij",
+      "glutenvrij",
+      "halal"
+    ],
+    "nutrition": {
+      "calories": 645,
+      "protein": 27,
+      "carbs": 61,
+      "fat": 30,
+      "fiber": 29,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "kikkererwten", "unit": "g", "quantity": 240, "scalable": true, "note": "uit blik of pot, uitgelekt" },
+          { "name": "bloemkool", "unit": "g", "quantity": 350, "scalable": true },
+          { "name": "rode ui", "unit": "g", "quantity": 100, "scalable": true },
+          { "name": "tahin", "unit": "g", "quantity": 15, "scalable": true },
+          { "name": "olijfolie", "unit": "el", "quantity": 1, "scalable": true },
+          { "name": "ras el hanout", "unit": "el", "quantity": 1, "scalable": true, "note": "ruime eetlepel" },
+          { "name": "vers citroensap", "unit": "el", "quantity": 1.5, "scalable": true },
+          { "name": "kleine teen knoflook", "unit": "", "quantity": 0.5, "scalable": true },
+          { "name": "warm water", "unit": "el", "quantity": 2, "scalable": true },
+          { "name": "citroen", "unit": "", "quantity": 0.5, "scalable": true, "note": "voor de rasp" },
+          { "name": "platte peterselie", "unit": "", "quantity": "ruime hand", "scalable": false },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "zout", "unit": "", "quantity": "snufje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Snijd de bloemkool in kleine roosjes en enkele dunne plakken en snijd de rode ui in dunne parten.",
+      "Spoel de kikkererwten af, laat goed uitlekken en dep ze zo droog mogelijk, zodat ze beter roosteren.",
+      "Verhit de olijfolie in een ruime hapjespan op middelhoog tot hoog vuur en bak de bloemkool 5–6 minuten; laat hem regelmatig ongemoeid liggen.",
+      "Doe de rode ui erbij en bak nog 2–3 minuten tot zowel bloemkool als ui duidelijke donkere randjes krijgen.",
+      "Zet het vuur iets lager, maak ruimte in het midden van de pan en voeg de ras el hanout toe. Bak ongeveer 20 seconden tot de specerijen sterk geuren.",
+      "Voeg de kikkererwten toe, schep alles om en bak nog 3–4 minuten zodat ze warm en aan de buitenkant iets droger worden.",
+      "Maak de tahinsaus. Rasp de knoflook zeer fijn en meng met tahin en citroensap.",
+      "Klop er beetje bij beetje 2–3 eetlepels warm water door tot een gladde, lichte en schenkbare saus ontstaat. Voeg zwarte peper toe.",
+      "Schep bloemkool, ui en kikkererwten op een bord en verdeel de tahinsaus er losjes overheen.",
+      "Bestrooi royaal met platte peterselie en fijne citroenrasp. Proef en voeg alleen indien nodig nog een klein beetje zout toe."
+    ]
+  },
+  {
+    "id": "zalm-franse-mosterdlinzen-wortel-selderij-tijm",
+    "title": "Zalm met warme Franse mosterdlinzen, wortel, selderij & tijm",
+    "status": "gepubliceerd",
+    "subtitle": "Sappige gebakken zalm op warme Franse linzen met wortel, selderij, Dijon en tijm, fris afgewerkt met rodewijnazijn en peterselie.",
+    "mealType": "diner",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 25,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Glutenvrij",
+      "Lactosevrij",
+      "Halal",
+      "Eiwitrijk",
+      "Vezelrijk"
+    ],
+    "suitableFor": [
+      "glutenvrij",
+      "lactosevrij",
+      "halal"
+    ],
+    "nutrition": {
+      "calories": 665,
+      "protein": 42,
+      "carbs": 49,
+      "fat": 30,
+      "fiber": 17,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "zalmfilet", "unit": "g", "quantity": 130, "scalable": true },
+          { "name": "gekookte linzen", "unit": "g", "quantity": 150, "scalable": true, "note": "uit blik of stazak, uitgelekt" },
+          { "name": "winterwortel", "unit": "g", "quantity": 150, "scalable": true },
+          { "name": "kleine sjalot", "unit": "", "quantity": 1, "scalable": true },
+          { "name": "bleekselderij", "unit": "stengel", "quantity": 1, "scalable": true },
+          { "name": "knoflook", "unit": "teen", "quantity": 0.5, "scalable": true },
+          { "name": "zoutarme groentebouillon", "unit": "ml", "quantity": 100, "scalable": true },
+          { "name": "olijfolie", "unit": "el", "quantity": 1, "scalable": true },
+          { "name": "Dijonmosterd", "unit": "tl", "quantity": 1, "scalable": true },
+          { "name": "rodewijnazijn", "unit": "tl", "quantity": 1.5, "scalable": true },
+          { "name": "verse tijm", "unit": "takjes", "quantity": 2, "scalable": true },
+          { "name": "platte peterselie", "unit": "", "quantity": "ruime hand", "scalable": false },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "zout", "unit": "", "quantity": "snufje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Snijd wortel, sjalot en bleekselderij in kleine blokjes en hak de knoflook fijn.",
+      "Verhit ongeveer de helft van de olijfolie en bak sjalot, wortel en bleekselderij 4–5 minuten op middelhoog vuur.",
+      "Voeg knoflook en tijm toe en bak ongeveer 30 seconden mee tot ze geuren.",
+      "Spoel de linzen af, laat goed uitlekken en voeg samen met de bouillon toe.",
+      "Laat 8–10 minuten zacht pruttelen tot de groenten gaar zijn en de bouillon grotendeels is opgenomen; de linzen moeten sappig blijven.",
+      "Dep de zalm zeer goed droog en kruid met zwarte peper en een klein beetje zout.",
+      "Verhit de resterende olijfolie en bak de zalm eerst aan de mooiste zijde of huidzijde stevig goudbruin.",
+      "Draai de zalm om, zet het vuur iets lager en gaar verder tot het midden nog sappig is.",
+      "Haal de linzen van het vuur, verwijder harde tijmtakjes en roer Dijonmosterd en rodewijnazijn erdoor.",
+      "Hak de peterselie fijn en meng royaal door de warme linzen. Proef en voeg eventueel zwarte peper of enkele druppels extra azijn toe.",
+      "Serveer. Schep de warme linzen in een diep bord, leg de gebakken zalm erop en werk af met wat extra peterselie en zwarte peper."
+    ]
+  },
+  {
+    "id": "romige-zilvervliesrijst-paddenstoelen-parmezaan-salie",
+    "title": "Romige zilvervliesrijst met diep gebakken paddenstoelen, Parmezaan, tijm & krokante salie",
+    "status": "gepubliceerd",
+    "subtitle": "Diep gebakken paddenstoelen en romige zilvervliesrijst met hartige kaas, aardse tijm, krokante salie en precies genoeg citroen.",
+    "mealType": "diner",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 25,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Vegetarisch",
+      "Glutenvrij",
+      "Eiwitrijk",
+      "Restaurantwaardig"
+    ],
+    "suitableFor": [
+      "vegetarisch",
+      "glutenvrij"
+    ],
+    "nutrition": {
+      "calories": 620,
+      "protein": 31,
+      "carbs": 80,
+      "fat": 20,
+      "fiber": 7,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "snelkook-zilvervliesrijst", "unit": "g", "quantity": 85, "scalable": true, "note": "ongekookt" },
+          { "name": "gemengde paddenstoelen", "unit": "g", "quantity": 200, "scalable": true, "note": "bijv. kastanjechampignons en oesterzwammen" },
+          { "name": "hüttenkäse", "unit": "g", "quantity": 100, "scalable": true },
+          { "name": "Parmezaanse kaas", "unit": "g", "quantity": 15, "scalable": true, "note": "vegetarisch, fijn geraspt" },
+          { "name": "kleine sjalot", "unit": "", "quantity": 1, "scalable": true },
+          { "name": "knoflook", "unit": "teen", "quantity": 0.5, "scalable": true },
+          { "name": "zoutarme groentebouillon", "unit": "ml", "quantity": 300, "scalable": true },
+          { "name": "olijfolie", "unit": "tl", "quantity": 2, "scalable": true },
+          { "name": "verse tijm", "unit": "takjes", "quantity": 2, "scalable": true },
+          { "name": "verse salieblaadjes", "unit": "", "quantity": 3, "scalable": true },
+          { "name": "vers citroensap", "unit": "tl", "quantity": 0.5, "scalable": true },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "zout", "unit": "", "quantity": "snufje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Pureer de hüttenkäse met een staafmixer volledig glad en zet apart.",
+      "Borstel de paddenstoelen schoon. Snijd kastanjechampignons in grove stukken en scheur oesterzwammen met de hand.",
+      "Snijd de sjalot fijn, verhit 1 tl olijfolie en fruit de sjalot 2 minuten zachtjes.",
+      "Hak de knoflook fijn en voeg samen met de tijmblaadjes toe. Bak ongeveer 30 seconden mee.",
+      "Voeg de zilvervliesrijst toe en bak 1 minuut. Schenk ongeveer 300 ml bouillon erbij en kook volgens de verpakking gaar.",
+      "Roer tijdens het koken af en toe en voeg indien nodig wat extra bouillon toe; de rijst moet gaar en vochtig blijven.",
+      "Verhit ondertussen de resterende 1 tl olijfolie in een ruime koekenpan op hoog vuur.",
+      "Verdeel de paddenstoelen ruim over de pan en laat ze regelmatig 1–2 minuten ongemoeid liggen zodat ze diep goudbruin worden.",
+      "Voeg pas wanneer de paddenstoelen goed gekleurd zijn zwarte peper en een klein snufje zout toe.",
+      "Bak de salieblaadjes de laatste minuut kort tussen de paddenstoelen tot ze krokant zijn en haal ze uit de pan.",
+      "Haal de gare rijst volledig van het vuur en roer de gladde hüttenkäse en geraspte harde kaas erdoor.",
+      "Voeg royaal zwarte peper en ongeveer ½ tl citroensap toe. Proef voordat je extra zout gebruikt.",
+      "Serveer. Schep de romige rijst in een diep bord, verdeel de gebakken paddenstoelen erover en verkruimel de krokante salie erboven met eventueel wat fijne citroenrasp."
+    ]
+  },
+  {
+    "id": "rozemarijnkip-pompoen-parmezaanpolenta-boerenkoolchips",
+    "title": "Rozemarijnkip met pompoen-Parmezaanpolenta, boerenkoolchips & pompoenpitten",
+    "status": "gepubliceerd",
+    "subtitle": "Romige pompoenpolenta met Parmezaan als basis voor kruidige rozemarijnkip, krokante boerenkool, geroosterde pompoenpitten en frisse citroenrasp.",
+    "mealType": "diner",
+    "seasons": [
+      "herfst-winter"
+    ],
+    "prepTime": 25,
+    "cookTime": 0,
+    "baseServings": 1,
+    "tags": [
+      "Glutenvrij",
+      "Halal",
+      "Eiwitrijk",
+      "Restaurantwaardig"
+    ],
+    "suitableFor": [
+      "glutenvrij",
+      "halal"
+    ],
+    "nutrition": {
+      "calories": 690,
+      "protein": 44,
+      "carbs": 58,
+      "fat": 33,
+      "fiber": 12,
+      "isIndicative": true,
+      "micronutrients": {}
+    },
+    "ingredients": [
+      {
+        "category": "Basis",
+        "items": [
+          { "name": "kipdijfilet", "unit": "g", "quantity": 150, "scalable": true, "note": "overtollig vet verwijderd" },
+          { "name": "polentameel", "unit": "g", "quantity": 50, "scalable": true },
+          { "name": "pompoenblokjes", "unit": "g", "quantity": 150, "scalable": true },
+          { "name": "gesneden boerenkool", "unit": "g", "quantity": 100, "scalable": true },
+          { "name": "Parmezaanse kaas", "unit": "g", "quantity": 10, "scalable": true },
+          { "name": "ongezouten pompoenpitten", "unit": "g", "quantity": 10, "scalable": true },
+          { "name": "olijfolie", "unit": "el", "quantity": 1, "scalable": true },
+          { "name": "zoutarme groentebouillon", "unit": "ml", "quantity": 250, "scalable": true },
+          { "name": "knoflook", "unit": "teen", "quantity": 0.5, "scalable": true },
+          { "name": "verse rozemarijn", "unit": "tl", "quantity": 0.5, "scalable": true, "note": "zeer fijngehakt" },
+          { "name": "kleine salieblaadjes", "unit": "", "quantity": 2, "scalable": true, "note": "fijngehakt" },
+          { "name": "nootmuskaat", "unit": "", "quantity": "snufje", "scalable": false },
+          { "name": "citroen", "unit": "", "quantity": 0.5, "scalable": true, "note": "voor de rasp" },
+          { "name": "zwarte peper", "unit": "", "quantity": "naar smaak", "scalable": false },
+          { "name": "zout", "unit": "", "quantity": "snufje", "scalable": false }
+        ]
+      }
+    ],
+    "instructions": [
+      "Verwarm de oven voor op 190°C.",
+      "Meng de boerenkool met ongeveer 1 tl olijfolie en een klein snufje zout en verdeel ruim over een bakplaat.",
+      "Rooster de boerenkool 8–10 minuten; schep halverwege om en controleer regelmatig zodat de randen krokant maar niet verbrand worden.",
+      "Rooster de pompoenpitten kort in een droge koekenpan tot ze geuren en licht kleuren en zet apart.",
+      "Meng de kip met zwarte peper, rozemarijn, fijngehakte salie en zeer fijngehakte knoflook.",
+      "Verhit de resterende olijfolie en bak de kipdij op middelhoog vuur rondom stevig goudbruin.",
+      "Zet het vuur iets lager en bak verder tot de kip volledig gaar maar nog sappig is. Laat enkele minuten rusten.",
+      "Kook ondertussen de pompoenblokjes in ongeveer 8 minuten volledig zacht, giet goed af en stamp of pureer fijn.",
+      "Breng de groentebouillon aan de kook en strooi de polenta er al roerend langzaam in.",
+      "Kook volgens de verpakking, meestal 3–5 minuten, en blijf regelmatig roeren.",
+      "Roer de pompoenpuree en Parmezaanse kaas door de polenta.",
+      "Voeg royaal zwarte peper en een heel klein snufje nootmuskaat toe. Proef voordat je extra zout toevoegt.",
+      "Rasp direct na het bakken een klein beetje citroenschil over de boerenkoolchips; gebruik geen citroensap zodat ze krokant blijven.",
+      "Serveer. Schep de pompoenpolenta in een diep bord, snijd de kip schuin in plakken en leg erop of ernaast.",
+      "Verdeel de boerenkoolchips en geroosterde pompoenpitten over het bord en eindig met wat extra zwarte peper en eventueel citroenrasp."
+    ]
   }
 ];
