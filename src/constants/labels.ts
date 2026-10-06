@@ -108,6 +108,17 @@ export const dietaryLabel: Record<DietaryPreference, string> = {
   halal: 'Halal',
 };
 
+/**
+ * Dietary preferences the user can actually pick in the UI (settings + recipe
+ * filter). `lactosevrij` and `halal` still exist on recipes' `suitableFor` but
+ * are no longer offered as a preference. Keep this the single source of truth.
+ */
+export const SELECTABLE_DIETS: DietaryPreference[] = [
+  'vegetarisch',
+  'vegan',
+  'glutenvrij',
+];
+
 /** Maps a JS Date weekday (0 = Sunday) onto our Dutch week ordering. */
 export function weekDayFromDate(date: Date): WeekDayName {
   // JS: 0 Sun .. 6 Sat. Our array starts on Monday.

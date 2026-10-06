@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { Platform } from 'react-native';
 
+import { SELECTABLE_DIETS } from '../constants/labels';
 import type { Settings } from '../types';
 
 /**
@@ -30,7 +31,12 @@ const webStorage: Storage | null =
 /** Merge stored settings onto the defaults so new fields always have a value. */
 function mergeSettings(stored: Partial<Settings> | null): Settings {
   if (!stored) return DEFAULT_SETTINGS;
-  return { ...DEFAULT_SETTINGS, ...stored };
+  const merged = { ...DEFAULT_SETTINGS, ...stored };
+  // Drop any diet that's no longer offered (e.g. lactosevrij/halal removed).
+  merged.dietaryPreferences = (merged.dietaryPreferences ?? []).filter((d) =>
+    SELECTABLE_DIETS.includes(d),
+  );
+  return merged;
 }
 
 function loadInitialSettings(): Settings {

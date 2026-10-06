@@ -6,18 +6,10 @@ import { BrandLogoStacked, Icon } from '../components/BrandIcons';
 import { FilterChip } from '../components/FilterChip';
 import { Screen } from '../components/Screen';
 import { Stepper } from '../components/Stepper';
-import { dietaryLabel } from '../constants/labels';
+import { dietaryLabel, SELECTABLE_DIETS } from '../constants/labels';
 import { useSettings } from '../context/SettingsContext';
 import { colors, iconSize, radius, shadow, spacing, typography } from '../theme';
 import type { DietaryPreference, NutritionGoal } from '../types';
-
-const DIETS: DietaryPreference[] = [
-  'glutenvrij',
-  'halal',
-  'lactosevrij',
-  'vegan',
-  'vegetarisch',
-];
 
 const GOALS: { value: NutritionGoal; label: string }[] = [
   { value: 'eiwitrijk', label: 'Eiwitrijk' },
@@ -93,7 +85,7 @@ export function InstellingenScreen() {
       >
         <View style={styles.card}>
           <View style={[styles.chips, styles.chipsLeft]}>
-            {DIETS.map((d) => (
+            {SELECTABLE_DIETS.map((d) => (
               <FilterChip
                 key={d}
                 label={dietaryLabel[d]}

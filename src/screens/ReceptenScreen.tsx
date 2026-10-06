@@ -16,7 +16,7 @@ import { Icon, type BrandIconName } from '../components/BrandIcons';
 import { FadeInView } from '../components/FadeInView';
 import { FilterChip } from '../components/FilterChip';
 import { RecipeCard } from '../components/RecipeCard';
-import { dietaryLabel, dishCategory, seasonLabel } from '../constants/labels';
+import { dietaryLabel, dishCategory, seasonLabel, SELECTABLE_DIETS } from '../constants/labels';
 import { useSettings } from '../context/SettingsContext';
 import { getAllRecipes } from '../data/recipes';
 import { useOpenRecipe } from '../navigation/hooks';
@@ -51,13 +51,6 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
 
 const SEASONS: Season[] = ['lente-zomer', 'herfst-winter'];
 
-const DIETS: DietaryPreference[] = [
-  'vegetarisch',
-  'vegan',
-  'lactosevrij',
-  'glutenvrij',
-  'halal',
-];
 
 /** A total-time (prep + cook) filter: at most, or over, a number of minutes. */
 type TimeFilter =
@@ -465,7 +458,7 @@ export function ReceptenScreen() {
                 title="Dieet"
                 subtitle="Houd rekening met je voorkeuren"
               >
-                {DIETS.map((d) => (
+                {SELECTABLE_DIETS.map((d) => (
                   <FilterChip
                     key={d}
                     label={dietaryLabel[d]}
